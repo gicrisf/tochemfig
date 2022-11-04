@@ -1,9 +1,9 @@
 ;;; tochemfig.el --- Description -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2022 gicrisf
+;; Copyright (C) 2022 Giovanni Crisalfi
 ;;
-;; Author: gicrisf <giovanni.crisalfi@protonmail.com>
-;; Maintainer: gicrisf <giovanni.crisalfi@protonmail.com>
+;; Author: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
+;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
 ;; Version: 0.0.1
@@ -26,7 +26,7 @@
 
 (defgroup tochemfig nil
 
-  "Manipulating molecules from Emacs."
+  "Manipulating molecules through LaTeX from Emacs."
   :prefix "tochemfig-"
   :group 'comm)
 
@@ -211,7 +211,17 @@
   "Generate chemfig code for a MOLECULE from mol or SMILES strings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 " (tochemfig-default-args-builder) molecule))))
+           (concat "python -m mol2chemfigPy3 " (tochemfig-default-args-builder) " " molecule))))
+
+;;;###autoload
+(defun tochemfig-custom (molecule custom_args)
+  "Gen. chemfig code for a MOLECULE from mol or SMILES strings with CUSTOM_ARGS."
+  (interactive
+   (list
+    (read-string "sEnter molecule: ")
+    (read-string "sEnter custom arguments: ")))
+  (insert (shell-command-to-string
+           (concat "python -m mol2chemfigPy3 " custom_args " " molecule))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
