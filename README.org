@@ -1,0 +1,52 @@
+#+title: tochemfig.el
+#+author: Giovanni Crisalfi
+
+/Manipulating molecules through LaTeX from Emacs/.
+
+* Intro
+=tochemfig= is an Emacs interface to the =mol2chemfig= python package.
+Generate chemfig code from mol or SMILES.
+
+* Requirements
+This package requires a working Python environment
+with the =mol2chemfigPy3= package installed and accessible via shell.
+If you miss the package, install it with this command (through =pip=):
+
+#+begin_src bash
+pip install -U mol2chemfigPy3
+#+end_src
+
+* Installation
+This package is under development, so it's not available on MELPA yet.
+If you really can't wait, you can install it through this git repo.
+The package is already functional: some function could be renamed soon.
+
+* TODO Usage
+* Features
+- [X] Generate from mol or SMILES file
+- [X] Generate from pubchem
+- [X] Generate from verbatim string
+- [X] Generate abiding to Indigo's chemical validation
+- [X] Flipping horizontally or vertically the drawing
+- [X] Generate extended or compact chemfig code
+- [X] Rotate the drawing by a custom angle
+- [X] Recalculate coordinates on molfiles before drawing
+- [X] Generate chemfig code specifying relative angles instead of absolute ones
+- [X] Generate chemfig code showing carbons
+- [X] Generate chemfig code showing methyls
+- [X] Manipulate hydrogen on the given structure
+- [X] Draw circles instead of double bonds inside aromatic rings
+- [X] Teach chemfig how to draw fancier double and triple bonds
+- [X] Show the molfile number of each atom next to it
+- [X] Scale the lengths of bonds
+- [X] Stretch the lengths of bonds
+- [X] Wrap the code in "\chemfig{...}" LaTeX command
+- [ ] Define submols
+- [ ] Specify first atom to be rendered in submols
+- [ ] Specify last atom to be rendered in submols
+- [ ] Specify bonds that should be drawn on top of others they cross over
+- [X] Generate chemfig code with customizable defaults
+- [X] Generate chemfig code with customized arguments (inject mol2chemfig flags in the command)
+- [X] Launch with customizable defaults while forcing a specific argument
+- [X] Support for =mol2chemfigPy3=
+- [ ] Support for =mol2chemfig= (the original Python 2 package)
