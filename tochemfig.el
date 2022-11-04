@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Keywords: convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
