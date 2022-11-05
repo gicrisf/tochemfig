@@ -173,9 +173,9 @@ or average (with tochemfig-default-bond-scale=normalize) for bond lengths."
 
 (defun tochemfig-args-builder (&optional xOpt)
   "Build default arguments which will be passed to mol2chemfig.
-XOPT is optional. If given, must be an alist."
+XOPT is an optional argument. If given, it must be an alist."
   (let ((args '()))
-    ;; read optional parameters, if given
+    ;; Read optional parameters, if given;
     (let ((input (or (cdr (assoc "input" xOpt)) tochemfig-default-input))
           (terse (or (cdr (assoc "terse" xOpt)) tochemfig-default-terse))
           (strict (or (cdr (assoc "strict" xOpt)) tochemfig-default-strict))
@@ -189,30 +189,56 @@ XOPT is optional. If given, must be an alist."
           (show-methyls (or (cdr (assoc "show-methyls" xOpt)) tochemfig-default-show-methyls))
           (hydrogens (or (cdr (assoc "hydrogens" xOpt)) tochemfig-default-hydrogens))
           (aromatic-circles (or (cdr (assoc "aromatic-circles" xOpt)) tochemfig-default-aromatic-circles))
+          (markers (or (cdr (assoc "markers" xOpt)) nil))
           (fancy-bonds (or (cdr (assoc "hydrogens" xOpt)) tochemfig-default-fancy-bonds))
           (atom-numbers (or (cdr (assoc "atom-numbers" xOpt)) tochemfig-default-atom-numbers))
           (bond-scale (or (cdr (assoc "bond-scale" xOpt)) tochemfig-default-bond-scale))
           (bond-stretch (or (cdr (assoc "bond-stretch" xOpt)) tochemfig-default-bond-stretch))
-          (wrap-chemfig (or (cdr (assoc "wrap-chemfig" xOpt)) tochemfig-default-wrap-chemfig)))
+          (wrap-chemfig (or (cdr (assoc "wrap-chemfig" xOpt)) tochemfig-default-wrap-chemfig))
+          (submol-name (or (cdr (assoc "submol-name" xOpt)) nil))
+          (entry-atom (or (cdr (assoc "entry-atom" xOpt)) nil))
+          (exit-atom (or (cdr (assoc "exit-atom" xOpt)) nil))
+          (cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) nil)))
 
-      ;; build the command substring list
-      ;; TODO check types!
+      ;; Build the command substring list;
+      ;; Type-check the arguments on place;
+      ;;
+      ;; Remember:
+      ;; %s for strings;
+      ;; %d for integers;
+      ;; %f for floats;
+      ;; Other formatting specifications:
+      ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Formatting-Strings.html
+
+      ;; TODO manage potential errors from type checking!
       (when (not (equal (format "%s" input) "file"))
         (push (concat "--input " (format "%s" input)) args))
       (when terse (push "--terse" args))
       (when strict (push "--strict" args))
       (when (not (equal indent 4))
-        (push (concat "--indent " (format "%s" indent)) args))
+        (push (concat "--indent " (format "%d" indent)) args))
       (when recalculate-coordinates (push "--recalculate-coordinates" args))
       (when (not (equal angle 0.0))
-        (push (concat "--angle " (format "%s" angle)) args))
+        (push (concat "--angle " (format "%f" angle)) args))
       (when relative-angles (push "--relative-angles" args))
       (when flip (push "--flip" args))
       (when flop (push "--flop" args))
       (when show-carbons (push "--show-carbons" args))
       (when show-methyls (push "--show-methyls" args))
-      (when (not (equal (format "%s" hydrogens) "keep"))
-        (push (concat "--hydrogens " (format "%s" hydrogens)) args))
+      (let ((hstr (format "%s" hydrogens)))
+      (
+       (when (not (equal hstr "keep"))
+         (if (equal hstr "add") (push (concat "--hydrogens " hstr) args)
+           (if (equal hstr "delete") (push (concat "--hydrogens " hstr) args)
+             ;; TODO else tell user was a wrong input
+             ;; signal
+             ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Signaling-Errors.html
+             ;; https://emacs.stackexchange.com/questions/13705/rethrowing-an-error-in-emacs-lisp
+             ) ;; ./if delete
+           ) ;; ./if add
+         ) ;; ./when
+       ) ;; ./ body
+      ) ;; ./let
       (when aromatic-circles (push "--aromatic-circles" args))
       (when fancy-bonds (push "--fancy-bonds" args))
       (when atom-numbers (push "--atom-numbers" args))
@@ -221,13 +247,15 @@ XOPT is optional. If given, must be an alist."
       (when (not (equal bond-stretch 1.0))
         (push (concat "--bond-stretch " (format "%s" bond-stretch)) args))
       (when wrap-chemfig (push "--wrap-chemfig" args))
+      (when submol-name (push (concat "--submol-name" (format "%s" submol-name) args)))
+      (when entry-atom (push (concat "--entry-atom" (format "%d" entry-atom) args)))
+      (when exit-atom (push (concat "--exit-atom" (format "%d" exit-atom) args)))
+      ;; TODO Needs to go through a series of inputs, one for each bond;
+      ;; (when cross-bonds (push "--cross-bonds" args))
 
-      ;; convert list to string
+      ;; Convert list to string:
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
-      (let ((strargs (mapconcat #'identity args " ")))
-        ;; print out the final string (for testing)
-        ;; (message strargs)
-        strargs))))
+      (let ((strargs (mapconcat #'identity args " "))) strargs))))
 
 ;; Interactive functions
 
