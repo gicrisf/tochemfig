@@ -266,7 +266,7 @@ Obviously, you have to be online for this input mode to work."
   "Generate chemfig code for a molecule from its file's PATH.
 The file must contain a molecule’s description in either molfile or SMILES,
 widely used file formats that can be exported from any chemical drawing program."
-  (interactive "sEnter molecule name for pubchem search: ")
+  (interactive "fEnter molecule name for pubchem search: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
                    (tochemfig-args-builder '(("input" . "file"))) " " path))))
@@ -317,8 +317,9 @@ widely used file formats that can be exported from any chemical drawing program.
 Forced to be verbose, because indentation doesn't make sense otherwise."
   (interactive
    (list
-    (read-string "sEnter molecule: ")
-    (read-string "sEnter integer for indentation: ")))
+    (read-string "Enter molecule: ")
+    ;; TODO Check for an integer!
+    (read-number "Enter an integer for indentation: ")))
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
                    (tochemfig-args-builder
@@ -339,10 +340,11 @@ Existing coordinates are discarded and new ones are derived from structure."
 Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
   (interactive
    (list
-    (read-string "sEnter molecule: ")
-    (read-string "sEnter angle for rotation (write 0.0 to leave as is): ")
-    (read-string "sFlipping horizontally? (t/nil) ")
-    (read-string "sFlipping vertically? (t/nil) ")))
+    (read-string "Enter molecule: ")
+    ;; TODO leave blank to write 0.0!
+    (read-number "Enter rotation angle (write 0.0 to leave as is): ")
+    (y-or-n-p "Flipping horizontally? ")
+    (y-or-n-p "Flipping vertically?")))
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
                    (tochemfig-args-builder
@@ -417,7 +419,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat "python -m mol2chemfigPy3 "
                    (tochemfig-args-builder '(("atom-numbers" . t))) " " molecule))))
 
-
 ;;;###autoload
 (defun tochemfig-hide-atom-numbers (molecule)
   "Generate chemfig code for a MOLECULE hiding the molfile number of each atom."
@@ -427,7 +428,7 @@ This will also trigger calculation of new coordinates for the entire molecule."
                    (tochemfig-args-builder '(("atom-numbers" . nil))) " " molecule))))
 
 ;;;###autoload
-(defun tochemfig-scale-bond (molecule factor)
+(defun tochemfig-bond-scale (molecule factor)
   "Generate chemfig code for a MOLECULE and scale the bonds by a given FACTOR."
   (interactive (list
                 (read-string "sEnter molecule: ")
@@ -440,7 +441,7 @@ This will also trigger calculation of new coordinates for the entire molecule."
                      (cons "bond-stretch" factor))) " " molecule))))
 
 ;;;###autoload
-(defun tochemfig-normalize-bond (molecule average)
+(defun tochemfig-bond-normalize (molecule average)
   "Generate chemfig code for a MOLECULE and normalize the bonds to a given AVERAGE."
   (interactive (list
                 (read-string "sEnter molecule: ")
