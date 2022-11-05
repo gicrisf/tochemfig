@@ -233,7 +233,7 @@ XOPT is optional. If given, must be an alist."
 
 ;;;###autoload
 (defun tochemfig (molecule)
-  "Generate chemfig code for a MOLECULE (with default settings)."
+  "Generate chemfig code for a MOLECULE using the default settings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 " (tochemfig-args-builder) " " molecule))))
@@ -242,7 +242,7 @@ XOPT is optional. If given, must be an alist."
 
 ;;;###autoload
 (defun tochemfig-custom (molecule custom_args)
-  "Gen. chemfig code for a MOLECULE from mol or SMILES strings with CUSTOM_ARGS."
+  "Generate chemfig code for a MOLECULE specifying all the needed CUSTOM_ARGS."
   (interactive
    (list
     (read-string "sEnter molecule: ")
@@ -254,7 +254,7 @@ XOPT is optional. If given, must be an alist."
 
 ;;;###autoload
 (defun tochemfig-input-pubchem (identifier)
-  "The argument is treated as an IDENTIFIER for the PubChem database.
+  "Generate chemfig code for a molecule retrieved with its pubchem IDENTIFIER.
 Obviously, you have to be online for this input mode to work."
   (interactive "sEnter molecule name for pubchem search: ")
   (insert (shell-command-to-string
@@ -262,14 +262,14 @@ Obviously, you have to be online for this input mode to work."
                    (tochemfig-args-builder '(("input" . "pubchem"))) " " identifier))))
 
 ;;;###autoload
-(defun tochemfig-input-file (file)
-  "Generate chemfig code for a molecule giving the name of a FILE.
-This must contain a molecule’s description in either molfile or SMILES,
+(defun tochemfig-input-file (path)
+  "Generate chemfig code for a molecule from its file's PATH.
+The file must contain a molecule’s description in either molfile or SMILES,
 widely used file formats that can be exported from any chemical drawing program."
   (interactive "sEnter molecule name for pubchem search: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("input" . "file"))) " " file))))
+                   (tochemfig-args-builder '(("input" . "file"))) " " path))))
 
 ;;;###autoload
 (defun tochemfig-input-direct (molecule)
@@ -297,8 +297,7 @@ widely used file formats that can be exported from any chemical drawing program.
 
 ;;;###autoload
 (defun tochemfig-strict (molecule)
-  "Generate chemfig code for a MOLECULE;
-strictly abide by Indigo’s chemical structure validation."
+  "Generate chemfig code for a MOLECULE strictly abiding by structure validation."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
@@ -306,8 +305,7 @@ strictly abide by Indigo’s chemical structure validation."
 
 ;;;###autoload
 (defun tochemfig-chill (molecule)
-  "Generate chemfig code for a MOLECULE;
-ignore potential errors in chemical structure validation."
+  "Generate chemfig code for a MOLECULE even if it fails structure validation."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
@@ -315,8 +313,7 @@ ignore potential errors in chemical structure validation."
 
 ;;;###autoload
 (defun tochemfig-indent (molecule int)
-  "Generate chemfig code for a given MOLECULE.
-Specify an INT for the number of spaces to use for indenting molecule branches.
+  "Generate chemfig code for a MOLECULE and indent its branches by INT spaces.
 Forced to be verbose, because indentation doesn't make sense otherwise."
   (interactive
    (list
@@ -329,8 +326,8 @@ Forced to be verbose, because indentation doesn't make sense otherwise."
 
 ;;;###autoload
 (defun tochemfig-recalculate-coordinates (molecule)
-  "Generate chemfig code for a MOLECULE.
-Discard existing coordinate and calculate new ones from covalent structure."
+  "Generate chemfig code for a MOLECULE calculating new coordinates.
+Existing coordinates are discarded and new ones are derived from structure."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
@@ -338,9 +335,8 @@ Discard existing coordinate and calculate new ones from covalent structure."
 
 ;;;###autoload
 (defun tochemfig-rotate (molecule angle flip flop)
-  "Generate chemfig code for a MOLECULE.
-Rotate molecule counterclockwise by a given ANGLE.
-Choose if you want to FLIP or FLOP horizontally/vertically."
+  "Generate chemfig code for a MOLECULE and rotate it clockwise by a given ANGLE.
+Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
   (interactive
    (list
     (read-string "sEnter molecule: ")
@@ -374,7 +370,7 @@ This is implied, if carbon atoms are already showed."
 
 ;;;###autoload
 (defun tochemfig-add-hydrogens (molecule)
-  "Generate chemfig code for a MOLECULE and show symbols for hydrogen atoms.
+  "Generate chemfig code for a MOLECULE and show explicit symbols for hydrogen.
 This will also trigger calculation of new coordinates for the entire molecule."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
@@ -391,8 +387,7 @@ This will also trigger calculation of new coordinates for the entire molecule."
 
 ;;;###autoload
 (defun tochemfig-aromatic-circles (molecule)
-  "Generate chemfig code for a MOLECULE.
-Draw circles instead of double bonds inside aromatic rings."
+  "Generate chemfig code for a MOLECULE and draw circles inside aromatic rings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
@@ -446,7 +441,7 @@ Draw circles instead of double bonds inside aromatic rings."
 
 ;;;###autoload
 (defun tochemfig-normalize-bond (molecule average)
-  "Generate chemfig code for a MOLECULE and normalize lenght on a given AVERAGE."
+  "Generate chemfig code for a MOLECULE and normalize the bonds to a given AVERAGE."
   (interactive (list
                 (read-string "sEnter molecule: ")
                 (read-string "sEnter average length: ")))
@@ -459,7 +454,7 @@ Draw circles instead of double bonds inside aromatic rings."
 
 ;;;###autoload
 (defun tochemfig-wrap (molecule)
-  "Generate chemfig code for a MOLECULE and wrap it into \\chemfig{...} command."
+  "Generate chemfig code for a MOLECULE and wrap it into a \\chemfig{...} command."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat "python -m mol2chemfigPy3 "
