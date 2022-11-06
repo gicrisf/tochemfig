@@ -145,14 +145,6 @@ or average (with tochemfig-default-bond-scale=normalize) for bond lengths."
   :group 'tochemfig
   :type 'boolean)
 
-;; Doesn't make sense to create a default of this one
-;; Specify bonds that should be drawn on top
-;; of others they cross over. Give the start
-;; and the end atoms. Example for one bond:
-;; --cross-bond=5-6 Example for two bonds:
-;; --crossbond=4-8,12-13 (Default: None)
-;; (setq chemfig-default-cross-bond '')
-
 (defun tochemfig--args-builder (&optional xOpt)
   "Build default arguments which will be passed to mol2chemfig.
 XOPT is an optional argument. If given, it must be an alist."
@@ -180,10 +172,9 @@ XOPT is an optional argument. If given, it must be an alist."
           (tochemfig-arg-submol-name (or (cdr (assoc "submol-name" xOpt)) ""))
           (tochemfig-arg-entry-atom (or (cdr (assoc "entry-atom" xOpt)) ""))
           (tochemfig-arg-exit-atom (or (cdr (assoc "exit-atom" xOpt)) ""))
-          (tochemfig-arg-cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) "")))
+          (tochemfig-arg-cross-bond (or (cdr (assoc "cross-bond" xOpt)) "")))
 
-      ;; Build the command substring list;
-      ;; Type-check the arguments on place;
+      ;; Build the command substring list and typecheck the arguments on place;
       (when (not (equal (format "%s" tochemfig-arg-input) "file"))
         (push (concat "--input " (format "%s" tochemfig-arg-input)) args))
       (when tochemfig-arg-terse (push "--terse" args))
@@ -220,8 +211,8 @@ XOPT is an optional argument. If given, it must be an alist."
       (when (not (string= "" tochemfig-arg-exit-atom))
         (push (concat "--exit-atom " (format "%d" tochemfig-arg-exit-atom)) args))
       ;; TODO Needs to go through a series of inputs, one for each bond;
-      (when (not (string= "" tochemfig-arg-cross-bonds))
-        (push (concat "--submol-name " (format "%s" tochemfig-arg-cross-bonds)) args))
+      (when (not (string= "" tochemfig-arg-cross-bond))
+        (push (concat "--cross-bond=" (format "%s" tochemfig-arg-cross-bond)) args))
 
       ;; debug function
       (message (mapconcat #'identity args " "))
@@ -514,6 +505,20 @@ EXITATOM is the number of last atom to be rendered."
                     (list (cons "submol-name" submol)
                           (cons "entry-atom" entryatom)
                           (cons "exit-atom" exitatom))) " " molecule))))
+
+;;;###autoload
+(defun tochemfig-cross-bond (molecule start end)
+  "Generate chemfig code for a MOLECULE;
+specify bonds that should be drawn on top of others they cross over.
+Give the START and the END atoms for each bond."
+  (interactive (list
+                (read-string "sEnter molecule: ")
+                (read-number "nEnter the start atom of the bond: ")
+                (read-number "nEnter the end atom of the bond: ")))
+  (insert (shell-command-to-string
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
+                    (list (cons "cross-bond" (format "%d-%d" start end)) )) " " molecule))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
