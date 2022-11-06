@@ -146,17 +146,6 @@ or average (with tochemfig-default-bond-scale=normalize) for bond lengths."
   :type 'boolean)
 
 ;; Doesn't make sense to create a default of this one
-;; (defcustom tochemfig-default-entry-atom nil
-;;  "Number of first atom to be rendered. Relevant only if generated code is to be used as sub-molecule"
-;;  :group 'tochemfig
-;;  :type 'number)
-
-;; (defcustom tochemfig-default-exit-atom nil
-;;  "Number of last atom to be rendered. Relevant only if generated code is to be used as sub-molecule"
-;;  :group 'tochemfig
-;;  :type 'number)
-
-;; Doesn't make sense to create a default of this one
 ;; Specify bonds that should be drawn on top
 ;; of others they cross over. Give the start
 ;; and the end atoms. Example for one bond:
@@ -188,10 +177,10 @@ XOPT is an optional argument. If given, it must be an alist."
           (tochemfig-arg-bond-scale (or (cdr (assoc "bond-scale" xOpt)) tochemfig-default-bond-scale))
           (tochemfig-arg-bond-stretch (or (cdr (assoc "bond-stretch" xOpt)) tochemfig-default-bond-stretch))
           (tochemfig-arg-wrap-chemfig (or (cdr (assoc "wrap-chemfig" xOpt)) tochemfig-default-wrap-chemfig))
-          (tochemfig-arg-submol-name (or (cdr (assoc "submol-name" xOpt)) nil))
-          (tochemfig-arg-entry-atom (or (cdr (assoc "entry-atom" xOpt)) nil))
-          (tochemfig-arg-exit-atom (or (cdr (assoc "exit-atom" xOpt)) nil))
-          (tochemfig-arg-cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) nil)))
+          (tochemfig-arg-submol-name (or (cdr (assoc "submol-name" xOpt)) ""))
+          (tochemfig-arg-entry-atom (or (cdr (assoc "entry-atom" xOpt)) ""))
+          (tochemfig-arg-exit-atom (or (cdr (assoc "exit-atom" xOpt)) ""))
+          (tochemfig-arg-cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) "")))
 
       ;; Build the command substring list;
       ;; Type-check the arguments on place;
@@ -224,15 +213,18 @@ XOPT is an optional argument. If given, it must be an alist."
       (when (not (equal tochemfig-arg-bond-stretch 1.0))
         (push (concat "--bond-stretch " (format "%s" tochemfig-arg-bond-stretch)) args))
       (when tochemfig-arg-wrap-chemfig (push "--wrap-chemfig" args))
-      (when (boundp 'tochemfig-arg-submol-name)
-        (push (concat "--submol-name" (format "%s" tochemfig-arg-submol-name)) args))
-      (when (boundp 'tochemfig-arg-entry-atom)
-        (push (concat "--entry-atom" (format "%d" tochemfig-arg-entry-atom)) args))
-      (when (boundp 'tochemfig-arg-exit-atom)
-        (push (concat "--exit-atom" (format "%d" tochemfig-arg-exit-atom)) args))
+      (when (not (string= "" tochemfig-arg-submol-name))
+        (push (concat "--submol-name " (format "%s" tochemfig-arg-submol-name)) args))
+      (when (not (string= "" tochemfig-arg-entry-atom))
+        (push (concat "--entry-atom " (format "%d" tochemfig-arg-entry-atom)) args))
+      (when (not (string= "" tochemfig-arg-exit-atom))
+        (push (concat "--exit-atom " (format "%d" tochemfig-arg-exit-atom)) args))
       ;; TODO Needs to go through a series of inputs, one for each bond;
-      (when (boundp 'tochemfig-arg-cross-bonds)
-        (push (concat "--submol-name" (format "%s" tochemfig-arg-cross-bonds)) args))
+      (when (not (string= "" tochemfig-arg-cross-bonds))
+        (push (concat "--submol-name " (format "%s" tochemfig-arg-cross-bonds)) args))
+
+      ;; debug function
+      (message (mapconcat #'identity args " "))
 
       ;; Convert list to string:
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
@@ -502,6 +494,26 @@ manually assembled structures or drawings."
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder '(("wrap-chemfig" . nil))) " " molecule))))
+
+;;;###autoload
+(defun tochemfig-partial-submol (molecule submol entryatom exitatom)
+  "Generate chemfig code for a MOLECULE and wrap a fragment of it as SUBMOL.
+The \\definesubmol macro defines a named shortcut for a molecule or fragment.
+This is useful if you want to integrate the generated code into larger,
+manually assembled structures or drawings.
+ENTRYATOM is the number of first atom to be rendered.
+EXITATOM is the number of last atom to be rendered."
+  (interactive (list
+                (read-string "sEnter molecule: ")
+                (read-string "sEnter submol name: ")
+                (read-string "nEnter entry atom: ")
+                (read-string "nEnter exit atom: ")))
+  (insert (shell-command-to-string
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
+                    (list (cons "submol-name" submol)
+                          (cons "entry-atom" entryatom)
+                          (cons "exit-atom" exitatom))) " " molecule))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
