@@ -15,7 +15,7 @@
 ;;
 ;;; Commentary:
 ;;; This package requires a working Python environment
-;;; with the `mol2chemfigPy3' package installed and accessible via shell.
+;;; with `mol2chemfig' or `mol2chemfigPy3' package installed.
 ;;; If you miss the package, install it with this command (through `pip'):
 ;;; $ pip install -U mol2chemfigPy3
 ;;
@@ -29,6 +29,12 @@
   "Manipulating molecules through LaTeX from Emacs."
   :prefix "tochemfig-"
   :group 'comm)
+
+(defcustom tochemfig-default-command "python -m mol2chemfigPy3"
+  "Command for calling mol2chemfig.
+Can be used the original mol2chemfig, the LUA client or mol2chemfigPy3."
+  :group 'tochemfig
+  :type 'string)
 
 (defcustom tochemfig-default-input 'file'
   "How to interpret the argument. With ’file’, mol2chemfig expects a filename.
@@ -171,87 +177,75 @@ or average (with tochemfig-default-bond-scale=normalize) for bond lengths."
 ;; --crossbond=4-8,12-13 (Default: None)
 ;; (setq chemfig-default-cross-bond '')
 
-(defun tochemfig-args-builder (&optional xOpt)
+(defun tochemfig--args-builder (&optional xOpt)
   "Build default arguments which will be passed to mol2chemfig.
 XOPT is an optional argument. If given, it must be an alist."
   (let ((args '()))
     ;; Read optional parameters, if given;
-    (let ((input (or (cdr (assoc "input" xOpt)) tochemfig-default-input))
-          (terse (or (cdr (assoc "terse" xOpt)) tochemfig-default-terse))
-          (strict (or (cdr (assoc "strict" xOpt)) tochemfig-default-strict))
-          (indent (or (cdr (assoc "indent" xOpt)) tochemfig-default-indent))
-          (recalculate-coordinates (or (cdr (assoc "recalculate-coordinates" xOpt)) tochemfig-default-recalculate-coordinates))
-          (angle (or (cdr (assoc "angle" xOpt)) tochemfig-default-angle))
-          (relative-angles (or (cdr (assoc "relative-angles" xOpt)) tochemfig-default-relative-angles))
-          (flip (or (cdr (assoc "flip" xOpt)) tochemfig-default-flip))
-          (flop (or (cdr (assoc "flop" xOpt)) tochemfig-default-flop))
-          (show-carbons (or (cdr (assoc "show-carbons" xOpt)) tochemfig-default-show-carbons))
-          (show-methyls (or (cdr (assoc "show-methyls" xOpt)) tochemfig-default-show-methyls))
-          (hydrogens (or (cdr (assoc "hydrogens" xOpt)) tochemfig-default-hydrogens))
-          (aromatic-circles (or (cdr (assoc "aromatic-circles" xOpt)) tochemfig-default-aromatic-circles))
-          (markers (or (cdr (assoc "markers" xOpt)) nil))
-          (fancy-bonds (or (cdr (assoc "hydrogens" xOpt)) tochemfig-default-fancy-bonds))
-          (atom-numbers (or (cdr (assoc "atom-numbers" xOpt)) tochemfig-default-atom-numbers))
-          (bond-scale (or (cdr (assoc "bond-scale" xOpt)) tochemfig-default-bond-scale))
-          (bond-stretch (or (cdr (assoc "bond-stretch" xOpt)) tochemfig-default-bond-stretch))
-          (wrap-chemfig (or (cdr (assoc "wrap-chemfig" xOpt)) tochemfig-default-wrap-chemfig))
-          (submol-name (or (cdr (assoc "submol-name" xOpt)) nil))
-          (entry-atom (or (cdr (assoc "entry-atom" xOpt)) nil))
-          (exit-atom (or (cdr (assoc "exit-atom" xOpt)) nil))
-          (cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) nil)))
+    (let ((tochemfig-arg-input (or (cdr (assoc "input" xOpt)) tochemfig-default-input))
+          (tochemfig-arg-terse (or (cdr (assoc "terse" xOpt)) tochemfig-default-terse))
+          (tochemfig-arg-strict (or (cdr (assoc "strict" xOpt)) tochemfig-default-strict))
+          (tochemfig-arg-indent (or (cdr (assoc "indent" xOpt)) tochemfig-default-indent))
+          (tochemfig-arg-recalculate-coordinates (or (cdr (assoc "recalculate-coordinates" xOpt)) tochemfig-default-recalculate-coordinates))
+          (tochemfig-arg-angle (or (cdr (assoc "angle" xOpt)) tochemfig-default-angle))
+          (tochemfig-arg-relative-angles (or (cdr (assoc "relative-angles" xOpt)) tochemfig-default-relative-angles))
+          (tochemfig-arg-flip (or (cdr (assoc "flip" xOpt)) tochemfig-default-flip))
+          (tochemfig-arg-flop (or (cdr (assoc "flop" xOpt)) tochemfig-default-flop))
+          (tochemfig-arg-show-carbons (or (cdr (assoc "show-carbons" xOpt)) tochemfig-default-show-carbons))
+          (tochemfig-arg-show-methyls (or (cdr (assoc "show-methyls" xOpt)) tochemfig-default-show-methyls))
+          (tochemfig-arg-hydrogens (or (cdr (assoc "hydrogens" xOpt)) tochemfig-default-hydrogens))
+          (tochemfig-arg-aromatic-circles (or (cdr (assoc "aromatic-circles" xOpt)) tochemfig-default-aromatic-circles))
+          (tochemfig-arg-markers (or (cdr (assoc "markers" xOpt)) nil))
+          (tochemfig-arg-fancy-bonds (or (cdr (assoc "fancy-bonds" xOpt)) tochemfig-default-fancy-bonds))
+          (tochemfig-arg-atom-numbers (or (cdr (assoc "atom-numbers" xOpt)) tochemfig-default-atom-numbers))
+          (tochemfig-arg-bond-scale (or (cdr (assoc "bond-scale" xOpt)) tochemfig-default-bond-scale))
+          (tochemfig-arg-bond-stretch (or (cdr (assoc "bond-stretch" xOpt)) tochemfig-default-bond-stretch))
+          (tochemfig-arg-wrap-chemfig (or (cdr (assoc "wrap-chemfig" xOpt)) tochemfig-default-wrap-chemfig))
+          (tochemfig-arg-submol-name (or (cdr (assoc "submol-name" xOpt)) nil))
+          (tochemfig-arg-entry-atom (or (cdr (assoc "entry-atom" xOpt)) nil))
+          (tochemfig-arg-exit-atom (or (cdr (assoc "exit-atom" xOpt)) nil))
+          (tochemfig-arg-cross-bonds (or (cdr (assoc "cross-bonds" xOpt)) nil)))
 
       ;; Build the command substring list;
       ;; Type-check the arguments on place;
-      ;;
-      ;; Remember:
-      ;; %s for strings;
-      ;; %d for integers;
-      ;; %f for floats;
-      ;; Other formatting specifications:
-      ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Formatting-Strings.html
-
-      ;; TODO manage potential errors from type checking!
-      (when (not (equal (format "%s" input) "file"))
-        (push (concat "--input " (format "%s" input)) args))
-      (when terse (push "--terse" args))
-      (when strict (push "--strict" args))
-      (when (not (equal indent 4))
-        (push (concat "--indent " (format "%d" indent)) args))
-      (when recalculate-coordinates (push "--recalculate-coordinates" args))
-      (when (not (equal angle 0.0))
-        (push (concat "--angle " (format "%f" angle)) args))
-      (when relative-angles (push "--relative-angles" args))
-      (when flip (push "--flip" args))
-      (when flop (push "--flop" args))
-      (when show-carbons (push "--show-carbons" args))
-      (when show-methyls (push "--show-methyls" args))
-      (let ((hstr (format "%s" hydrogens)))
-      (
-       (when (not (equal hstr "keep"))
-         (if (equal hstr "add") (push (concat "--hydrogens " hstr) args)
-           (if (equal hstr "delete") (push (concat "--hydrogens " hstr) args)
-             ;; TODO else tell user was a wrong input
-             ;; signal
-             ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Signaling-Errors.html
-             ;; https://emacs.stackexchange.com/questions/13705/rethrowing-an-error-in-emacs-lisp
-             ) ;; ./if delete
-           ) ;; ./if add
-         ) ;; ./when
-       ) ;; ./ body
-      ) ;; ./let
-      (when aromatic-circles (push "--aromatic-circles" args))
-      (when fancy-bonds (push "--fancy-bonds" args))
-      (when atom-numbers (push "--atom-numbers" args))
-      (when (not (equal (format "%s" bond-scale) "normalize"))
-        (push (concat "--bond-scale " (format "%s" bond-scale)) args))
-      (when (not (equal bond-stretch 1.0))
-        (push (concat "--bond-stretch " (format "%s" bond-stretch)) args))
-      (when wrap-chemfig (push "--wrap-chemfig" args))
-      (when submol-name (push (concat "--submol-name" (format "%s" submol-name) args)))
-      (when entry-atom (push (concat "--entry-atom" (format "%d" entry-atom) args)))
-      (when exit-atom (push (concat "--exit-atom" (format "%d" exit-atom) args)))
+      (when (not (equal (format "%s" tochemfig-arg-input) "file"))
+        (push (concat "--input " (format "%s" tochemfig-arg-input)) args))
+      (when tochemfig-arg-terse (push "--terse" args))
+      (when tochemfig-arg-strict (push "--strict" args))
+      (when (not (equal tochemfig-arg-indent 4))
+        (push (concat "--indent " (format "%d" tochemfig-arg-indent)) args))
+      (when tochemfig-arg-recalculate-coordinates (push "--recalculate-coordinates" args))
+      (when (not (equal tochemfig-arg-angle 0.0))
+        (push (concat "--angle " (format "%f" tochemfig-arg-angle)) args))
+      (when tochemfig-arg-relative-angles (push "--relative-angles" args))
+      (when tochemfig-arg-flip (push "--flip" args))
+      (when tochemfig-arg-flop (push "--flop" args))
+      (when tochemfig-arg-show-carbons (push "--show-carbons" args))
+      (when tochemfig-arg-show-methyls (push "--show-methyls" args))
+      (let ((hstr (format "%s" tochemfig-arg-hydrogens)))
+        (when (not (equal hstr "keep"))
+          (if (or (equal hstr "add") (equal hstr "delete"))
+              (push (concat "--hydrogens " hstr) args)
+            (error "Hydrogens can only be 'keep', 'add' or 'delete'"))))
+      (when tochemfig-arg-aromatic-circles (push "--aromatic-circles" args))
+      (when (boundp 'tochemfig-arg-markers)
+        (push (concat "--markers" (format "%s" tochemfig-arg-markers)) args))
+      (when tochemfig-arg-fancy-bonds (push "--fancy-bonds" args))
+      (when tochemfig-arg-atom-numbers (push "--atom-numbers" args))
+      (when (not (equal (format "%s" tochemfig-arg-bond-scale) "normalize"))
+        (push (concat "--bond-scale " (format "%s" tochemfig-arg-bond-scale)) args))
+      (when (not (equal tochemfig-arg-bond-stretch 1.0))
+        (push (concat "--bond-stretch " (format "%s" tochemfig-arg-bond-stretch)) args))
+      (when tochemfig-arg-wrap-chemfig (push "--wrap-chemfig" args))
+      (when (boundp 'tochemfig-arg-submol-name)
+        (push (concat "--submol-name" (format "%s" tochemfig-arg-submol-name)) args))
+      (when (boundp 'tochemfig-arg-entry-atom)
+        (push (concat "--entry-atom" (format "%d" tochemfig-arg-entry-atom)) args))
+      (when (boundp 'tochemfig-arg-exit-atom)
+        (push (concat "--exit-atom" (format "%d" tochemfig-arg-exit-atom)) args))
       ;; TODO Needs to go through a series of inputs, one for each bond;
-      ;; (when cross-bonds (push "--cross-bonds" args))
+      (when (boundp 'tochemfig-arg-cross-bonds)
+        (push (concat "--submol-name" (format "%s" tochemfig-arg-cross-bonds)) args))
 
       ;; Convert list to string:
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
@@ -264,7 +258,7 @@ XOPT is an optional argument. If given, it must be an alist."
   "Generate chemfig code for a MOLECULE using the default settings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 " (tochemfig-args-builder) " " molecule))))
+           (concat tochemfig-default-command " " (tochemfig--args-builder) " " molecule))))
 
 ;; The following one totally ignores defaults and directly inject custom flags
 
@@ -276,7 +270,7 @@ XOPT is an optional argument. If given, it must be an alist."
     (read-string "sEnter molecule: ")
     (read-string "sEnter custom arguments: ")))
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 " custom_args " " molecule))))
+           (concat tochemfig-default-command " " custom_args " " molecule))))
 
 ;; The following ones force a specific argument over the defaults leaving the rest untouched
 
@@ -286,8 +280,8 @@ XOPT is an optional argument. If given, it must be an alist."
 Obviously, you have to be online for this input mode to work."
   (interactive "sEnter molecule name for pubchem search: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("input" . "pubchem"))) " " identifier))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("input" . "pubchem"))) " " identifier))))
 
 ;;;###autoload
 (defun tochemfig-input-file (path)
@@ -296,48 +290,48 @@ The file must contain a molecule’s description in either molfile or SMILES,
 widely used file formats that can be exported from any chemical drawing program."
   (interactive "fEnter molecule name for pubchem search: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("input" . "file"))) " " path))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("input" . "file"))) " " path))))
 
 ;;;###autoload
 (defun tochemfig-input-direct (molecule)
   "Generate chemfig code for a MOLECULE from a verbatim string."
   (interactive "sEnter molecule as verbatim string: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("input" . "direct"))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("input" . "direct"))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-terse (molecule)
   "Generate chemfig code for a MOLECULE removing whitespaces and comments."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("terse" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("terse" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-verbose (molecule)
   "Generate chemfig code for a MOLECULE leaving whitespaces and comments."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("terse" . nil))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("terse" . nil))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-strict (molecule)
   "Generate chemfig code for a MOLECULE strictly abiding by structure validation."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("strict" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("strict" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-chill (molecule)
   "Generate chemfig code for a MOLECULE even if it fails structure validation."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("strict" . nil))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("strict" . nil))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-indent (molecule int)
@@ -349,8 +343,8 @@ Forced to be verbose, because indentation doesn't make sense otherwise."
     ;; TODO Check for an integer!
     (read-number "Enter an integer for indentation: ")))
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
                     (list (cons "indent" int) (cons "terse" nil))) " " molecule))))
 
 ;;;###autoload
@@ -359,8 +353,8 @@ Forced to be verbose, because indentation doesn't make sense otherwise."
 Existing coordinates are discarded and new ones are derived from structure."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("recalculate-coordinates" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("recalculate-coordinates" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-rotate (molecule angle flip flop)
@@ -374,8 +368,8 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
     (y-or-n-p "Flipping horizontally? ")
     (y-or-n-p "Flipping vertically?")))
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
                     (list
                      (cons "angle" angle)
                      (cons "flip" flip)
@@ -386,8 +380,8 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
   "Generate chemfig code for a MOLECULE and show element symbol for carbon atoms."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("show-carbons" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("show-carbons" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-show-methyls (molecule)
@@ -395,8 +389,8 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
 This is implied, if carbon atoms are already showed."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("show-methyls" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("show-methyls" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-add-hydrogens (molecule)
@@ -404,56 +398,56 @@ This is implied, if carbon atoms are already showed."
 This will also trigger calculation of new coordinates for the entire molecule."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("hydrogens" . "add"))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("hydrogens" . "add"))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-delete-hydrogens (molecule)
   "Generate chemfig code for a MOLECULE and delete explicit symbols for hydrogen."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("hydrogens" . "delete"))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("hydrogens" . "delete"))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-aromatic-circles (molecule)
   "Generate chemfig code for a MOLECULE and draw circles inside aromatic rings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("aromatic-circles" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("aromatic-circles" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-fancy-bonds (molecule)
   "Generate chemfig code for a MOLECULE drawing fancier double and triple bonds."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("fancy-bonds" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("fancy-bonds" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-vanilla-bonds (molecule)
   "Generate chemfig code for a MOLECULE drawing standard double and triple bonds."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("fancy-bonds" . nil))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("fancy-bonds" . nil))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-show-atom-numbers (molecule)
   "Generate chemfig code for a MOLECULE showing the molfile number of each atom."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("atom-numbers" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("atom-numbers" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-hide-atom-numbers (molecule)
   "Generate chemfig code for a MOLECULE hiding the molfile number of each atom."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("atom-numbers" . nil))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("atom-numbers" . nil))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-bond-scale (molecule factor)
@@ -462,8 +456,8 @@ This will also trigger calculation of new coordinates for the entire molecule."
                 (read-string "sEnter molecule: ")
                 (read-string "sEnter scaling factor: ")))
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
                     (list
                      (cons "bond-scale" "scale")
                      (cons "bond-stretch" factor))) " " molecule))))
@@ -475,8 +469,8 @@ This will also trigger calculation of new coordinates for the entire molecule."
                 (read-string "sEnter molecule: ")
                 (read-string "sEnter average length: ")))
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
                     (list
                      (cons "bond-scale" "normalize")
                      (cons "bond-stretch" average))) " " molecule))))
@@ -486,16 +480,16 @@ This will also trigger calculation of new coordinates for the entire molecule."
   "Generate chemfig code for a MOLECULE and wrap it into a \\chemfig{...} command."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("wrap-chemfig" . t))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("wrap-chemfig" . t))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-unwrap (molecule)
   "Generate chemfig code for a MOLECULE without wrapping it into any command."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
-           (concat "python -m mol2chemfigPy3 "
-                   (tochemfig-args-builder '(("wrap-chemfig" . nil))) " " molecule))))
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder '(("wrap-chemfig" . nil))) " " molecule))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here

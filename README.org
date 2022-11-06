@@ -41,12 +41,12 @@ The package is already functional: some function could be renamed soon.
 - [X] Scale the lengths of bonds
 - [X] Stretch the lengths of bonds
 - [X] Wrap the code in "\chemfig{...}" LaTeX command
-- [ ] Define submols
-- [ ] Specify first atom to be rendered in submols
-- [ ] Specify last atom to be rendered in submols
-- [ ] Specify bonds that should be drawn on top of others they cross over
+- [X] Define submols
+- [X] Specify first atom to be rendered in submols
+- [X] Specify last atom to be rendered in submols
+- [X] Specify bonds that should be drawn on top of others they cross over
 - [X] Generate chemfig code with customizable defaults
 - [X] Generate chemfig code with customized arguments (inject mol2chemfig flags in the command)
 - [X] Launch with customizable defaults while forcing a specific argument
 - [X] Support for =mol2chemfigPy3=
-- [ ] Support for =mol2chemfig= (the original Python 2 package)
+- [X] Support for =mol2chemfig= (the original Python 2 package)
