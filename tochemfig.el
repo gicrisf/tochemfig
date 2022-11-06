@@ -15,9 +15,8 @@
 ;;
 ;;; Commentary:
 ;;; This package requires a working Python environment
-;;; with `mol2chemfig' or `mol2chemfigPy3' package installed.
-;;; If you miss the package, install it with this command (through `pip'):
-;;; $ pip install -U mol2chemfigPy3
+;;; with `mol2chemfig' or `mol2chemfigPy3' package installed OR
+;;; you can use the `mol2chemfig' LUA web client.
 ;;
 ;;  Description
 ;;  Emacs interface to mol2chemfig. Generate chemfig code from mol or SMILES.
@@ -506,19 +505,35 @@ EXITATOM is the number of last atom to be rendered."
                           (cons "entry-atom" entryatom)
                           (cons "exit-atom" exitatom))) " " molecule))))
 
+(defun tochemfig--read-bond ()
+  "Pick a bond giving the start and the end atoms."
+  (let ((start (read-number "Enter the start atom of the bond: "))
+        (end (read-number "Enter the end atom of the bond: ")))
+    (format "%d-%d" start end)))
+
+(defun tochemfig--collect-bonds ()
+  "Collect a bunch of bonds."
+  (let ((bonds '())
+        (continue t))
+    ;; Repeat read-bond until the user stops it;
+    (while continue
+      (setq bonds (cons (tochemfig--read-bond) bonds))
+      (when (not (y-or-n-p "Should we add another bond to the list?"))
+        (setq continue nil)))
+    bonds))
+
 ;;;###autoload
-(defun tochemfig-cross-bond (molecule start end)
-  "Generate chemfig code for a MOLECULE;
-specify bonds that should be drawn on top of others they cross over.
-Give the START and the END atoms for each bond."
-  (interactive (list
-                (read-string "sEnter molecule: ")
-                (read-number "nEnter the start atom of the bond: ")
-                (read-number "nEnter the end atom of the bond: ")))
+(defun tochemfig-cross-bond (molecule)
+  "Generate chemfig code for a MOLECULE and specify special bonds to draw on top;
+those should be drawn on top of others they cross over."
+  (interactive "sEnter molecule: ")
+
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder
-                    (list (cons "cross-bond" (format "%d-%d" start end)) )) " " molecule))))
+                    (list (cons "cross-bond"
+                                (mapconcat #'identity (tochemfig--collect-bonds) ",")) ))
+                   " " molecule))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
