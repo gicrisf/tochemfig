@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.0.3
+;; Version: 0.1.0
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
@@ -209,12 +209,11 @@ XOPT is an optional argument. If given, it must be an alist."
         (push (concat "--entry-atom " (format "%d" tochemfig-arg-entry-atom)) args))
       (when (not (string= "" tochemfig-arg-exit-atom))
         (push (concat "--exit-atom " (format "%d" tochemfig-arg-exit-atom)) args))
-      ;; TODO Needs to go through a series of inputs, one for each bond;
       (when (not (string= "" tochemfig-arg-cross-bond))
         (push (concat "--cross-bond=" (format "%s" tochemfig-arg-cross-bond)) args))
 
       ;; debug function
-      (message (mapconcat #'identity args " "))
+      ;; (message (mapconcat #'identity args " "))
 
       ;; Convert list to string:
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
@@ -309,12 +308,12 @@ Forced to be verbose, because indentation doesn't make sense otherwise."
   (interactive
    (list
     (read-string "Enter molecule: ")
-    ;; TODO Check for an integer!
     (read-number "Enter an integer for indentation: ")))
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder
-                    (list (cons "indent" int) (cons "terse" nil))) " " molecule))))
+                    (list (cons "indent" int) (cons "terse" nil)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-recalculate-coordinates (molecule)
@@ -332,7 +331,6 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
   (interactive
    (list
     (read-string "Enter molecule: ")
-    ;; TODO leave blank to write 0.0!
     (read-number "Enter rotation angle (write 0.0 to leave as is): ")
     (y-or-n-p "Flipping horizontally? ")
     (y-or-n-p "Flipping vertically?")))
@@ -342,7 +340,8 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
                     (list
                      (cons "angle" angle)
                      (cons "flip" flip)
-                     (cons "flop" flop))) " " molecule))))
+                     (cons "flop" flop)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-show-carbons (molecule)
@@ -395,7 +394,8 @@ This will also trigger calculation of new coordinates for the entire molecule."
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder
-                    (list (cons "markers" markers))) " " molecule))))
+                    (list (cons "markers" markers)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-fancy-bonds (molecule)
@@ -440,7 +440,8 @@ This will also trigger calculation of new coordinates for the entire molecule."
                    (tochemfig--args-builder
                     (list
                      (cons "bond-scale" "scale")
-                     (cons "bond-stretch" factor))) " " molecule))))
+                     (cons "bond-stretch" factor)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-bond-normalize (molecule average)
@@ -453,7 +454,8 @@ This will also trigger calculation of new coordinates for the entire molecule."
                    (tochemfig--args-builder
                     (list
                      (cons "bond-scale" "normalize")
-                     (cons "bond-stretch" average))) " " molecule))))
+                     (cons "bond-stretch" average)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-wrap-chemfig (molecule)
@@ -475,7 +477,8 @@ manually assembled structures or drawings."
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder
-                    (list (cons "submol-name" submol))) " " molecule))))
+                    (list (cons "submol-name" submol)))
+                   " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-unwrap (molecule)
@@ -503,7 +506,8 @@ EXITATOM is the number of last atom to be rendered."
                    (tochemfig--args-builder
                     (list (cons "submol-name" submol)
                           (cons "entry-atom" entryatom)
-                          (cons "exit-atom" exitatom))) " " molecule))))
+                          (cons "exit-atom" exitatom)))
+                   " " molecule))))
 
 (defun tochemfig--read-bond ()
   "Pick a bond giving the start and the end atoms."
