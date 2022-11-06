@@ -121,13 +121,6 @@ Option ’keep’ does nothing."
   :group 'tochemfig
   :type 'boolean)
 
-;; Doesn't make sense to create a default of this one
-;; (defcustom tochemfig-default-markers nil
-;;  "Give each atom and each bond a unique marker that can be used for attaching electron movement arrows.
-;;  With value ’a’, atom 2 will be labeled @{a2}, and its bond to atom 5 @{a2-5}."
-;;  :group 'tochemfig
-;;  :type 'string)
-
 ;; When this option is set, charges and implicit hydrogens will not be shown.
 (defcustom tochemfig-default-atom-numbers nil
   "Show the molfile number of each atom next to it."
@@ -151,12 +144,6 @@ or average (with tochemfig-default-bond-scale=normalize) for bond lengths."
   "Wrap generated code into \\chemfig{...}."
   :group 'tochemfig
   :type 'boolean)
-
-;; Doesn't make sense to create a default of this one
-;; (defcustom tochemfig-default-submol-name nil
-;;  "If a name is given, wrap generated code into chemfig \definesubmol{name}{...} command"
-;;  :group 'tochemfig
-;;  :type 'string)
 
 ;; Doesn't make sense to create a default of this one
 ;; (defcustom tochemfig-default-entry-atom nil
@@ -418,6 +405,17 @@ This will also trigger calculation of new coordinates for the entire molecule."
                    (tochemfig--args-builder '(("aromatic-circles" . t))) " " molecule))))
 
 ;;;###autoload
+(defun tochemfig-markers (molecule markers)
+  "Generate chemfig code for a MOLECULE and add unique MARKERS to each atom/bond."
+  (interactive (list
+                (read-string "sEnter molecule: ")
+                (read-string "sEnter markers: ")))
+  (insert (shell-command-to-string
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
+                    (list (cons "markers" markers))) " " molecule))))
+
+;;;###autoload
 (defun tochemfig-fancy-bonds (molecule)
   "Generate chemfig code for a MOLECULE drawing fancier double and triple bonds."
   (interactive "sEnter molecule: ")
@@ -476,12 +474,26 @@ This will also trigger calculation of new coordinates for the entire molecule."
                      (cons "bond-stretch" average))) " " molecule))))
 
 ;;;###autoload
-(defun tochemfig-wrap (molecule)
+(defun tochemfig-wrap-chemfig (molecule)
   "Generate chemfig code for a MOLECULE and wrap it into a \\chemfig{...} command."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder '(("wrap-chemfig" . t))) " " molecule))))
+
+;;;###autoload
+(defun tochemfig-wrap-submol (molecule submol)
+  "Generate chemfig code for a MOLECULE and wrap it as SUBMOL.
+The \\definesubmol macro defines a named shortcut for a molecule or fragment.
+This is useful if you want to integrate the generated code into larger,
+manually assembled structures or drawings."
+  (interactive (list
+                (read-string "sEnter molecule: ")
+                (read-string "sEnter submol name: ")))
+  (insert (shell-command-to-string
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder
+                    (list (cons "submol-name" submol))) " " molecule))))
 
 ;;;###autoload
 (defun tochemfig-unwrap (molecule)
