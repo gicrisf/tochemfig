@@ -1,16 +1,17 @@
 #+title: tochemfig.el
 #+author: Giovanni Crisalfi
 
-/Manipulating molecules through LaTeX from Emacs/.
+/Manipulating molecules with Emacs/.
 
-* Intro
-=tochemfig= is an Emacs interface to the =mol2chemfig= python package.
-Generate chemfig code from mol or SMILES.
+=tochemfig= is an Emacs interface to =mol2chemfig= python package.
 
 * Requirements
-This package requires a working Python environment
-with the =mol2chemfigPy3= package installed and accessible via shell.
-If you miss the package, install it with this command (through =pip=):
+This package only requires access to =mol2chemfig= through the shell.
+This means you can set up a working Python 3 environment and launch =mol2chemfigPy3= or keep using the original =mol2chemfig= in Python 2.
+You could use the LUA web client too, if you are more comfortable with it, but of course that way you would depend on internet access.
+
+Most linux distros come with a working Python 3 version already installed.
+To keep things simple, you could install =mol2chemfigPy3= with this command:
 
 #+begin_src bash
 pip install -U mol2chemfigPy3
@@ -23,8 +24,8 @@ The package is already functional: some function could be renamed soon.
 
 * TODO Usage
 * Features
-- [X] Generate from mol or SMILES file
-- [X] Generate from pubchem
+- [X] Generate chemfig code from mol or SMILES file
+- [X] Generate chemfig code from pubchem
 - [X] Generate from verbatim string
 - [X] Generate abiding to Indigo's chemical validation
 - [X] Flipping horizontally or vertically the drawing
@@ -50,3 +51,4 @@ The package is already functional: some function could be renamed soon.
 - [X] Launch with customizable defaults while forcing a specific argument
 - [X] Support for =mol2chemfigPy3=
 - [X] Support for =mol2chemfig= (the original Python 2 package)
+- [X] Support for =mol2chemfig= LUA web client
