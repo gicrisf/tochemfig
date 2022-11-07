@@ -22,33 +22,85 @@ This package is under development, so it's not available on MELPA yet.
 If you really can't wait, you can install it through this git repo.
 The package is already functional: some function could be renamed soon.
 
-* TODO Usage
+On Doom Emacs, you could install directly from the Github repo:
+
+#+begin_src emacs-lisp :tangle packages.el :noweb yes
+(package! tochemfig :recipe (:host github :repo "gicrisf/tochemfig"))
+#+end_src
+
+On vanilla Emacs, you can do the same using =use-package= or =straight=.
+An example with =straight=:
+
+#+begin_src emacs-lisp
+(straight-use-package
+ '(tochemfig :type git :host github :repo "gicrisf/tochemfig"))
+#+end_src
+
+* Usage
+Simply reset the default command by specifying new defaults in your configuration file:
+
+#+begin_src emacs-lisp
+;; We can change the default simply resetting the default var.
+;; The default input expected is a mol file;
+(setq tochemfig-default-input 'direct')
+
+;; The default option provides absolute angles;
+(setq tochemfig-default-relative-angles t)
+
+;; This option improves the aesthetics of double and triple bonds;
+(setq tochemfig-default-fancy-bonds t)
+
+;; We can wrap the code in `\chemfig` latex command;
+(setq tochemfig-default-wrap-chemfig t)
+#+end_src
+
+Launching =tochemfig= (the main command) you ask to Emacs to follow exactly the defaults and you must specify only the molecule you want to draw. If you usually use files as sources, maybe you will prefer to leave =tochemfig-default-input= as 'file'.
+The other functions overwrite a specific argument over the default. Maybe sometimes you prefer throwing the SMILES of a molecule directly in the minibuffer, so, although your default is set to 'file', you can very easily by calling =tochemfig-input-direct=.
+This way, every other preference is leaved untouched (and so you can keep the fancy bonds you usually expect from your outputs).
+
+The defaults have impact on any function you launch except for =tochemfig-custom=.
+=tochemfig-custom= will ask you what flags you want to pass to the =mol2chemfig= command directly. This function allows a more immediate interface to the =mol2chemfig= command line, but it's less comfortable, so it's inteded to be used in particular cases.
+
+To have a complete view on all the features provided, install the package and launch =M-x tochemfig=.
+
 * Features
-- [X] Generate chemfig code from mol or SMILES file
-- [X] Generate chemfig code from pubchem
+- [X] *Generate chemfig code from mol or SMILES*
+- [X] *Generate chemfig code from files*
+- [X] *Generate chemfig code from pubchem*
 - [X] Generate from verbatim string
 - [X] Generate abiding to Indigo's chemical validation
 - [X] Flipping horizontally or vertically the drawing
-- [X] Generate extended or compact chemfig code
+- [X] Generate extended or *compact chemfig code*
 - [X] Rotate the drawing by a custom angle
-- [X] Recalculate coordinates on molfiles before drawing
-- [X] Generate chemfig code specifying relative angles instead of absolute ones
-- [X] Generate chemfig code showing carbons
+- [X] *Recalculate coordinates* on molfiles before drawing
+- [X] Generate chemfig code specifying *relative angles* instead of absolute ones
+- [X] Generate chemfig code *showing carbons*
 - [X] Generate chemfig code showing methyls
 - [X] Manipulate hydrogen on the given structure
 - [X] Draw circles instead of double bonds inside aromatic rings
-- [X] Teach chemfig how to draw fancier double and triple bonds
-- [X] Show the molfile number of each atom next to it
+- [X] Teach chemfig how to *draw fancier double and triple bonds*
+- [X] *Show the molfile number of each atom* next to it
 - [X] Scale the lengths of bonds
 - [X] Stretch the lengths of bonds
 - [X] Wrap the code in "\chemfig{...}" LaTeX command
-- [X] Define submols
+- [X] *Define submols*
 - [X] Specify first atom to be rendered in submols
 - [X] Specify last atom to be rendered in submols
 - [X] Specify bonds that should be drawn on top of others they cross over
-- [X] Generate chemfig code with customizable defaults
-- [X] Generate chemfig code with customized arguments (inject mol2chemfig flags in the command)
-- [X] Launch with customizable defaults while forcing a specific argument
+- [X] Generate chemfig code with *customizable defaults*
+- [X] Generate chemfig code with *customized arguments* (inject mol2chemfig flags in the command)
+- [X] Launch with customizable defaults while *forcing a specific argument*
 - [X] Support for =mol2chemfigPy3=
 - [X] Support for =mol2chemfig= (the original Python 2 package)
 - [X] Support for =mol2chemfig= LUA web client
+- [ ] Wrapper for *org mode* (export block as LaTeX).
+- [ ] Export submols as external =.tex= files
+
+* Donate
+Did you find this package useful?
+Why don't you help me keeping myself awake buying me a coffee?
+
+[[https://ko-fi.com/V7V425BFU][https://ko-fi.com/img/githubbutton_sm.svg]]
+
+* License
+Open sourced under the [[./LICENSE][MIT license]].
