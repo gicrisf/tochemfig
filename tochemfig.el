@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
@@ -177,7 +177,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
           (tochemfig-arg-entry-atom (or (cdr (assoc "entry-atom" xOpt)) ""))
           (tochemfig-arg-exit-atom (or (cdr (assoc "exit-atom" xOpt)) ""))
           (tochemfig-arg-cross-bond (or (cdr (assoc "cross-bond" xOpt)) ""))
-          ;; TODO output support
           (tochemfig-arg-output (or (cdr (assoc "output" xOpt)) "")))
 
       ;; Add optional post-molecule bash commands
@@ -228,7 +227,7 @@ You must give MOLECULE source. XOPT contains optional arguments."
         (push (concat "--cross-bond=" (format "%s" tochemfig-arg-cross-bond)) args))
 
       ;; debug function
-      (message (mapconcat #'identity args " "))
+      ;; (message (mapconcat #'identity args " "))
 
       ;; Convert list to string:
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
@@ -243,8 +242,8 @@ You must give MOLECULE source. XOPT contains optional arguments."
   (insert (shell-command-to-string
            (concat tochemfig-default-command " " (tochemfig--args-builder molecule)))))
 
-;; The following one totally ignores defaults and directly inject custom flags
-
+;; TODO make "tochemfig-custom" the most complex fun and name this "tochemfig-raw";
+;; The following one totally ignores defaults and directly inject custom flags;
 ;;;###autoload
 (defun tochemfig-custom (molecule custom_args)
   "Generate chemfig code for a MOLECULE specifying all the needed CUSTOM_ARGS."
@@ -271,10 +270,36 @@ Obviously, you have to be online for this input mode to work."
   "Generate chemfig code for a molecule from its file's PATH.
 The file must contain a molecule’s description in either molfile or SMILES,
 widely used file formats that can be exported from any chemical drawing program."
-  (interactive "fEnter molecule name for pubchem search: ")
+  (interactive "fEnter molecule location: ")
   (insert (shell-command-to-string
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder path '(("input" . "file")))))))
+
+;;;###autoload
+(defun tochemfig-input-direct-output-file (molecule path)
+  "Generate chemfig code for a MOLECULE;
+use output redirection to save it in a file, of which you must give the PATH."
+  (interactive (list
+    (read-string "sEnter molecule as verbatim string: ")
+    (read-file-name "fEnter output location: ")))
+  (shell-command-to-string
+   (concat tochemfig-default-command " "
+           (tochemfig--args-builder molecule (list
+                                              (cons "input" "direct")
+                                              (cons "output" path))))))
+
+;;;###autoload
+(defun tochemfig-input-file-output-file (inpath outpath)
+  "Generate chemfig code for a molecule from a file placed in INPATH;
+use output redirection to save it in a file, of which you must give the OUTPATH."
+  (interactive (list
+    (read-file-name "fEnter molecule location: ")
+    (read-file-name "fEnter output location: ")))
+  (shell-command-to-string
+   (concat tochemfig-default-command " "
+           (tochemfig--args-builder inpath (list
+                                              (cons "input" "file")
+                                              (cons "output" outpath))))))
 
 ;;;###autoload
 (defun tochemfig-input-direct (molecule)

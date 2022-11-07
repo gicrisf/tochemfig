@@ -1,11 +1,20 @@
 #+title: tochemfig.el
 #+author: Giovanni Crisalfi
 
-/Manipulating molecules with Emacs/.
+# /Manipulating molecules with Emacs/.
 
-=tochemfig= is an Emacs interface to =mol2chemfig= python package.
+=tochemfig= is an Emacs interface to =mol2chemfig=.
 
 * Requirements
+From =mol2chemfig= documentation's abstract:
+
+#+begin_quote
+=mol2chemfig= is a Python program that generates TeX graphics of chemical structures provided in molfile or SMILES format.
+Its output is written in the syntax of the chemfig package, which in turn is based on TiKZ.
+#+end_quote
+
+Thus, both LaTeX/TiKZ and Python/mol2chemfig are required in order to compile =tochemfig='s output.
+
 This package only requires access to =mol2chemfig= through the shell.
 This means you can set up a working Python 3 environment and launch =mol2chemfigPy3= or keep using the original =mol2chemfig= in Python 2.
 You could use the LUA web client too, if you are more comfortable with it, but of course that way you would depend on internet access.
@@ -16,6 +25,70 @@ To keep things simple, you could install =mol2chemfigPy3= with this command:
 #+begin_src bash
 pip install -U mol2chemfigPy3
 #+end_src
+
+* Quickstart
+The following is a SMILES representation of the caffeine:
+
+#+begin_src
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+#+end_src
+
+You can turn this string into chemfig's code by running =M-x chemfig-input-direct=.
+# Gif
+
+The minibuffer will request an input: copy-paste the SMILES, press =RET= and Emacs will do the magic, inserting the final result right into your buffer.
+
+#+begin_export latex
+\chemfig{
+            % 1
+      -[:42]N% 2
+      -[:96]% 3
+     =_[:24]N% 4
+     -[:312]% 5
+    =_[:240]% 6
+               (
+         -[:168]\phantom{N}% -> 2
+               )
+     -[:300]% 7
+               (
+         =[:240]O% 8
+               )
+           -N% 9
+               (
+         -[:300]% 14
+               )
+      -[:60]% 10
+               (
+               =O% 11
+               )
+     -[:120]N% 12
+               (
+         -[:180]% -> 5
+               )
+      -[:60]% 13
+}
+#+end_export
+
+If we export the LaTeX document as a PDF, we get the following result
+
+#+DOWNLOADED: screenshot @ 2022-11-08 00:39:41
+#+CAPTION: Caffeine rendered by LaTeX/TiKZ
+[[file:Quickstart/2022-11-08_00-39-41_screenshot.png]]
+
+
+which is fine, but maybe we're used to see the xanthines with a slight rotation, with the imidazole ring on the right and parallel to the ground.
+
+#+DOWNLOADED: screenshot @ 2022-11-08 00:50:01
+#+Caption: Caffeine rendered by LaTeX/TiKZ, flipped and rotated
+[[file:Quickstart/2022-11-08_00-50-01_screenshot.png]]
+
+To obtain this result, we can rotate the molecule by an angle of -30° and flip it horizontally, all with a single act: running =M-X chemfig-rotate= on the same input (as long as the "direct" input is set as default).
+
+#+begin_src emacs-lisp
+(setq tochemfig-default-input 'direct')
+#+end_src
+
+If you're not familiar with changing the default variables in your config file, read the usage section of this file.
 
 * Installation
 This package is under development, so it's not available on MELPA yet.
@@ -93,8 +166,34 @@ To have a complete view on all the features provided, install the package and la
 - [X] Support for =mol2chemfigPy3=
 - [X] Support for =mol2chemfig= (the original Python 2 package)
 - [X] Support for =mol2chemfig= LUA web client
-- [ ] Wrapper for *org mode* (export block as LaTeX).
-- [ ] Export submols as external =.tex= files
+- [X] Export submols as external =.tex= files
+
+# [ ] Wrapper for *org mode* (export block as LaTeX).
+# In questa libreria devo limitarmi SOLO a creare un'interfaccia per LaTeX
+# E quindi ricalcare SOLO le funzioni previste da mol2chemfig
+# [ ] Add a drawer for collecting metadata about the generated molecule
+# This could give me the opportunity to "re-render" the same molecule on place
+# Ma il drawer è una prerogativa di Org mode!
+# Meglio inserire queste funzioni in una libreria a parte
+# Potrebbe chiamarsi chemorg; chemutils;
+# (vedi wikinforg for wikinfo, anche per come ha implementato il drawer)
+# The drawer should collect:
+# - The name of the molecule (if given)
+# - The name of the file (if it's from file)
+# - A list of flag
+# This way I could edit the chemfig code, then re-render with other options
+# Per esempio, potrei scrivere la versione coi carbonio espliciti (più leggibile)
+# Alterare le funzioni che mi interessano, poi ri-renderizzare con carboni impliciti
+# Can I convert chemfig to SMILES?
+# L'ideale sarebbe produrre sul posto l'immagine
+# Sia per la maggiore integrazione in org-mode e quindi più facile esportazione in:
+# - HTML
+# - ODT (ecc.)
+# Sia perché così potrei visualizzare il risultato delle modifiche in tempi ridotti
+# libchemfig potrebbe collezionare molecole
+# Ma a che pro, quando c'è pubchem? Poi perché collezionarle in chemfig?
+# Tanto vale collezionarle in SMILES, no?
+# Eh, ma potrei conservarle come submols già utilizzabili, proprio importare le submols
 
 * Donate
 Did you find this package useful?
