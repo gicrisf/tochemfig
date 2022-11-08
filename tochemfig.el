@@ -20,6 +20,9 @@
 ;;
 ;;  Description
 ;;  Emacs interface to mol2chemfig. Generate chemfig code from mol or SMILES.
+;;  From mol2chemfig documentation’s abstract:
+;;  "mol2chemfig is a Python program that generates TeX graphics of chemical structures provided in molfile or SMILES format.
+;;  Its output is written in the syntax of the chemfig package, which in turn is based on TiKZ."
 ;;
 ;;; Code:
 
@@ -31,9 +34,9 @@
 
 ;; Edit this command as you prefer;
 ;; Write `python - m mol2chemfig' if you have installed the local version of mol2chemfig;
-;; Write `python -m mol2chemfigPy3' if you installed the Python3 version;
-;; You could avoid the `python -m ' substring by adding mol2chemfig on your PATH;
-;; If you want to use the web client version, you must write mol2chemfig.lua.
+;; Write 'python -m mol2chemfigPy3' if you installed the Python3 version;
+;; You could avoid the `python -m ' substring by adding `mol2chemfig` on your PATH;
+;; To use the web client version, you should use 'mol2chemfig.lua' as command.
 (defcustom tochemfig-default-command "python -m mol2chemfigPy3"
   "Command for calling mol2chemfig.
 Can be used the original mol2chemfig, the LUA client or mol2chemfigPy3."
@@ -276,6 +279,14 @@ widely used file formats that can be exported from any chemical drawing program.
                    (tochemfig--args-builder path '(("input" . "file")))))))
 
 ;;;###autoload
+(defun tochemfig-input-direct (molecule)
+  "Generate chemfig code for a MOLECULE from a verbatim string."
+  (interactive "sEnter molecule as verbatim string: ")
+  (insert (shell-command-to-string
+           (concat tochemfig-default-command " "
+                   (tochemfig--args-builder molecule '(("input" . "direct")))))))
+
+;;;###autoload
 (defun tochemfig-input-direct-output-file (molecule path)
   "Generate chemfig code for a MOLECULE;
 use output redirection to save it in a file, of which you must give the PATH."
@@ -300,14 +311,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
            (tochemfig--args-builder inpath (list
                                               (cons "input" "file")
                                               (cons "output" outpath))))))
-
-;;;###autoload
-(defun tochemfig-input-direct (molecule)
-  "Generate chemfig code for a MOLECULE from a verbatim string."
-  (interactive "sEnter molecule as verbatim string: ")
-  (insert (shell-command-to-string
-           (concat tochemfig-default-command " "
-                   (tochemfig--args-builder molecule '(("input" . "direct")))))))
 
 ;;;###autoload
 (defun tochemfig-terse (molecule)
@@ -570,6 +573,149 @@ those should be drawn on top of others they cross over."
                    (tochemfig--args-builder molecule
                     (list (cons "cross-bond"
                                 (mapconcat #'identity (tochemfig--collect-bonds) ",")) ))))))
+
+;; Return "(default)" tagged string
+;; Equivalent to:
+;; ```
+;; (choices (list (format "file%s"
+;;                                 (if (equal tochemfig-default-input "file") " (default)" ""))
+;;                         (format "direct%s"
+;;                                 (if (equal tochemfig-default-input "direct") " (default)" ""))
+;;                         (format "pubchem%s"
+;;                                 (if (equal tochemfig-default-input "pubchem") " (default)" ""))
+;;                         )  ;; choices list
+;;                   )
+;; ```
+
+;; TODO Integrare questa funzione nell'arricchitore di stringhe
+(defun tochemfig--highlight-default (arg)
+  (let ((eventuallytagged (concat arg (format "%s"
+                                 (if (equal tochemfig-default-input arg) " (default)" "")))))
+    eventuallytagged)
+  )
+
+;; TODO for loop
+;; for passing the variable only when selected, not the entire string
+(defun tochemfig--wizard-input ()
+  ;; Voglio partire dalla lista di opzioni
+  ;; Passare ad una funzione che genera una lista di cons
+  ;; Questa mi fornisce delle coppie di significanti e significati
+  ;; Il significante può essere una stringa arricchita
+  ;; Il significato è il valore che deve essere passato al comando
+  ;; Nel momento in cui scelgo un significante, questo mi torna indietro
+  ;; E la funzione mi restituisce il corrispettivo significato
+  ;; In questo modo il significato verrà usato come argomento
+  ;; Arbitrariamente sceglierò di scrivere il significato come car e significante come cdr
+  ;; L'output sarà così:
+  ;; ("file" . "file (default)")
+  ;; ("direct" . "direct")
+  ;; ("pubchem" . "pubchem")
+  (let* ((options '("file" "direct" "pubchem"))
+         (choices (mapcar #'(lambda (x) (tochemfig--highlight-default x)) options))
+        ) ;; let head
+    (message "%s" (completing-read "Select what argument you wish to edit: " choices ))
+    ) ;; let
+  ) ;; defun
+
+(defun tochemfig--wizard-arg-selector (selections)
+  "Show a list of arguments, while keeping the current SELECTIONS on the side."
+  ;; Store data in cons like this one
+  ;; ("input (selected: direct)" . "input")
+  (let* ((args (list (cons "input"
+                           (or (cdr (assoc "input" selections))
+                               tochemfig-default-input))
+                     (cons "terse"
+                           (or (cdr (assoc "terse" selections))
+                               tochemfig-default-terse))
+                     (cons "strict"
+                           (or (cdr (assoc "strict" selections))
+                               tochemfig-default-strict))
+                     (cons "indent"
+                           (or (cdr (assoc "indent" selections))
+                               tochemfig-default-indent))
+                     (cons "recalculate-coordinates"
+                           (or (cdr (assoc "recalculate-coordinates" selections))
+                               tochemfig-default-recalculate-coordinates))
+                     (cons "angle"
+                           (or (cdr (assoc "angle" selections))
+                               tochemfig-default-angle))
+                     (cons "relative-angles"
+                           (or (cdr (assoc "relative-angles" selections))
+                               tochemfig-default-relative-angles))
+                     (cons "flip"
+                           (or (cdr (assoc "flip" selections))
+                               tochemfig-default-flip))
+                     (cons "flop"
+                           (or (cdr (assoc "flop" selections))
+                               tochemfig-default-flop))
+                     (cons "show-carbons"
+                           (or (cdr (assoc "show-carbons" selections))
+                               tochemfig-default-show-carbons))
+                     (cons "show-methyls"
+                           (or (cdr (assoc "show-methyls" selections))
+                               tochemfig-default-show-methyls))
+                     (cons "hydrogens"
+                           (or (cdr (assoc "hydrogens" selections))
+                               tochemfig-default-hydrogens))
+                     (cons "aromatic-circles"
+                           (or (cdr (assoc "aromatic-circles" selections))
+                               tochemfig-default-aromatic-circles))
+                     (cons "markers"
+                           (or (cdr (assoc "markers" selections)) ""))
+                     (cons "fancy-bonds"
+                           (or (cdr (assoc "fancy-bonds" selections))
+                               tochemfig-default-fancy-bonds))
+                     (cons "atom-numbers"
+                           (or (cdr (assoc "atom-numbers" selections))
+                               tochemfig-default-atom-numbers))
+                     (cons "bond-scale"
+                           (or (cdr (assoc "bond-scale" selections))
+                               tochemfig-default-bond-scale))
+                     (cons "bond-stretch"
+                           (or (cdr (assoc "bond-stretch" selections))
+                               tochemfig-default-bond-stretch))
+                     (cons "wrap-chemfig"
+                           (or (cdr (assoc "wrap-chemfig" selections))
+                               tochemfig-default-wrap-chemfig))
+                     (cons "submol-name"
+                           (or (cdr (assoc "submol-name" selections)) ""))
+                     (cons "entry-atom"
+                           (or (cdr (assoc "entry-atom" selections)) ""))
+                     (cons "exit-atom"
+                           (or (cdr (assoc "exit-atom" selections)) ""))
+                     (cons "cross-bond"
+                           (or (cdr (assoc "cross-bond" selections)) ""))
+                     (cons  "output"
+                            (or (cdr (assoc "output" selections)) ""))))
+         (choices
+          (mapcar #'(lambda (arg)
+                  (cons (format "%s (selected: %s)" (car arg) (cdr arg)) (car arg))) args))
+         (choice
+          (completing-read "Select what argument you wish to edit: "
+                           (mapcar #'(lambda (el) (car el)) choices) )))
+
+    ;; print choices for debug
+    ;; (let ((strargs (mapconcat #'(lambda (arg) (concat (car arg) " - " (cdr arg))) choices " "))) strargs)
+
+    (cdr (assoc choice choices))))
+
+;;;###autoload
+(defun tochemfig-wizard (molecule)
+  (interactive "sEnter molecule: ")
+  (let ((wizargs '())
+        (continue t))
+    (while continue
+      (let ((tochange (tochemfig--wizard-arg-selector wizargs)))
+        ;; Now you should change the value of the argument and collect it in wizargs;
+        ;; (push () wizargs)
+        (message tochange))
+
+      ;; stop the loop
+      (when (not (y-or-n-p "Wanna edit another argument? "))
+        (setq continue nil)
+        ) ;; ./ when n
+      ) ;; ./continue
+    )) ;; ./let ./defun
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
