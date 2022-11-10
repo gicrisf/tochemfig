@@ -236,21 +236,13 @@ You must give MOLECULE source. XOPT contains optional arguments."
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
       (let ((strargs (mapconcat #'identity args " "))) strargs))))
 
-(defun tochemfig--wizard-arg-selector (items)
+;; Store data in cons like this:
+;; ("input (selected: direct)" . "input")
+(defun tochemfig--custom-arg-selector (items)
   "Show a list of arguments, while keeping the current ITEMS on the side."
-  ;; Store data in cons like this:
-  ;; ("input (selected: direct)" . "input")
-  ;;
-  ;; Debug test
-  ;; (when (assoc "terse" items) (message (cdr (assoc "terse" items))))
-  ;; Debug test
-  ;; (let ((wiz (mapconcat #'identity items " "))) wiz)
-  ;;
-  ;; ... So, I know for sure now that the data are optimally passed in the loop;
-  ;; Now we have to extract the data;
   (let* ((args (list (cons "input" (if (assoc "input" items)
                                        (cdr (assoc "input" items)) tochemfig-default-input))
-                     ;; TODO make a function out of this one; the code is too redundant.
+                     ;; TODO make a function out of this pattern; hate to see this kind of redundancy.
                      (cons "terse" (if (assoc "terse" items)
                                        (if (equal (cdr (assoc "terse" items)) t) "t" "nil")
                                tochemfig-default-terse))
@@ -298,7 +290,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
                      (cons "wrap-chemfig" (if (assoc "wrap-chemfig" items)
                                         (if (equal (cdr (assoc "wrap-chemfig" items)) t) "t" "nil")
                                       tochemfig-default-wrap-chemfig))
-                     ;; TODO custom ones
                      (cons "submol-name" (or (cdr (assoc "submol-name" items)) ""))
                      (cons "entry-atom" (or (cdr (assoc "entry-atom" items)) ""))
                      (cons "exit-atom" (or (cdr (assoc "exit-atom" items)) ""))
@@ -325,7 +316,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
   (insert (shell-command-to-string
            (concat tochemfig-default-command " " (tochemfig--args-builder molecule)))))
 
-;; TODO make "tochemfig-custom" the most complex fun and name this "tochemfig-raw";
 ;; The following one totally ignores defaults and directly inject custom flags;
 ;;;###autoload
 (defun tochemfig-custom-raw (molecule custom_args)
@@ -655,82 +645,61 @@ those should be drawn on top of others they cross over."
                                 (mapconcat #'identity (tochemfig--collect-bonds) ",")) ))))))
 
 ;;;###autoload
-(defun tochemfig-wizard ()
+(defun tochemfig-custom ()
+  "Collect user's preferences and print the corresponding chemfig code."
   (interactive)
   (let ((wizargs '())
-        (input tochemfig-default-input) ;; var here just for easiness of use;
+        (input tochemfig-default-input) ;; here just for easiness;
         (continue t))
     (while continue
-      (let ((selected (tochemfig--wizard-arg-selector wizargs)))
-        ;; Now you should change the value of the argument and collect it in wizargs;
-        ;; You can pass to the function a string with the value you're about to change
-        ;; Se l'argomento richiede una stringa tra varie opzioni, proponi custom
-        ;; Se l'argomento richiede un numero, vai di conseguenza ecc.
-
-        ;; If the selected item want a bool...
+      (let ((selected (tochemfig--custom-arg-selector wizargs)))
+        ;; Now you should change the value of some arguments and collect them in wizargs;
         (if (member selected '("terse" "strict" "recalculate-coordinates" "relative-angles"
                                "flip" "flop" "show-carbons" "show-methyls" "fancy-bonds"
                                "aromatic-circles" "atom-numbers" "wrap-chemfig"))
-            ;; Else if
             (if (equal (completing-read "Activating this one? " '("true" "false")) "false")
                 (push (cons selected nil) wizargs)
               (push (cons selected t) wizargs))
-          ;; Else if
           (if (equal selected "input")
               (let ((inpOpts '("file" "direct" "pubchem")))
                 ;; This is a special assign, just to make it simpler to retrieve this;
                 (setq input (completing-read "Select input mode: " inpOpts))
                 (push (cons selected input) wizargs))
-            ;; Else if
             (if (equal selected "indent")
                 (push (cons selected (read-number "Enter an integer for indentation: ")) wizargs)
-              ;; Else if
               (if (equal selected "angle")
                   (push (cons selected (read-number "Enter rotation grades : ")) wizargs)
-                ;; Else if
                 (if (equal selected "hydrogens")
                     (let ((hydroOpts '("add" "delete" "keep")))
                       (push (cons selected (completing-read "Adding or deleting hydrogens? " hydroOpts)) wizargs))
-                  ;; Else if
                   (if (equal selected "markers")
                       (push (cons selected (read-string "Enter markers: ")) wizargs)
-                    ;; Else if
                     (if (equal selected "bond-scale")
                         (let ((inpOpts '("scale" "normalize")))
                           (push (cons selected (completing-read "Scale or normalize bonds " inpOpts)) wizargs))
-                      ;; Else if
                       (if (equal selected "bond-stretch")
                           (push (cons selected (read-number "Enter length factor : ")) wizargs)
-                        ;; Else if
                         (if (equal selected "submol-name")
                             (push (cons selected (read-string "Enter markers: ")) wizargs)
-                          ;; Else if
                           (if (equal selected "entry-atom")
                               (push (cons selected (read-number "Entry atom : ")) wizargs)
-                            ;; Else if
                             (if (equal selected "exit-atom")
                                 (push (cons selected (read-number "Exit atom : ")) wizargs)
-                              ;; Else if
-                              ;; TODO support "cross-bondS", plural
                               (if (equal selected "cross-bond")
-                                  (push (cons selected (tochemfig--read-bond)) wizargs)
-                                ;; Else if
+                                  ;; TODO solve bug stringp requested
+                                  (push (cons selected (tochemfig--collect-bonds)) wizargs)
                                 (if (equal selected "output")
                                     (push (cons selected (read-file-name "fEnter location: ")) wizargs)
-                                  ;; Else if
                                   (message "nessuno"))))))))))))))
 
-        ;; stop the loop
-        (if (y-or-n-p "Wanna edit another argument? ")
-            (message "well, to the next argument, then.")
-            (setq continue nil))))
+        ;; Stop the loop;
+        (when (not (y-or-n-p "Wish to edit another argument? "))
+          (setq continue nil))))
 
-    ;; get the molecule according to input
+    ;; Get the molecule input and insert the result;
     (let ((molecule (if (equal input "file")
                         (read-file-name "Enter molecule location: ")
                       (read-string "Enter molecule: "))))
-
-      ;; return the actual string
       (insert (shell-command-to-string
                (concat tochemfig-default-command " "
                        (tochemfig--args-builder molecule wizargs)))))))

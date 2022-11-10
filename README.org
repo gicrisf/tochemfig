@@ -167,7 +167,7 @@ To have a complete view on all the features provided, install the package and la
 - [X] Support for =mol2chemfig= (the original Python 2 package)
 - [X] Support for =mol2chemfig= LUA web client
 - [X] Export submols as external =.tex= files
-- [ ] *a WIZARD*
+- [X] *Aided, step-by-step function to customize the command*
 
 # [ ] Wrapper for *org mode* (export block as LaTeX).
 # In questa libreria devo limitarmi SOLO a creare un'interfaccia per LaTeX
