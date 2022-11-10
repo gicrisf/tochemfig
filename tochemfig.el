@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
@@ -236,10 +236,90 @@ You must give MOLECULE source. XOPT contains optional arguments."
       ;; http://xahlee.info/emacs/emacs/elisp_list.html
       (let ((strargs (mapconcat #'identity args " "))) strargs))))
 
+(defun tochemfig--wizard-arg-selector (items)
+  "Show a list of arguments, while keeping the current ITEMS on the side."
+  ;; Store data in cons like this:
+  ;; ("input (selected: direct)" . "input")
+  ;;
+  ;; Debug test
+  ;; (when (assoc "terse" items) (message (cdr (assoc "terse" items))))
+  ;; Debug test
+  ;; (let ((wiz (mapconcat #'identity items " "))) wiz)
+  ;;
+  ;; ... So, I know for sure now that the data are optimally passed in the loop;
+  ;; Now we have to extract the data;
+  (let* ((args (list (cons "input" (if (assoc "input" items)
+                                       (cdr (assoc "input" items)) tochemfig-default-input))
+                     ;; TODO make a function out of this one; the code is too redundant.
+                     (cons "terse" (if (assoc "terse" items)
+                                       (if (equal (cdr (assoc "terse" items)) t) "t" "nil")
+                               tochemfig-default-terse))
+                     (cons "strict" (if (assoc "strict" items)
+                                       (if (equal (cdr (assoc "strict" items)) t) "t" "nil")
+                               tochemfig-default-strict))
+                     (cons "indent" (or (cdr (assoc "indent" items))
+                               tochemfig-default-indent))
+                     (cons "recalculate-coordinates" (if (assoc "recalculate-coordinates" items)
+                                       (if (equal (cdr (assoc "recalculate-coordinates" items)) t) "t" "nil")
+                               tochemfig-default-recalculate-coordinates))
+                     (cons "angle" (or (cdr (assoc "angle" items))
+                               tochemfig-default-angle))
+                     (cons "relative-angles" (if (assoc "relative-angles" items)
+                                                 (if (equal (cdr (assoc "relative-angles" items)) t) "t" "nil")
+                                               tochemfig-default-relative-angles))
+                     (cons "flip" (if (assoc "flip" items)
+                                        (if (equal (cdr (assoc "flip" items)) t) "t" "nil")
+                                      tochemfig-default-flip))
+                     (cons "flop" (if (assoc "flop" items)
+                                        (if (equal (cdr (assoc "flop" items)) t) "t" "nil")
+                                      tochemfig-default-flop))
+                     (cons "show-carbons" (if (assoc "show-carbons" items)
+                                        (if (equal (cdr (assoc "show-carbons" items)) t) "t" "nil")
+                                      tochemfig-default-show-carbons))
+                     (cons "show-methyls" (if (assoc "show-methyls" items)
+                                        (if (equal (cdr (assoc "show-methyls" items)) t) "t" "nil")
+                                      tochemfig-default-show-methyls))
+                     (cons "hydrogens" (or (cdr (assoc "hydrogens" items))
+                               tochemfig-default-hydrogens))
+                     (cons "aromatic-circles" (if (assoc "aromatic-circles" items)
+                                        (if (equal (cdr (assoc "aromatic-circles" items)) t) "t" "nil")
+                                      tochemfig-default-aromatic-circles))
+                     (cons "markers" (or (cdr (assoc "markers" items)) ""))
+                     (cons "fancy-bonds" (if (assoc "fancy-bonds" items)
+                                        (if (equal (cdr (assoc "fancy-bonds" items)) t) "t" "nil")
+                                      tochemfig-default-fancy-bonds))
+                     (cons "atom-numbers" (if (assoc "atom-numbers" items)
+                                        (if (equal (cdr (assoc "atom-numbers" items)) t) "t" "nil")
+                                      tochemfig-default-atom-numbers))
+                     (cons "bond-scale" (or (cdr (assoc "bond-scale" items))
+                               tochemfig-default-bond-scale))
+                     (cons "bond-stretch" (or (cdr (assoc "bond-stretch" items))
+                               tochemfig-default-bond-stretch))
+                     (cons "wrap-chemfig" (if (assoc "wrap-chemfig" items)
+                                        (if (equal (cdr (assoc "wrap-chemfig" items)) t) "t" "nil")
+                                      tochemfig-default-wrap-chemfig))
+                     ;; TODO custom ones
+                     (cons "submol-name" (or (cdr (assoc "submol-name" items)) ""))
+                     (cons "entry-atom" (or (cdr (assoc "entry-atom" items)) ""))
+                     (cons "exit-atom" (or (cdr (assoc "exit-atom" items)) ""))
+                     (cons "cross-bond" (or (cdr (assoc "cross-bond" items)) ""))
+                     (cons  "output" (or (cdr (assoc "output" items)) ""))))
+         (choices
+          (mapcar #'(lambda (arg)
+                  (cons (format "%s (selected: %s)" (car arg) (cdr arg)) (car arg))) args))
+         (choice
+          (completing-read "Select what argument you wish to edit: "
+                           (mapcar #'(lambda (el) (car el)) choices) )))
+
+    ;; print choices for debug
+    ;; (let ((strargs (mapconcat #'(lambda (arg) (concat (car arg) " - " (cdr arg))) choices " "))) strargs)
+
+    (cdr (assoc choice choices))))
+
 ;; Interactive functions
 
 ;;;###autoload
-(defun tochemfig (molecule)
+(defun tochemfig-default (molecule)
   "Generate chemfig code for a MOLECULE using the default settings."
   (interactive "sEnter molecule: ")
   (insert (shell-command-to-string
@@ -248,7 +328,7 @@ You must give MOLECULE source. XOPT contains optional arguments."
 ;; TODO make "tochemfig-custom" the most complex fun and name this "tochemfig-raw";
 ;; The following one totally ignores defaults and directly inject custom flags;
 ;;;###autoload
-(defun tochemfig-custom (molecule custom_args)
+(defun tochemfig-custom-raw (molecule custom_args)
   "Generate chemfig code for a MOLECULE specifying all the needed CUSTOM_ARGS."
   (interactive
    (list
@@ -574,148 +654,86 @@ those should be drawn on top of others they cross over."
                     (list (cons "cross-bond"
                                 (mapconcat #'identity (tochemfig--collect-bonds) ",")) ))))))
 
-;; Return "(default)" tagged string
-;; Equivalent to:
-;; ```
-;; (choices (list (format "file%s"
-;;                                 (if (equal tochemfig-default-input "file") " (default)" ""))
-;;                         (format "direct%s"
-;;                                 (if (equal tochemfig-default-input "direct") " (default)" ""))
-;;                         (format "pubchem%s"
-;;                                 (if (equal tochemfig-default-input "pubchem") " (default)" ""))
-;;                         )  ;; choices list
-;;                   )
-;; ```
-
-;; TODO Integrare questa funzione nell'arricchitore di stringhe
-(defun tochemfig--highlight-default (arg)
-  (let ((eventuallytagged (concat arg (format "%s"
-                                 (if (equal tochemfig-default-input arg) " (default)" "")))))
-    eventuallytagged)
-  )
-
-;; TODO for loop
-;; for passing the variable only when selected, not the entire string
-(defun tochemfig--wizard-input ()
-  ;; Voglio partire dalla lista di opzioni
-  ;; Passare ad una funzione che genera una lista di cons
-  ;; Questa mi fornisce delle coppie di significanti e significati
-  ;; Il significante può essere una stringa arricchita
-  ;; Il significato è il valore che deve essere passato al comando
-  ;; Nel momento in cui scelgo un significante, questo mi torna indietro
-  ;; E la funzione mi restituisce il corrispettivo significato
-  ;; In questo modo il significato verrà usato come argomento
-  ;; Arbitrariamente sceglierò di scrivere il significato come car e significante come cdr
-  ;; L'output sarà così:
-  ;; ("file" . "file (default)")
-  ;; ("direct" . "direct")
-  ;; ("pubchem" . "pubchem")
-  (let* ((options '("file" "direct" "pubchem"))
-         (choices (mapcar #'(lambda (x) (tochemfig--highlight-default x)) options))
-        ) ;; let head
-    (message "%s" (completing-read "Select what argument you wish to edit: " choices ))
-    ) ;; let
-  ) ;; defun
-
-(defun tochemfig--wizard-arg-selector (selections)
-  "Show a list of arguments, while keeping the current SELECTIONS on the side."
-  ;; Store data in cons like this one
-  ;; ("input (selected: direct)" . "input")
-  (let* ((args (list (cons "input"
-                           (or (cdr (assoc "input" selections))
-                               tochemfig-default-input))
-                     (cons "terse"
-                           (or (cdr (assoc "terse" selections))
-                               tochemfig-default-terse))
-                     (cons "strict"
-                           (or (cdr (assoc "strict" selections))
-                               tochemfig-default-strict))
-                     (cons "indent"
-                           (or (cdr (assoc "indent" selections))
-                               tochemfig-default-indent))
-                     (cons "recalculate-coordinates"
-                           (or (cdr (assoc "recalculate-coordinates" selections))
-                               tochemfig-default-recalculate-coordinates))
-                     (cons "angle"
-                           (or (cdr (assoc "angle" selections))
-                               tochemfig-default-angle))
-                     (cons "relative-angles"
-                           (or (cdr (assoc "relative-angles" selections))
-                               tochemfig-default-relative-angles))
-                     (cons "flip"
-                           (or (cdr (assoc "flip" selections))
-                               tochemfig-default-flip))
-                     (cons "flop"
-                           (or (cdr (assoc "flop" selections))
-                               tochemfig-default-flop))
-                     (cons "show-carbons"
-                           (or (cdr (assoc "show-carbons" selections))
-                               tochemfig-default-show-carbons))
-                     (cons "show-methyls"
-                           (or (cdr (assoc "show-methyls" selections))
-                               tochemfig-default-show-methyls))
-                     (cons "hydrogens"
-                           (or (cdr (assoc "hydrogens" selections))
-                               tochemfig-default-hydrogens))
-                     (cons "aromatic-circles"
-                           (or (cdr (assoc "aromatic-circles" selections))
-                               tochemfig-default-aromatic-circles))
-                     (cons "markers"
-                           (or (cdr (assoc "markers" selections)) ""))
-                     (cons "fancy-bonds"
-                           (or (cdr (assoc "fancy-bonds" selections))
-                               tochemfig-default-fancy-bonds))
-                     (cons "atom-numbers"
-                           (or (cdr (assoc "atom-numbers" selections))
-                               tochemfig-default-atom-numbers))
-                     (cons "bond-scale"
-                           (or (cdr (assoc "bond-scale" selections))
-                               tochemfig-default-bond-scale))
-                     (cons "bond-stretch"
-                           (or (cdr (assoc "bond-stretch" selections))
-                               tochemfig-default-bond-stretch))
-                     (cons "wrap-chemfig"
-                           (or (cdr (assoc "wrap-chemfig" selections))
-                               tochemfig-default-wrap-chemfig))
-                     (cons "submol-name"
-                           (or (cdr (assoc "submol-name" selections)) ""))
-                     (cons "entry-atom"
-                           (or (cdr (assoc "entry-atom" selections)) ""))
-                     (cons "exit-atom"
-                           (or (cdr (assoc "exit-atom" selections)) ""))
-                     (cons "cross-bond"
-                           (or (cdr (assoc "cross-bond" selections)) ""))
-                     (cons  "output"
-                            (or (cdr (assoc "output" selections)) ""))))
-         (choices
-          (mapcar #'(lambda (arg)
-                  (cons (format "%s (selected: %s)" (car arg) (cdr arg)) (car arg))) args))
-         (choice
-          (completing-read "Select what argument you wish to edit: "
-                           (mapcar #'(lambda (el) (car el)) choices) )))
-
-    ;; print choices for debug
-    ;; (let ((strargs (mapconcat #'(lambda (arg) (concat (car arg) " - " (cdr arg))) choices " "))) strargs)
-
-    (cdr (assoc choice choices))))
-
 ;;;###autoload
-(defun tochemfig-wizard (molecule)
-  (interactive "sEnter molecule: ")
+(defun tochemfig-wizard ()
+  (interactive)
   (let ((wizargs '())
+        (input tochemfig-default-input) ;; var here just for easiness of use;
         (continue t))
     (while continue
-      (let ((tochange (tochemfig--wizard-arg-selector wizargs)))
+      (let ((selected (tochemfig--wizard-arg-selector wizargs)))
         ;; Now you should change the value of the argument and collect it in wizargs;
-        ;; (push () wizargs)
-        (message tochange))
+        ;; You can pass to the function a string with the value you're about to change
+        ;; Se l'argomento richiede una stringa tra varie opzioni, proponi custom
+        ;; Se l'argomento richiede un numero, vai di conseguenza ecc.
 
-      ;; stop the loop
-      (when (not (y-or-n-p "Wanna edit another argument? "))
-        (setq continue nil)
-        ) ;; ./ when n
-      ) ;; ./continue
-    )) ;; ./let ./defun
+        ;; If the selected item want a bool...
+        (if (member selected '("terse" "strict" "recalculate-coordinates" "relative-angles"
+                               "flip" "flop" "show-carbons" "show-methyls" "fancy-bonds"
+                               "aromatic-circles" "atom-numbers" "wrap-chemfig"))
+            ;; Else if
+            (if (equal (completing-read "Activating this one? " '("true" "false")) "false")
+                (push (cons selected nil) wizargs)
+              (push (cons selected t) wizargs))
+          ;; Else if
+          (if (equal selected "input")
+              (let ((inpOpts '("file" "direct" "pubchem")))
+                ;; This is a special assign, just to make it simpler to retrieve this;
+                (setq input (completing-read "Select input mode: " inpOpts))
+                (push (cons selected input) wizargs))
+            ;; Else if
+            (if (equal selected "indent")
+                (push (cons selected (read-number "Enter an integer for indentation: ")) wizargs)
+              ;; Else if
+              (if (equal selected "angle")
+                  (push (cons selected (read-number "Enter rotation grades : ")) wizargs)
+                ;; Else if
+                (if (equal selected "hydrogens")
+                    (let ((hydroOpts '("add" "delete" "keep")))
+                      (push (cons selected (completing-read "Adding or deleting hydrogens? " hydroOpts)) wizargs))
+                  ;; Else if
+                  (if (equal selected "markers")
+                      (push (cons selected (read-string "Enter markers: ")) wizargs)
+                    ;; Else if
+                    (if (equal selected "bond-scale")
+                        (let ((inpOpts '("scale" "normalize")))
+                          (push (cons selected (completing-read "Scale or normalize bonds " inpOpts)) wizargs))
+                      ;; Else if
+                      (if (equal selected "bond-stretch")
+                          (push (cons selected (read-number "Enter length factor : ")) wizargs)
+                        ;; Else if
+                        (if (equal selected "submol-name")
+                            (push (cons selected (read-string "Enter markers: ")) wizargs)
+                          ;; Else if
+                          (if (equal selected "entry-atom")
+                              (push (cons selected (read-number "Entry atom : ")) wizargs)
+                            ;; Else if
+                            (if (equal selected "exit-atom")
+                                (push (cons selected (read-number "Exit atom : ")) wizargs)
+                              ;; Else if
+                              ;; TODO support "cross-bondS", plural
+                              (if (equal selected "cross-bond")
+                                  (push (cons selected (tochemfig--read-bond)) wizargs)
+                                ;; Else if
+                                (if (equal selected "output")
+                                    (push (cons selected (read-file-name "fEnter location: ")) wizargs)
+                                  ;; Else if
+                                  (message "nessuno"))))))))))))))
+
+        ;; stop the loop
+        (if (y-or-n-p "Wanna edit another argument? ")
+            (message "well, to the next argument, then.")
+            (setq continue nil))))
+
+    ;; get the molecule according to input
+    (let ((molecule (if (equal input "file")
+                        (read-file-name "Enter molecule location: ")
+                      (read-string "Enter molecule: "))))
+
+      ;; return the actual string
+      (insert (shell-command-to-string
+               (concat tochemfig-default-command " "
+                       (tochemfig--args-builder molecule wizargs)))))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
