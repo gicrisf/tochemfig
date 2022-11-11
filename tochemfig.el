@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.1.3
+;; Version: 0.1.4
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
