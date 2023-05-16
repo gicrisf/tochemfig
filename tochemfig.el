@@ -6,7 +6,7 @@
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Created: novembre 04, 2022
 ;; Modified: novembre 04, 2022
-;; Version: 0.1.4
+;; Version: 0.1.5
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools unix
 ;; Homepage: https://github.com/gicrisf/tochemfig
 ;; Package-Requires: ((emacs "24.3"))
@@ -309,7 +309,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
 
 ;; Interactive functions
 
-;;;###autoload
 (defun tochemfig-default (molecule)
   "Generate chemfig code for a MOLECULE using the default settings."
   (interactive "sEnter molecule: ")
@@ -317,7 +316,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
            (concat tochemfig-default-command " " (tochemfig--args-builder molecule)))))
 
 ;; The following one totally ignores defaults and directly inject custom flags;
-;;;###autoload
 (defun tochemfig-custom-raw (molecule custom_args)
   "Generate chemfig code for a MOLECULE specifying all the needed CUSTOM_ARGS."
   (interactive
@@ -328,8 +326,6 @@ You must give MOLECULE source. XOPT contains optional arguments."
            (concat tochemfig-default-command " " custom_args " " molecule))))
 
 ;; The following ones force a specific argument over the defaults leaving the rest untouched
-
-;;;###autoload
 (defun tochemfig-input-pubchem (identifier)
   "Generate chemfig code for a molecule retrieved with its pubchem IDENTIFIER.
 Obviously, you have to be online for this input mode to work."
@@ -338,7 +334,6 @@ Obviously, you have to be online for this input mode to work."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder identifier '(("input" . "pubchem")))))))
 
-;;;###autoload
 (defun tochemfig-input-file (path)
   "Generate chemfig code for a molecule from its file's PATH.
 The file must contain a molecule’s description in either molfile or SMILES,
@@ -348,7 +343,6 @@ widely used file formats that can be exported from any chemical drawing program.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder path '(("input" . "file")))))))
 
-;;;###autoload
 (defun tochemfig-input-direct (molecule)
   "Generate chemfig code for a MOLECULE from a verbatim string."
   (interactive "sEnter molecule as verbatim string: ")
@@ -356,7 +350,6 @@ widely used file formats that can be exported from any chemical drawing program.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("input" . "direct")))))))
 
-;;;###autoload
 (defun tochemfig-input-direct-output-file (molecule path)
   "Generate chemfig code for a MOLECULE;
 use output redirection to save it in a file, of which you must give the PATH."
@@ -369,7 +362,6 @@ use output redirection to save it in a file, of which you must give the PATH."
                                               (cons "input" "direct")
                                               (cons "output" path))))))
 
-;;;###autoload
 (defun tochemfig-input-file-output-file (inpath outpath)
   "Generate chemfig code for a molecule from a file placed in INPATH;
 use output redirection to save it in a file, of which you must give the OUTPATH."
@@ -382,7 +374,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
                                               (cons "input" "file")
                                               (cons "output" outpath))))))
 
-;;;###autoload
 (defun tochemfig-terse (molecule)
   "Generate chemfig code for a MOLECULE removing whitespaces and comments."
   (interactive "sEnter molecule: ")
@@ -390,7 +381,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("terse" . t)))))))
 
-;;;###autoload
 (defun tochemfig-verbose (molecule)
   "Generate chemfig code for a MOLECULE leaving whitespaces and comments."
   (interactive "sEnter molecule: ")
@@ -398,7 +388,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("terse" . nil)))))))
 
-;;;###autoload
 (defun tochemfig-strict (molecule)
   "Generate chemfig code for a MOLECULE strictly abiding by structure validation."
   (interactive "sEnter molecule: ")
@@ -406,7 +395,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("strict" . t)))))))
 
-;;;###autoload
 (defun tochemfig-chill (molecule)
   "Generate chemfig code for a MOLECULE even if it fails structure validation."
   (interactive "sEnter molecule: ")
@@ -414,7 +402,6 @@ use output redirection to save it in a file, of which you must give the OUTPATH.
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("strict" . nil)))))))
 
-;;;###autoload
 (defun tochemfig-indent (molecule int)
   "Generate chemfig code for a MOLECULE and indent its branches by INT spaces.
 Forced to be verbose, because indentation doesn't make sense otherwise."
@@ -427,7 +414,6 @@ Forced to be verbose, because indentation doesn't make sense otherwise."
                    (tochemfig--args-builder molecule
                     (list (cons "indent" int) (cons "terse" nil)))))))
 
-;;;###autoload
 (defun tochemfig-recalculate-coordinates (molecule)
   "Generate chemfig code for a MOLECULE calculating new coordinates.
 Existing coordinates are discarded and new ones are derived from structure."
@@ -436,7 +422,6 @@ Existing coordinates are discarded and new ones are derived from structure."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("recalculate-coordinates" . t)))))))
 
-;;;###autoload
 (defun tochemfig-rotate (molecule angle flip flop)
   "Generate chemfig code for a MOLECULE and rotate it clockwise by a given ANGLE.
 Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
@@ -454,7 +439,6 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
                      (cons "flip" flip)
                      (cons "flop" flop)))))))
 
-;;;###autoload
 (defun tochemfig-show-carbons (molecule)
   "Generate chemfig code for a MOLECULE and show element symbol for carbon atoms."
   (interactive "sEnter molecule: ")
@@ -462,7 +446,6 @@ Then, choose if you want to FLIP it (horizontally) or FLOP it (vertically)."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("show-carbons" . t)))))))
 
-;;;###autoload
 (defun tochemfig-show-methyls (molecule)
   "Generate chemfig code for a MOLECULE and show element symbols for methyl groups.
 This is implied, if carbon atoms are already showed."
@@ -471,7 +454,6 @@ This is implied, if carbon atoms are already showed."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("show-methyls" . t)))))))
 
-;;;###autoload
 (defun tochemfig-add-hydrogens (molecule)
   "Generate chemfig code for a MOLECULE and show explicit symbols for hydrogen.
 This will also trigger calculation of new coordinates for the entire molecule."
@@ -480,7 +462,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("hydrogens" . "add")))))))
 
-;;;###autoload
 (defun tochemfig-delete-hydrogens (molecule)
   "Generate chemfig code for a MOLECULE and delete explicit symbols for hydrogen."
   (interactive "sEnter molecule: ")
@@ -488,7 +469,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("hydrogens" . "delete")))))))
 
-;;;###autoload
 (defun tochemfig-aromatic-circles (molecule)
   "Generate chemfig code for a MOLECULE and draw circles inside aromatic rings."
   (interactive "sEnter molecule: ")
@@ -496,7 +476,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("aromatic-circles" . t)))))))
 
-;;;###autoload
 (defun tochemfig-markers (molecule markers)
   "Generate chemfig code for a MOLECULE and add unique MARKERS to each atom/bond."
   (interactive (list
@@ -507,7 +486,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
                    (tochemfig--args-builder molecule
                     (list (cons "markers" markers)))))))
 
-;;;###autoload
 (defun tochemfig-fancy-bonds (molecule)
   "Generate chemfig code for a MOLECULE drawing fancier double and triple bonds."
   (interactive "sEnter molecule: ")
@@ -515,7 +493,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("fancy-bonds" . t)))))))
 
-;;;###autoload
 (defun tochemfig-vanilla-bonds (molecule)
   "Generate chemfig code for a MOLECULE drawing standard double and triple bonds."
   (interactive "sEnter molecule: ")
@@ -523,7 +500,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("fancy-bonds" . nil)))))))
 
-;;;###autoload
 (defun tochemfig-show-atom-numbers (molecule)
   "Generate chemfig code for a MOLECULE showing the molfile number of each atom."
   (interactive "sEnter molecule: ")
@@ -531,7 +507,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("atom-numbers" . t)))))))
 
-;;;###autoload
 (defun tochemfig-hide-atom-numbers (molecule)
   "Generate chemfig code for a MOLECULE hiding the molfile number of each atom."
   (interactive "sEnter molecule: ")
@@ -539,7 +514,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("atom-numbers" . nil)))))))
 
-;;;###autoload
 (defun tochemfig-bond-scale (molecule factor)
   "Generate chemfig code for a MOLECULE and scale the bonds by a given FACTOR."
   (interactive (list
@@ -552,7 +526,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
                      (cons "bond-scale" "scale")
                      (cons "bond-stretch" factor)))))))
 
-;;;###autoload
 (defun tochemfig-bond-normalize (molecule average)
   "Generate chemfig code for a MOLECULE and normalize the bonds to a given AVERAGE."
   (interactive (list
@@ -565,7 +538,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
                      (cons "bond-scale" "normalize")
                      (cons "bond-stretch" average)))))))
 
-;;;###autoload
 (defun tochemfig-wrap-chemfig (molecule)
   "Generate chemfig code for a MOLECULE and wrap it into a \\chemfig{...} command."
   (interactive "sEnter molecule: ")
@@ -573,7 +545,6 @@ This will also trigger calculation of new coordinates for the entire molecule."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("wrap-chemfig" . t)))))))
 
-;;;###autoload
 (defun tochemfig-wrap-submol (molecule submol)
   "Generate chemfig code for a MOLECULE and wrap it as SUBMOL.
 The \\definesubmol macro defines a named shortcut for a molecule or fragment.
@@ -587,7 +558,6 @@ manually assembled structures or drawings."
                    (tochemfig--args-builder molecule
                     (list (cons "submol-name" submol)))))))
 
-;;;###autoload
 (defun tochemfig-unwrap (molecule)
   "Generate chemfig code for a MOLECULE without wrapping it into any command."
   (interactive "sEnter molecule: ")
@@ -595,7 +565,6 @@ manually assembled structures or drawings."
            (concat tochemfig-default-command " "
                    (tochemfig--args-builder molecule '(("wrap-chemfig" . nil)))))))
 
-;;;###autoload
 (defun tochemfig-partial-submol (molecule submol entryatom exitatom)
   "Generate chemfig code for a MOLECULE and wrap a fragment of it as SUBMOL.
 The \\definesubmol macro defines a named shortcut for a molecule or fragment.
@@ -632,7 +601,6 @@ EXITATOM is the number of last atom to be rendered."
         (setq continue nil)))
     bonds))
 
-;;;###autoload
 (defun tochemfig-cross-bond (molecule)
   "Generate chemfig code for a MOLECULE and specify special bonds to draw on top;
 those should be drawn on top of others they cross over."
@@ -644,7 +612,6 @@ those should be drawn on top of others they cross over."
                     (list (cons "cross-bond"
                                 (mapconcat #'identity (tochemfig--collect-bonds) ",")) ))))))
 
-;;;###autoload
 (defun tochemfig-custom ()
   "Collect user's preferences and print the corresponding chemfig code."
   (interactive)
@@ -703,6 +670,9 @@ those should be drawn on top of others they cross over."
       (insert (shell-command-to-string
                (concat tochemfig-default-command " "
                        (tochemfig--args-builder molecule wizargs)))))))
+
+(define-minor-mode tochemfig-mode
+  "Unlock the power of tochemfig in your buffer.")
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here

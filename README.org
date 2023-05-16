@@ -112,18 +112,21 @@ An example with =straight=:
 #+end_src
 
 * Usage
-You have essentially *4 ways* to launch tochemfig:
-- =tochemfig-default= is the less flexible but probably the more useful one; it asks the user for an input molecule, so the chemfig code che be wrote off instantly; by =tochemfig-default=, you're basically telling Emacs to execute the command "as usual", like you would do with your favorite barman. For example, if you often open mol code from external sources, there's no doubt you should leave =tochemfig-default-input= as "file". On the other side, if you usually need to render molecules from SMILES or Pubchem identifiers, it would be convenient for you to set the config var to ="direct"= or ="pubchem"= respectively.
-- =tochemfig-custom= aids you in editing the parameters through a series of sanely crafted dialogs; Emacs let you search for the desired options in the lists, so the process of customization can be really fast. While this function was taught mostly for simultaneous editing of two or more parameters, I'd say this is the way to go for beginners and casuals.
+Here are *4 ways* to launch tochemfig:
+1. To use =tochemfig-default=, which is the most immediate although less flexible method, you by simply introduce the molecule string in the minibuffer and the chemfig code will be generated instantly. You can configure this to open input from different sources such as files, SMILES or Pubchem identifiers.
+2. To use =tochemfig-custom=, which opens a series of dialogs to customize the parameters. *This is useful for beginners and casual users.*
 
   [[./custom-multiedit-demo.gif]]
 
-- =tochemfig-custom-raw= just lets you write the flags to be passed to the shell command; this is clearly the less comfortable way, because it's closer to the terminal experience, but it can be particularly immediate if you're accustomed to the underlying program;
-- Every other =tochemfig-= function is about overwriting quickly *a single parameter* over the defaults. This is explained more easily with an example: imagine you always get your molecules from an external file: of course your =tochemfig-default-input= will be =file=; but what if it happens that you need to paste a SMILES directly in the minibuffer? What do you do? Of course you could launch =tochemfig-custom=, but you really need a single change over the defaults and =tochemfig-custom= might seems like too much. In this case, I suggest to change the input mode on the fly with =tochemfig-input-direct=. End what if I want to leave every default as is, except for =terse= (and so deleting whitespaces from the rendered)? You're covered with =tochemfig-terse=. You should expect the same happening for every parameter in the list.
+3. To use =tochemfig-custom-raw=, you can write the flags for the shell command. This method may not be as comfortable as the other options, but it is immediate if you are accustomed to the underlying CLI interface.
+4. Other =tochemfig-= functions allow you to *overwrite a single parameter* with different settings than the defaults. For example, =tochemfig-input-direct= changes the input mode to allow pasting a SMILES directly into the minibuffer.
 
   [[./custom-one-edit-demo.gif]]
 
-I think anyone, at this point, should appreciate the essential role of a good set of defaults. In writing this package, I made sure to keep *exactly* the same defaults of the original =mol2chemfig=, in order to avoid confusion among users. So, how do you set *your custom defaults*? Simply reset the default command by specifying new defaults in your configuration file:
+The last case is better explained through a contextualized, applied example.
+Assuming you always get your molecules from an external file and set "file" as the default input, what do you do if you need to input a SMILES directly into the minibuffer? You could use =tochemfig-custom=, but that may be too time consuming if you only need to make a single change from the defaults. Instead, use =tochemfig-input-direct= to change the input mode temporarily. Similarly, if you want to keep all default settings but remove whitespaces when rendering, use =tochemfig-terse=. The same goes for any other parameter in the list.
+
+It's important to note that in this library the same defaults of the original =mol2chemfig= have been kept to avoid confusion among users. To set your *custom defaults*, simply reset the default command by specifying new defaults in your configuration file.
 
 #+begin_src emacs-lisp
 ;; We can change the default simply resetting the default var.
@@ -209,8 +212,7 @@ To have a complete view on all the features provided, install the package and la
 # Eh, ma potrei conservarle come submols già utilizzabili, proprio importare le submols
 
 * Donate
-Did you find this package useful?
-Why don't you help me keeping myself awake buying me a coffee?
+Did you find this package useful? If you'd like to help me stay awake (writing code, wink wink), consider buying me a coffee.
 
 [[https://ko-fi.com/V7V425BFU][https://ko-fi.com/img/githubbutton_sm.svg]]
 
