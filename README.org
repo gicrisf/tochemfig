@@ -100,7 +100,8 @@ The package is already functional: some function could be renamed soon.
 On Doom Emacs, you could install directly from the Github repo:
 
 #+begin_src emacs-lisp :tangle packages.el :noweb yes
-(package! tochemfig :recipe (:host github :repo "gicrisf/tochemfig"))
+(package! tochemfig
+  :recipe (:host github :repo "gicrisf/tochemfig"))
 #+end_src
 
 On vanilla Emacs, you can do the same using =use-package= or =straight=.
@@ -109,6 +110,13 @@ An example with =straight=:
 #+begin_src emacs-lisp
 (straight-use-package
  '(tochemfig :type git :host github :repo "gicrisf/tochemfig"))
+#+end_src
+
+Remember to add this to the =config.el= file to autoload the mode main function:
+
+#+begin_src emacs-lisp
+;; in ~/.doom.d/config.el
+(use-package! tochemfig)
 #+end_src
 
 * Usage
