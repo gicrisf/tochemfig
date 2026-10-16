@@ -16,7 +16,7 @@ Fully native, dependency-free chemfig generation.
   =\chemfig{...}= in LaTeX and Org buffers, and keeps options buffer-local.
 - A =transient= options menu, =tochemfig-dispatch= (=tochemfig-custom=),
   replacing the old completing-read wizard.
-- A parity test suite (256 ERT tests) comparing output against golden files
+- A parity test suite (265 ERT tests) comparing output against golden files
   produced by the reference =mol2chemfigPy3= implementation, plus a chemfig
   syntax validator and mode tests.
 - A =flake.nix= development shell providing the Python reference toolchain.

@@ -15,6 +15,8 @@
 
 The package generates chemfig code natively in Elisp using =emacs-indigo= for molecular structure handling. No Python or external commands required.
 
+Some output uses helper macros inherited from =mol2chemfig= (charges such as =\mcfplus=, aromatic circles =\mcfcringle=, wavy bonds =\mcfwavy=, fancy bonds =\dbl=/\dbr=/\trpl=, ...). Include mol2chemfig's =mcfmacros= preamble (or equivalent definitions) when rendering structures that use them.
+
 * Quickstart
 
 The following is a SMILES representation of caffeine:
@@ -226,7 +228,7 @@ To see all available commands, run =M-x tochemfig-= and explore the completion l
 - [X] *Define submols* with entry/exit atoms
 - [X] Export submols as external =.tex= files
 - [X] *Customizable defaults*
-- [X] *Step-by-step parameter wizard*
+- [X] *Interactive transient options menu*
 - [X] Single-parameter override commands
 
 * Testing
