@@ -21,4 +21,5 @@
 
 (setf eldev-test-fileset
       '("test/tochemfig-test.el"
-        "test/tochemfig-mode-test.el"))
+        "test/tochemfig-mode-test.el"
+        "test/tochemfig-graph-test.el"))
