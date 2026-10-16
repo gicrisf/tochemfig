@@ -449,5 +449,46 @@ available under the `C-c m' prefix."
       (tochemfig-mode--on)
     (tochemfig-mode--off)))
 
+;;; Global mode
+
+(defcustom tochemfig-global-mode-all-buffers nil
+  "Enable `tochemfig-global-mode' in every buffer when non-nil.
+By default the global mode only turns on `tochemfig-mode' in wrapping
+contexts (LaTeX and Org); set this to t to enable it everywhere."
+  :group 'tochemfig
+  :type 'boolean)
+
+(defun tochemfig-mode--eligible-p ()
+  "Return non-nil when `tochemfig-global-mode' should enable the mode here."
+  (and (not (minibufferp))
+       (not (string-prefix-p " " (buffer-name)))
+       (not (derived-mode-p 'special-mode))
+       (not buffer-read-only)
+       (or tochemfig-global-mode-all-buffers
+           (tochemfig-mode--latex-or-org-p))))
+
+(defun tochemfig-mode--turn-on ()
+  "Enable `tochemfig-mode' in eligible buffers."
+  (when (tochemfig-mode--eligible-p)
+    (tochemfig-mode 1)))
+
+;;;###autoload
+(define-globalized-minor-mode tochemfig-global-mode
+  tochemfig-mode tochemfig-mode--turn-on
+  :group 'tochemfig)
+
+;;;###autoload
+(defun tochemfig-global-mode-refresh ()
+  "Enable `tochemfig-mode' in buffers that are now eligible.
+Useful after changing `tochemfig-mode-wrap-modes' or
+`tochemfig-global-mode-all-buffers'.  Never disables the mode in buffers
+where it is already on."
+  (interactive)
+  (when tochemfig-global-mode
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (and (not tochemfig-mode) (tochemfig-mode--eligible-p))
+          (tochemfig-mode 1))))))
+
 (provide 'tochemfig-mode)
 ;;; tochemfig-mode.el ends here

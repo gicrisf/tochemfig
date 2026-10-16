@@ -107,6 +107,38 @@
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d")) #'tochemfig))
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-dispatch)))
 
+(ert-deftest tochemfig-mode-global-eligibility ()
+  "The global mode enables only in eligible buffers by default."
+  (let ((tochemfig-global-mode-all-buffers nil))
+    (unwind-protect
+        (progn
+          (tochemfig-global-mode 1)
+          (with-temp-buffer
+            (rename-buffer "tochemfig-test.tex" t)
+            (latex-mode)
+            (should tochemfig-mode))
+          (with-temp-buffer
+            (rename-buffer "tochemfig-test.org" t)
+            (org-mode)
+            (should tochemfig-mode))
+          (with-temp-buffer
+            (rename-buffer "tochemfig-test.el" t)
+            (emacs-lisp-mode)
+            (should-not tochemfig-mode)))
+      (tochemfig-global-mode -1))))
+
+(ert-deftest tochemfig-mode-global-all-buffers ()
+  "With the opt-in, the global mode enables everywhere."
+  (let ((tochemfig-global-mode-all-buffers t))
+    (unwind-protect
+        (progn
+          (tochemfig-global-mode 1)
+          (with-temp-buffer
+            (rename-buffer "tochemfig-test-lisp.el" t)
+            (emacs-lisp-mode)
+            (should tochemfig-mode)))
+      (tochemfig-global-mode -1))))
+
 (ert-deftest tochemfig-mode-convert-empty-region ()
   "Converting an empty region signals a user-error."
   (with-temp-buffer
