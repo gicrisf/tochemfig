@@ -280,16 +280,6 @@ OVERRIDES is an alist of option overrides."
                                   (mapcar #'car choices))))
     (cdr (assoc choice choices))))
 
-;;; Minor Mode
-
-;;;###autoload
-(define-minor-mode tochemfig-mode
-  "Minor mode for generating chemfig code from molecules.
-Provides commands to convert molecular structures (SMILES, MOL files)
-into LaTeX chemfig code."
-  :lighter " tochemfig"
-  :group 'tochemfig)
-
 ;;; Interactive Commands
 
 ;;;###autoload
