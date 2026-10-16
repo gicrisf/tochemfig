@@ -11,9 +11,14 @@ Fully native, dependency-free chemfig generation.
 - A native Elisp port of the =mol2chemfig= chemfig generator, split into
   =tochemfig-mappings.el=, =tochemfig-atom.el=, =tochemfig-bond.el= and
   =tochemfig-molecule.el=.
+- A context-aware =tochemfig-mode= (=C-c m= prefix) that generates chemfig
+  code from the region or the SMILES string at point, wraps output in
+  =\chemfig{...}= in LaTeX and Org buffers, and keeps options buffer-local.
+- A =transient= options menu, =tochemfig-dispatch= (=tochemfig-custom=),
+  replacing the old completing-read wizard.
 - A parity test suite (256 ERT tests) comparing output against golden files
   produced by the reference =mol2chemfigPy3= implementation, plus a chemfig
-  syntax validator.
+  syntax validator and mode tests.
 - A =flake.nix= development shell providing the Python reference toolchain.
 - New options: =-aromatic-circles=, =-cross-bond=, =-markers=, =-strict=,
   =-recalculate-coordinates= and legacy Lewis radicals.
@@ -22,7 +27,7 @@ Fully native, dependency-free chemfig generation.
 
 ** Changed
 - =tochemfig= now depends on =emacs-indigo= instead of a Python
-  =mol2chemfig= installation.
+  =mol2chemfig= installation, and requires Emacs 28.1 (for =transient=).
 - Ported the full rendering algorithm: trunk marking, fragment connection,
   ring annotation, fancy double/triple bonds, relative angles,
   atom/charge/hydrogen placement and terse/verbose output formatting.

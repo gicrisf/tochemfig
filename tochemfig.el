@@ -27,6 +27,10 @@
 ;; Usage:
 ;;   M-x tochemfig-input-direct RET <SMILES> RET
 ;;   M-x tochemfig-input-file RET <path-to-mol-file> RET
+;;
+;; For a context-aware experience enable `tochemfig-mode' (see
+;; tochemfig-mode.el), which adds commands under the `C-c m' prefix and a
+;; transient options menu.
 
 ;;; Code:
 
