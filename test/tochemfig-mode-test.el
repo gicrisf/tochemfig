@@ -1,0 +1,98 @@
+;;; tochemfig-mode-test.el --- Tests for tochemfig-mode -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2025 Giovanni Crisalfi
+
+;; This file is not part of GNU Emacs.
+
+;;; Commentary:
+
+;; Tests for the context-aware minor mode: context detection, region and
+;; thing-at-point conversion, buffer-local options, the transient menu and
+;; the keymap.
+
+;;; Code:
+
+(require 'ert)
+(require 'tex-mode)
+(require 'tochemfig-mode)
+
+(ert-deftest tochemfig-mode-context-p ()
+  "LaTeX and Org buffers are recognised as wrapping contexts."
+  (with-temp-buffer (latex-mode) (should (tochemfig-mode--latex-or-org-p)))
+  (with-temp-buffer (org-mode) (should (tochemfig-mode--latex-or-org-p)))
+  (with-temp-buffer (emacs-lisp-mode)
+    (should-not (tochemfig-mode--latex-or-org-p))))
+
+(ert-deftest tochemfig-mode-auto-wrap-on-enable ()
+  "Enabling the mode in a LaTeX buffer turns on wrapping locally."
+  (with-temp-buffer
+    (latex-mode)
+    (tochemfig-mode 1)
+    (should (local-variable-p 'tochemfig-default-wrap-chemfig))
+    (should tochemfig-default-wrap-chemfig)))
+
+(ert-deftest tochemfig-mode-options-are-buffer-local ()
+  "Enabling the mode makes the option variables buffer-local."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (should (local-variable-p 'tochemfig-default-terse))))
+
+(ert-deftest tochemfig-mode-region-conversion ()
+  "Converting a region wraps the output in a LaTeX buffer."
+  (with-temp-buffer
+    (latex-mode)
+    (tochemfig-mode 1)
+    (insert "CCO")
+    (tochemfig-convert-region (point-min) (point-max))
+    (should (string-prefix-p "\\chemfig{" (buffer-string)))
+    (should (equal (buffer-string)
+                   (tochemfig--generate-from-string
+                    "CCO" '(("wrap-chemfig" . t)))))))
+
+(ert-deftest tochemfig-mode-thing-at-point ()
+  "The SMILES string at point is recognised."
+  (with-temp-buffer
+    (insert "use CCO here")
+    (goto-char 6)
+    (should (equal (tochemfig-smiles-at-point) "CCO"))))
+
+(ert-deftest tochemfig-mode-dwim-replaces-thing ()
+  "The dispatch command replaces the SMILES string at point."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (insert "see CCO now")
+    (goto-char 6)
+    (tochemfig-mode 1)
+    (tochemfig)
+    (should (equal (buffer-string)
+                   (concat "see " (tochemfig--generate-from-string "CCO") " now")))))
+
+(ert-deftest tochemfig-mode-copy ()
+  "The copy command puts chemfig code on the kill ring."
+  (with-temp-buffer
+    (insert "CCO")
+    (goto-char 2)
+    (tochemfig-copy)
+    (should (equal (current-kill 0) (tochemfig--generate-from-string "CCO")))))
+
+(ert-deftest tochemfig-mode-toggle-suffix ()
+  "Toggling an option suffix updates the buffer-local value."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (setq tochemfig-mode--edit-buffer (current-buffer))
+    (should-not tochemfig-default-terse)
+    (call-interactively #'tochemfig-toggle-terse)
+    (should tochemfig-default-terse)
+    (should (local-variable-p 'tochemfig-default-terse))))
+
+(ert-deftest tochemfig-mode-transient-defined ()
+  "The transient prefix and its alias exist, and keys are bound."
+  (should (get 'tochemfig-dispatch 'transient--prefix))
+  (should (fboundp 'tochemfig-custom))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d")) #'tochemfig))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-dispatch)))
+
+(provide 'tochemfig-mode-test)
+;;; tochemfig-mode-test.el ends here

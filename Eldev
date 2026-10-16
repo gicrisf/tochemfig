@@ -8,7 +8,7 @@
 ;; needing to download and compile it again.  Only when no sibling checkout is
 ;; available do we fall back to the package from MELPA.
 (if (file-directory-p "emacs-indigo")
-    (eldev-add-loading-roots "emacs-indigo")
+    (eldev-use-local-sources "emacs-indigo")
   (eldev-add-extra-dependencies 'test '(:package indigo)))
 
 (setf eldev-main-fileset
@@ -20,4 +20,5 @@
         "tochemfig-molecule.el"))
 
 (setf eldev-test-fileset
-      '("test/tochemfig-test.el"))
+      '("test/tochemfig-test.el"
+        "test/tochemfig-mode-test.el"))
