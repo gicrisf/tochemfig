@@ -148,7 +148,9 @@ Returns nil when the token at point does not look like SMILES."
                (cons 'smiles #'tochemfig-smiles-bounds-at-point)))
 
 (defun tochemfig-mode--source-at-point ()
-  "Return (TEXT BOUNDS) for the molecule in the region or at point, or nil."
+  "Return (TEXT BOUNDS) for the molecule in the region or at point, or nil.
+BOUNDS is a pair of markers, so the source follows edits in its buffer and
+can be detected as dead once that buffer is killed."
   (let ((bounds (cond ((use-region-p)
                        (cons (region-beginning) (region-end)))
                       ((tochemfig-smiles-bounds-at-point)))))
@@ -156,7 +158,8 @@ Returns nil when the token at point does not look like SMILES."
       (let ((text (string-trim (buffer-substring-no-properties
                                 (car bounds) (cdr bounds)))))
         (unless (string-empty-p text)
-          (list text bounds))))))
+          (list text (cons (copy-marker (car bounds))
+                           (copy-marker (cdr bounds)))))))))
 
 (defun tochemfig-mode--read-input ()
   "Read a molecule from the minibuffer.
@@ -177,9 +180,13 @@ a raw Indigo error."
     (error (user-error "tochemfig: %s" (error-message-string err)))))
 
 (defun tochemfig-mode--insert (code bounds)
-  "Insert CODE, replacing BOUNDS when non-nil."
+  "Insert CODE, replacing BOUNDS when non-nil and still valid.
+BOUNDS may be buffer positions or markers.  When BOUNDS are markers whose
+buffer has been killed, CODE is inserted without deleting anything."
   (atomic-change-group
-    (when bounds
+    (when (and bounds
+               (or (not (markerp (car bounds)))
+                   (marker-buffer (car bounds))))
       (goto-char (car bounds))
       (delete-region (car bounds) (cdr bounds)))
     (insert code)))
@@ -398,13 +405,15 @@ KEY is the transient key and LABEL the menu entry description."
      (interactive)
      (tochemfig-mode--set ',variable (not (tochemfig-mode--value ',variable)))))
 
-(defmacro tochemfig-mode--define-option (name key variable label reader)
+(defmacro tochemfig-mode--define-option (name key variable label reader &optional guard)
   "Define a transient suffix NAME editing VARIABLE.
-KEY is the transient key, LABEL the menu entry description and READER the
-function used to read a new value."
+KEY is the transient key, LABEL the menu entry description, READER the
+function used to read a new value, and GUARD an optional form; when it
+evaluates to nil the suffix is hidden."
   `(transient-define-suffix ,name ()
      :transient t
      :key ,key
+     ,@(when guard (list :if guard))
      :description (lambda ()
                     (format "%s [%s]" ,label
                             (tochemfig-mode--display
@@ -461,10 +470,12 @@ function used to read a new value."
   "l" tochemfig-default-submol-name "Submol name" #'tochemfig-mode--string-reader)
 (tochemfig-mode--define-option tochemfig-option-entry-atom
   "e" tochemfig-default-entry-atom "Entry atom"
-  #'tochemfig-mode--optional-number-reader)
+  #'tochemfig-mode--optional-number-reader
+  (lambda () (tochemfig-mode--value 'tochemfig-default-submol-name)))
 (tochemfig-mode--define-option tochemfig-option-exit-atom
   "x" tochemfig-default-exit-atom "Exit atom"
-  #'tochemfig-mode--optional-number-reader)
+  #'tochemfig-mode--optional-number-reader
+  (lambda () (tochemfig-mode--value 'tochemfig-default-submol-name)))
 
 (tochemfig-mode--define-toggle tochemfig-toggle-strict
   "r" tochemfig-default-strict "Strict validation")
@@ -499,6 +510,15 @@ function used to read a new value."
     (with-current-buffer (or (and (buffer-live-p buffer) buffer)
                              (current-buffer))
       (tochemfig-mode--produce t source))))
+
+(transient-define-suffix tochemfig-transient-bindings ()
+  "Show the `C-c m' key bindings."
+  :key "?"
+  :description "Key bindings"
+  (interactive)
+  (if (fboundp 'describe-keymap)
+      (describe-keymap 'tochemfig-mode-map)
+    (describe-bindings)))
 
 (transient-define-prefix tochemfig-dispatch ()
   "Customize `tochemfig' options and generate chemfig code."
@@ -535,7 +555,8 @@ function used to read a new value."
    (tochemfig-option-cross-bond)]
   ["Actions"
    (tochemfig-transient-generate)
-   (tochemfig-transient-copy)]
+   (tochemfig-transient-copy)
+   (tochemfig-transient-bindings)]
   (interactive)
   (unless tochemfig-mode
     (tochemfig-mode 1))
@@ -575,6 +596,29 @@ The commands are bound under the `C-c m' prefix.")
       "C-c m t" "Terse output"
       "C-c m r" "Rotate"
       "C-c m p" "Copy to kill ring")))
+
+;;; Menu bar
+
+(defcustom tochemfig-mode-menu t
+  "Show a tochemfig item in the menu bar while `tochemfig-mode' is active."
+  :group 'tochemfig
+  :type 'boolean)
+
+(defvar tochemfig-mode-menu-map
+  (easy-menu-create-menu
+   "tochemfig"
+   '(["Generate (region/point/prompt)" tochemfig t]
+     ["Options menu" tochemfig-dispatch t]
+     ["Copy to kill ring" tochemfig-copy t]
+     "--"
+     ["Describe options" tochemfig-describe-options t]
+     ["Save options" tochemfig-save-options t]
+     ["Reset buffer options" tochemfig-reset-options t]))
+  "Menu-bar entry shown while `tochemfig-mode' is active.")
+
+(when tochemfig-mode-menu
+  (define-key tochemfig-mode-map [menu-bar tochemfig]
+    (cons "tochemfig" tochemfig-mode-menu-map)))
 
 ;;; Minor Mode
 
