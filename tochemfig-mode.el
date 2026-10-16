@@ -76,8 +76,30 @@ code is wrapped in \\chemfig{...}."
 (defconst tochemfig-mode--smiles-charset "A-Za-z0-9@+[]()=#$:/\\.%*-"
   "Characters that may appear in a SMILES string.")
 
+(defun tochemfig-mode--smiles-syntax-p (s)
+  "Return non-nil when S contains SMILES-specific punctuation."
+  (catch 'yes
+    (dolist (char '("(" ")" "[" "]" "=" "#" "@" "+" "/" "\\"))
+      (when (string-search char s) (throw 'yes t)))
+    nil))
+
+(defun tochemfig-mode--smiles-looking-p (s)
+  "Return non-nil when S looks like SMILES rather than ordinary prose."
+  (and (not (string-empty-p s))
+       (or (string-match-p "[0-9]" s)              ; ring closures, counts
+           (tochemfig-mode--smiles-syntax-p s)     ; SMILES-only punctuation
+           (string-match-p "\\`[BCNOPSFI][BCNOPSFI]*\\'" s)))) ; bare chain
+
+(defcustom tochemfig-smiles-looking-predicate #'tochemfig-mode--smiles-looking-p
+  "Function of one string deciding whether it looks like SMILES.
+Used to keep `tochemfig-smiles-at-point' and the SMILES `thing' from
+matching ordinary prose.  Set it to a function that always returns t to
+restore the previous permissive behaviour."
+  :group 'tochemfig
+  :type 'function)
+
 (defun tochemfig-mode--bounds-of-smiles-at-point ()
-  "Return the (START . END) bounds of the SMILES string at point, or nil."
+  "Return the raw (START . END) bounds of the token at point, or nil."
   (let ((start (save-excursion
                  (skip-chars-backward tochemfig-mode--smiles-charset)
                  (point)))
@@ -87,22 +109,49 @@ code is wrapped in \\chemfig{...}."
     (when (< start end)
       (cons start end))))
 
+(defun tochemfig-smiles-bounds-at-point ()
+  "Return the (START . END) bounds of the SMILES string at point, or nil.
+Returns nil when the token at point does not look like SMILES."
+  (let ((bounds (tochemfig-mode--bounds-of-smiles-at-point)))
+    (when bounds
+      (let ((text (string-trim
+                   (buffer-substring-no-properties (car bounds) (cdr bounds)))))
+        (when (funcall tochemfig-smiles-looking-predicate text)
+          bounds)))))
+
 (defun tochemfig-smiles-at-point ()
   "Return the SMILES string at point, or nil."
-  (let ((bounds (tochemfig-mode--bounds-of-smiles-at-point)))
+  (let ((bounds (tochemfig-smiles-bounds-at-point)))
     (when bounds
       (string-trim (buffer-substring-no-properties (car bounds) (cdr bounds))))))
 
+(defun forward-tochemfig-smiles (&optional arg)
+  "Move forward across a SMILES string (backward with negative ARG)."
+  (interactive "^p")
+  (let ((n (or arg 1)))
+    (dotimes (_ (abs n))
+      (if (> n 0)
+          (progn
+            (skip-chars-forward (concat "^" tochemfig-mode--smiles-charset))
+            (skip-chars-forward tochemfig-mode--smiles-charset))
+        (skip-chars-backward tochemfig-mode--smiles-charset)
+        (skip-chars-backward (concat "^" tochemfig-mode--smiles-charset))))))
+
 ;; Expose SMILES as a `thing' when the running Emacs supports it.
+(put 'smiles 'forward-op #'forward-tochemfig-smiles)
+(put 'smiles 'bounds-of-thing-at-point #'tochemfig-smiles-bounds-at-point)
 (when (boundp 'thing-at-point-provider-alist)
   (add-to-list 'thing-at-point-provider-alist
                (cons 'smiles #'tochemfig-smiles-at-point)))
+(when (boundp 'bounds-of-thing-at-point-provider-alist)
+  (add-to-list 'bounds-of-thing-at-point-provider-alist
+               (cons 'smiles #'tochemfig-smiles-bounds-at-point)))
 
 (defun tochemfig-mode--source-at-point ()
   "Return (TEXT BOUNDS) for the molecule in the region or at point, or nil."
   (let ((bounds (cond ((use-region-p)
                        (cons (region-beginning) (region-end)))
-                      ((tochemfig-mode--bounds-of-smiles-at-point)))))
+                      ((tochemfig-smiles-bounds-at-point)))))
     (when bounds
       (let ((text (string-trim (buffer-substring-no-properties
                                 (car bounds) (cdr bounds)))))
