@@ -482,7 +482,7 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
 
 ;;; Public entry point
 
-(defun tochemfig-generate-structure (mol options)
+(defun tochemfig-generate (mol options)
   "Generate chemfig code for molecule MOL with OPTIONS plist."
   (let ((atoms (tochemfig--parse-atoms options mol)))
     ;; Flip / flop coordinates before bonds are parsed.
