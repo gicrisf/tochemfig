@@ -75,6 +75,18 @@ Fully native, dependency-free chemfig generation.
   ring annotation, fancy double/triple bonds, relative angles,
   atom/charge/hydrogen placement and terse/verbose output formatting.
 
+** Fixed
+- Byte-compilation no longer depends on emacs-indigo's dynamic module loading at
+  build time: the =indigo-with-*= resource macros are now required explicitly at
+  compile time (=tochemfig.el=, =tochemfig-molecule.el=).  Previously, building
+  where the module could not load (e.g. some =doom sync= environments) produced a
+  =tochemfig.elc= with unexpanded macros that failed at runtime with
+  =void-function mol=.  The =indigo= dependency is also relaxed to =0.10.1=, and
+  a clear error is signalled if the macros are unavailable.
+- =tools/check-module-free-compile.sh= guards against the above regression by
+  byte-compiling tochemfig with a stubbed =indigo= (module never loaded) and
+  asserting the macros were expanded.
+
 ** Removed
 - The Python =mol2chemfig= / =mol2chemfigPy3= command interface and the
   =tochemfig-default-command= option.

@@ -10,7 +10,7 @@
 * Requirements
 
 - Emacs 29.1+ with dynamic module support
-- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library)
+- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.10.1 or newer (0.11.1 recommended)
 - LaTeX with chemfig and TiKZ packages (for rendering output)
 
 The package generates chemfig code natively in Elisp using =emacs-indigo= for molecular structure handling. No Python or external commands required.
@@ -96,6 +96,12 @@ cd emacs-indigo
 #+end_src
 
 The install script automatically downloads and builds all dependencies (zlib, TinyXML, Indigo library) locally, then compiles the Emacs dynamic module.
+
+Note: =emacs-indigo= defines its =indigo-with-*= resource macros only after its
+dynamic module has loaded.  tochemfig works around this at byte-compilation time,
+but you should still make sure a stale install is up to date: if you installed
+=emacs-indigo= via Doom/straight and have not updated it recently, run
+=M-x straight-pull-package RET indigo= (or =doom sync -u=) and rebuild tochemfig.
 
 Add to your Emacs config:
 

@@ -8,12 +8,15 @@ out molecules, and produces chemfig code with no Python or shell dependency.
 
 ## Prerequisites
 
-1. **Emacs 28.1+**
-2. **emacs-indigo**: build the C module first:
+1. **Emacs 29.1+**
+2. **emacs-indigo 0.10.1+** (0.11.1 recommended): build the C module first:
    ```bash
    cd emacs-indigo
    ./install.sh
    ```
+   If you installed it via Doom/straight, make sure it is not stale
+   (`M-x straight-pull-package RET indigo`, or `doom sync -u`); old builds can
+   break byte-compilation of tochemfig.
 3. **LaTeX** with the `chemfig`/TiKZ packages (to render the output).
 
 ## Installation
