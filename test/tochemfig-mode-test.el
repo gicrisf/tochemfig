@@ -178,5 +178,107 @@
     (should-error (tochemfig-convert-region (point-min) (point-max))
                   :type 'user-error)))
 
+;;; Thing-at-point and heuristic
+
+(ert-deftest tochemfig-mode-smiles-heuristic ()
+  "The SMILES heuristic accepts molecules and rejects prose."
+  (should (tochemfig-mode--smiles-looking-p "CCO"))
+  (should (tochemfig-mode--smiles-looking-p "c1ccccc1"))
+  (should (tochemfig-mode--smiles-looking-p "N[C@@H](C)C(=O)O"))
+  (should-not (tochemfig-mode--smiles-looking-p "Hello"))
+  (should-not (tochemfig-mode--smiles-looking-p "well-known"))
+  (should-not (tochemfig-mode--smiles-looking-p "")))
+
+(ert-deftest tochemfig-mode-smiles-thing ()
+  "SMILES is registered as a `thing'."
+  (with-temp-buffer
+    (insert "use CCO here")
+    (goto-char (point-min))
+    (search-forward "CCO")
+    (goto-char (match-beginning 0))
+    (should (equal (tochemfig-smiles-at-point) "CCO"))
+    (should (equal (thing-at-point 'smiles) "CCO"))
+    (let ((bounds (bounds-of-thing-at-point 'smiles)))
+      (should bounds)
+      (should (equal (buffer-substring-no-properties (car bounds) (cdr bounds))
+                     "CCO")))))
+
+;;; Options introspection and persistence
+
+(ert-deftest tochemfig-mode-describe-options ()
+  "`tochemfig-describe-options' lists effective values."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (set (make-local-variable 'tochemfig-default-indent) 7)
+    (tochemfig-describe-options)
+    (with-current-buffer "*tochemfig options*"
+      (goto-char (point-min))
+      (should (search-forward "tochemfig-default-indent" nil t))
+      (should (search-forward "buffer-local" nil t)))))
+
+(ert-deftest tochemfig-mode-save-reload-options ()
+  "Saving and reloading global options round-trips."
+  (let ((tochemfig-options-file (make-temp-file "tochemfig-options" nil ".el")))
+    (unwind-protect
+        (progn
+          (with-temp-buffer
+            (emacs-lisp-mode)
+            (tochemfig-mode 1)
+            (set (make-local-variable 'tochemfig-default-flip) t)
+            (tochemfig-save-options))
+          (should (default-value 'tochemfig-default-flip))
+          (set-default 'tochemfig-default-flip nil)
+          (tochemfig-reload-options)
+          (should tochemfig-default-flip))
+      (set-default 'tochemfig-default-flip nil)
+      (delete-file tochemfig-options-file))))
+
+(ert-deftest tochemfig-mode-reset-options ()
+  "Resetting removes buffer-local values."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (set (make-local-variable 'tochemfig-default-terse) t)
+    (should (local-variable-p 'tochemfig-default-terse))
+    (tochemfig-reset-options)
+    (should-not (local-variable-p 'tochemfig-default-terse))))
+
+;;; Transient guards and killed-buffer safety
+
+(ert-deftest tochemfig-mode-entry-exit-guard ()
+  "Entry/exit suffixes are hidden unless a submol name is set."
+  (let* ((object (get 'tochemfig-option-entry-atom 'transient--suffix))
+         (pred (and object (eieio-oref object 'if))))
+    (should object)
+    (should pred)
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (tochemfig-mode 1)
+      (setq tochemfig-mode--edit-buffer (current-buffer))
+      (set (make-local-variable 'tochemfig-default-submol-name) nil)
+      (should-not (funcall pred))
+      (set (make-local-variable 'tochemfig-default-submol-name) "mol")
+      (should (funcall pred)))))
+
+(ert-deftest tochemfig-mode-killed-source-inserts ()
+  "Generating from a killed buffer inserts without deleting."
+  (let ((edit (generate-new-buffer "tochemfig-edit")))
+    (with-current-buffer edit
+      (emacs-lisp-mode)
+      (tochemfig-mode 1)
+      (insert "CCO")
+      (goto-char (point-min)))
+    (setq tochemfig-mode--edit-buffer edit)
+    (setq tochemfig-mode--pending-source
+          (with-current-buffer edit (tochemfig-mode--source-at-point)))
+    (kill-buffer edit)
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (insert "PREFIX")
+      (tochemfig-transient-generate)
+      (should (string-prefix-p "PREFIX" (buffer-string)))
+      (should (string-match-p "OH" (buffer-string))))))
+
 (provide 'tochemfig-mode-test)
 ;;; tochemfig-mode-test.el ends here
