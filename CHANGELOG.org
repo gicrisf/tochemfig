@@ -35,13 +35,31 @@ Fully native, dependency-free chemfig generation.
   =-recalculate-coordinates= and legacy Lewis radicals.
 - New commands: =tochemfig-aromatic-circles=, =tochemfig-markers= and
   =tochemfig-cross-bond=.
+- A global minor mode, =tochemfig-global-mode=, that enables =tochemfig-mode=
+  only in the wrapping contexts (opt into every buffer with
+  =tochemfig-global-mode-all-buffers=).
+- Configurable wrapping contexts (=tochemfig-mode-wrap-modes=, now including
+  =markdown-mode=), per-command wrapping and LaTeX source blocks inside Org.
+- Option lifecycle commands: =tochemfig-describe-options=,
+  =tochemfig-save-options= / =tochemfig-reload-options= (global defaults) and
+  =tochemfig-reset-options= (buffer or, with a prefix, global).
+- SMILES registered as a =thing= at point (=forward-tochemfig-smiles=,
+  =bounds-of-thing-at-point=) with a prose-rejecting, customizable
+  =tochemfig-smiles-looking-predicate=.
+- An optional menu-bar entry shown while =tochemfig-mode= is active.
 
 ** Changed
+- =tochemfig= now requires Emacs 29.1 (was 28.1).
 - Generation failures in =tochemfig-mode= now surface as =user-error= instead
   of a raw Indigo error; blank SMILES input signals a =user-error= rather than
   an internal error.
+- The =tochemfig-default-*= options are localized lazily (on first edit)
+  instead of eagerly on enable, so global default changes keep reaching
+  enabled-but-unedited buffers; wrapping is decided per command rather than at
+  enable time.  The transient Generate/Copy actions are now safe when the
+  invoking buffer has been killed.
 - =tochemfig= now depends on =emacs-indigo= instead of a Python
-  =mol2chemfig= installation, and requires Emacs 28.1 (for =transient=).
+  =mol2chemfig= installation.
 - Ported the full rendering algorithm: trunk marking, fragment connection,
   ring annotation, fancy double/triple bonds, relative angles,
   atom/charge/hydrogen placement and terse/verbose output formatting.

@@ -9,7 +9,7 @@
 
 * Requirements
 
-- Emacs 28.1+ with dynamic module support
+- Emacs 29.1+ with dynamic module support
 - [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library)
 - LaTeX with chemfig and TiKZ packages (for rendering output)
 
@@ -153,7 +153,9 @@ There are *4 ways* to use tochemfig:
 
 1. *Quick generation* with =tochemfig-default=: Input your molecule and get chemfig code instantly using your configured defaults.
 
-2. *Context-aware minor mode* with =tochemfig-mode=: Enable it in a buffer to generate chemfig code from the SMILES string at point or in the region, with output wrapped in =\chemfig{...}= automatically in LaTeX and Org buffers.  The commands live under the =C-c m= prefix:
+2. *Context-aware minor mode* with =tochemfig-mode=: Enable it in a buffer to generate chemfig code from the SMILES string at point or in the region, with output wrapped in =\chemfig{...}= automatically in LaTeX and Org buffers (including LaTeX source blocks inside Org).  The commands live under the =C-c m= prefix; an optional menu-bar entry appears while the mode is active.
+
+   Which major modes count as wrapping contexts is controlled by =tochemfig-mode-wrap-modes= (default: =tex-mode=, =latex-mode=, =LaTeX-mode=, =org-mode=, =markdown-mode=).  Wrapping is decided per command, so a single Org buffer can mix wrapped and unwrapped output.  Set =tochemfig-mode-auto-wrap= to nil to disable automatic wrapping.
 
    | Key       | Command                    | Description                       |
    |-----------+----------------------------+-----------------------------------|
@@ -170,7 +172,13 @@ There are *4 ways* to use tochemfig:
    (add-hook 'org-mode-hook #'tochemfig-mode)
    #+end_src
 
-3. *Interactive options menu* with =tochemfig-dispatch= (also bound to =tochemfig-custom=): a transient menu that edits every option live.  Options are buffer-local while =tochemfig-mode= is active.
+   To turn it on everywhere it makes sense, use the global mode (it enables =tochemfig-mode= only in the wrapping contexts above; opt into every buffer with =tochemfig-global-mode-all-buffers=):
+
+   #+begin_src emacs-lisp
+   (tochemfig-global-mode 1)
+   #+end_src
+
+3. *Interactive options menu* with =tochemfig-dispatch= (also bound to =tochemfig-custom=): a transient menu that edits every option live.  Options are buffer-local while =tochemfig-mode= is active, and are only localized the first time you edit them, so changes to the global defaults still reach untouched buffers.  Use =tochemfig-describe-options= to see the effective values, =tochemfig-save-options= / =tochemfig-reload-options= to persist the global defaults, and =tochemfig-reset-options= (=C-u= for global) to reset.
 
 4. *Single-parameter override*: Functions like =tochemfig-input-direct=, =tochemfig-rotate=, or =tochemfig-fancy-bonds= let you override one specific setting while keeping all other defaults.
 
@@ -230,6 +238,11 @@ To see all available commands, run =M-x tochemfig-= and explore the completion l
 - [X] *Customizable defaults*
 - [X] *Interactive transient options menu*
 - [X] Single-parameter override commands
+- [X] *Global mode* (=tochemfig-global-mode=) with configurable wrapping contexts
+- [X] Per-command wrapping (LaTeX/Org, plus Org LaTeX source blocks)
+- [X] Describe / save / reload / reset effective options
+- [X] SMILES recognised as a =thing= at point (with a prose-rejecting heuristic)
+- [X] Optional menu-bar entry while the mode is active
 
 * Testing
 

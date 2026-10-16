@@ -9,7 +9,7 @@
 ;; Version: 0.3.0
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools
 ;; Homepage: https://github.com/gicrisf/tochemfig
-;; Package-Requires: ((emacs "28.1") (indigo "0.11.1"))
+;; Package-Requires: ((emacs "29.1") (indigo "0.11.1"))
 
 ;; This file is not part of GNU Emacs.
 

@@ -57,13 +57,24 @@ M-x tochemfig-default RET <SMILES or file> RET
 ## Context-aware mode
 
 Enable `tochemfig-mode` in a buffer to generate chemfig code from the region
-or the SMILES string at point. In LaTeX and Org buffers the output is wrapped
-in `\chemfig{...}` automatically.
+or the SMILES string at point. In the wrapping contexts (LaTeX, Org and
+Markdown by default) the output is wrapped in `\chemfig{...}` automatically;
+wrapping is decided per command, so LaTeX source blocks inside Org work too.
 
 ```elisp
 (add-hook 'latex-mode-hook #'tochemfig-mode)
 (add-hook 'org-mode-hook #'tochemfig-mode)
 ```
+
+To enable it across all the wrapping contexts at once, use the global mode:
+
+```elisp
+(tochemfig-global-mode 1)
+```
+
+It only enables the mode in wrapping contexts; set
+`tochemfig-global-mode-all-buffers` to `t` to enable it everywhere, and
+`tochemfig-mode-wrap-modes` to change which major modes count.
 
 The commands are bound under the `C-c m` prefix:
 
@@ -83,6 +94,10 @@ Other useful mode commands:
 |-----------------------------|---------------------------------------------------|
 | `tochemfig-convert-region`  | Replace the region with chemfig for its SMILES    |
 | `tochemfig-custom`          | Alias for `tochemfig-dispatch` (options menu)     |
+| `tochemfig-describe-options`| Show effective options (buffer-local vs global)   |
+| `tochemfig-save-options`    | Save effective options as the global defaults     |
+| `tochemfig-reload-options`  | Reload the saved global defaults                  |
+| `tochemfig-reset-options`   | Reset buffer options (`C-u`: global defaults)     |
 
 ## Options menu
 
