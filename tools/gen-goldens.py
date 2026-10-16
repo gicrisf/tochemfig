@@ -14,6 +14,7 @@ Run through tools/gen-goldens.sh (which provides the right Python environment).
 """
 
 import os
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -60,13 +61,34 @@ CURATED = {
     "mixture_ethanol": "CCO.CCO",
     "methyl_radical": "[CH3]",
     "oxygen_radical": "[O]",
+    "ethyl_radical": "C[CH2]",
+    # Stereo single bonds (wedge/hash) and isotopes.
+    "bromochloromethane_stereo": "C[C@H](Cl)Br",
+    "lactic_acid": "C[C@H](O)C(=O)O",
+    "isotope_methanol": "[13CH3]CO",
+    # Charged aromatics and aromatic fragments.
+    "pyridinium": "c1cc[nH+]cc1",
+    "nitrophenol": "Oc1ccc(cc1)[N+](=O)[O-]",
+    # Macrocyclic, bridged and fused systems.
+    "cyclododecane": "C1CCCCCCCCCCC1",
+    "decalin": "C1CCC2CCCCC2C1",
+    # Extra multi-fragment salts/mixtures.
+    "salt_sodium_acetate": "CC(=O)[O-].[Na+]",
+    "mixture_water_ethanol": "O.CCO",
+    # A large structure (>150 atoms).
+    "long_alkane": "C" * 160,
 }
 
 # A subset rich enough to exercise the per-feature profiles.
+# Note: fused polycyclics (e.g. decalin) are deliberately kept out of RICH.
+# `hydrogens add` unfolds hydrogens with coordinates computed by Indigo, and
+# the reference (Indigo 1.46) and emacs-indigo (Indigo 1.2.3) place symmetric
+# ring hydrogens in a different order, which changes bond angles.  This is an
+# Indigo-version dependency, not a generator difference.
 RICH = [
-    "ethanol", "isobutane", "benzene", "naphthalene", "pyridine",
+    "ethanol", "isobutane", "benzene", "naphthalene", "indole", "pyridine",
     "glycine", "ammonium", "acetate", "caffeine", "alanine",
-    "salt_nacl", "oxygen_radical",
+    "salt_nacl", "oxygen_radical", "lactic_acid",
 ]
 
 # A batch of real-world structures pulled from emacs-indigo's ChEBI test data.
@@ -91,6 +113,7 @@ FLAG = {
     "fancy-bonds": "-f",
     "atom-numbers": "-n",
     "wrap-chemfig": "-w",
+    "legacy-lewis": "-j",
 }
 
 VALUE = {
@@ -127,12 +150,15 @@ RICH_PROFILES = {
     "hydrogens-delete": {"hydrogens": "delete"},
     "wrap": {"wrap-chemfig": True},
     "submol": {"submol-name": "mol"},
+    "legacy-lewis": {"legacy-lewis": True},
 }
 
 # Molecule specific extras (entry/exit atoms, cross bonds).
 EXTRA = [
     ("benzene", "entryexit", {"entry-atom": 1, "exit-atom": 4}),
     ("benzene", "cross", {"cross-bond": [(1, 2)]}),
+    ("caffeine", "entryexit", {"entry-atom": 4, "exit-atom": 10}),
+    ("indole", "entryexit", {"entry-atom": 3, "exit-atom": 8}),
 ]
 
 
@@ -241,6 +267,16 @@ def generate(cases):
     return manifest
 
 
+def check_perception():
+    """Fail unless emacs-indigo and the reference agree on the corpus.
+
+    Golden files are only meaningful if both Indigo builds perceive the same
+    molecules; re-verify that before (re)generating anything.
+    """
+    script = os.path.join(ROOT, "tools", "check-perception.py")
+    subprocess.run([sys.executable, script], check=True)
+
+
 def main():
     os.makedirs(CORPUS_DIR, exist_ok=True)
     os.makedirs(GOLDEN_DIR, exist_ok=True)
@@ -260,7 +296,10 @@ def main():
         normalize_mol(src, dst)
         paths[name] = dst
 
-    # 3. Generate golden files.
+    # 3. Refuse to generate unless both Indigo builds agree on the corpus.
+    check_perception()
+
+    # 4. Generate golden files.
     print("generating goldens...")
     cases = []
     for name, path in paths.items():
