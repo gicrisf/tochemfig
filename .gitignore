@@ -1,1 +1,11 @@
 *.elc
+/.eldev
+/Eldev-local
+/.venv
+build
+
+# Sibling checkouts used for development only
+/emacs-indigo
+/mol2chemfigPy3
+/cl-indigo
+/.claude

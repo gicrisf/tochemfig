@@ -1,0 +1,23 @@
+; -*- mode: emacs-lisp; lexical-binding: t -*-
+
+(eldev-use-package-archive 'melpa)
+
+;; The reference mol2chemfigPy3 implementation and its golden output files are
+;; used by the parity test suite.  During development a sibling emacs-indigo
+;; checkout is preferred, so the pre-built dynamic module is picked up without
+;; needing to download and compile it again.
+(eldev-add-extra-dependencies 'test '(:package indigo))
+
+(when (file-directory-p "emacs-indigo")
+  (eldev-add-loading-roots "emacs-indigo"))
+
+(setf eldev-main-fileset
+      '("tochemfig.el"
+        "tochemfig-atom.el"
+        "tochemfig-bond.el"
+        "tochemfig-mappings.el"
+        "tochemfig-molecule.el"))
+
+(setf eldev-test-fileset
+      '("test/tochemfig-syntax-test.el"
+        "test/tochemfig-parity-test.el"))
