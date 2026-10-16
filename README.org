@@ -244,8 +244,10 @@ implementation. Three layers of tests guard against regressions:
    generated chemfig back into a molecular graph and compares it, via
    canonical SMILES, with the graph read directly from Indigo.  This proves the
    output encodes the same molecule *independently of the reference*, and it
-   covers the SMILES/layout path that byte parity cannot.  A randomized
-   generator adds a fuzz smoke test.
+   covers the SMILES/layout path that byte parity cannot.  An option matrix
+   then re-runs every non-destructive option profile (angles, flips, labels,
+   bond scaling, wrapping, markers, fancy bonds, ...) and asserts the molecule
+   is unchanged; a randomized generator adds a fuzz smoke test.
 
 3. *Perception agreement*: =tools/check-perception.py= recomputes canonical
    SMILES for every corpus MOL with both =emacs-indigo= and the reference

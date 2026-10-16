@@ -231,6 +231,70 @@ Also reports total generation time (loose upper bound only)."
         (indigo-with-molecule (mol smiles)
           (tochemfig-graph-test--assert-mol mol (list override '("strict" . nil))))))))
 
+;;; Option matrix (metamorphic testing)
+
+(defconst tochemfig-graph-test--profiles
+  '(("default" . nil)
+    ("relative-angles" . (("relative-angles" . t)))
+    ("rotate" . (("angle" . 30.0) ("flip" . t)))
+    ("flip" . (("flip" . t)))
+    ("flop" . (("flop" . t)))
+    ("show-carbons" . (("show-carbons" . t)))
+    ("show-methyls" . (("show-methyls" . t)))
+    ("atom-numbers" . (("atom-numbers" . t)))
+    ("bond-scale-keep" . (("bond-scale" . keep)))
+    ("bond-scale-scale" . (("bond-scale" . scale) ("bond-stretch" . 2.0)))
+    ("bond-scale-normalize" . (("bond-scale" . normalize) ("bond-stretch" . 1.5)))
+    ("wrap-chemfig" . (("wrap-chemfig" . t)))
+    ("submol-name" . (("submol-name" . "mol")))
+    ("fancy-bonds" . (("fancy-bonds" . t)))
+    ("markers" . (("markers" . "a"))))
+  "Option profiles that must not change the encoded molecule.
+`terse' is excluded because it strips the ring-closure comments the parser
+needs; `aromatic-circles' because the circle replaces explicit ring bond
+orders; and `hydrogens' because it is covered by `tochemfig-graph-hydrogens'.
+`atom-numbers' drops charges and radicals, so it is only exercised on neutral,
+closed-shell molecules.")
+
+(defun tochemfig-graph-test--charged-p (graph)
+  "Return non-nil when GRAPH contains a charged or radical atom."
+  (cl-some (lambda (atom) (or (/= (nth 1 atom) 0) (/= (nth 2 atom) 0)))
+           (car graph)))
+
+(defun tochemfig-graph-test--matrix-check (mol base)
+  "Run every option profile on MOL (with base overrides BASE).
+Return a list of (PROFILE . CODE) failures."
+  (let (failures)
+    (dolist (profile tochemfig-graph-test--profiles)
+      (condition-case err
+          (pcase-let ((`(,expected ,actual ,code)
+                       (tochemfig-graph-test--check
+                        mol (append (cdr profile) base))))
+            (unless (and (equal (car profile) "atom-numbers")
+                         (tochemfig-graph-test--charged-p expected))
+              (unless (tochemfig-graph-test--equal expected actual)
+                (push (cons (car profile) code) failures))))
+        (error (push (cons (car profile) (format "error: %S" err)) failures))))
+    (nreverse failures)))
+
+(ert-deftest tochemfig-graph-option-matrix ()
+  "No option profile may change the molecule encoded by the chemfig output."
+  :tags '(graph)
+  (dolist (smiles tochemfig-graph-test--smiles)
+    (ert-info ((format "smiles: %s" smiles))
+      (indigo-with-molecule (mol smiles)
+        (dolist (failure (tochemfig-graph-test--matrix-check
+                          mol '(("strict" . nil))))
+          (ert-fail (format "smiles %s profile %s:\n%s"
+                            smiles (car failure) (cdr failure)))))))
+  (dolist (path tochemfig-graph-test--corpus)
+    (ert-info ((format "mol: %s" (file-name-nondirectory path)))
+      (indigo-with-mol-file (mol path)
+        (dolist (failure (tochemfig-graph-test--matrix-check mol nil))
+          (ert-fail (format "mol %s profile %s:\n%s"
+                            (file-name-nondirectory path) (car failure)
+                            (cdr failure))))))))
+
 ;;; Fuzz smoke + performance
 
 (defconst tochemfig-graph-test--fuzz-atoms

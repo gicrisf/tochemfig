@@ -24,7 +24,8 @@ Fully native, dependency-free chemfig generation.
   (=test/tochemfig-chemfig-parser.el=, =test/tochemfig-graph-test.el=),
   independent of the reference golden files.  It covers the SMILES/layout
   path, an expanded MOL corpus (stereo, isotopes, charges, macrocycles, a
-  160-atom structure) and a randomized fuzz smoke test.
+  160-atom structure), an option matrix asserting that every non-destructive
+  option profile preserves the molecule, and a randomized fuzz smoke test.
 - =tools/check-perception.py=, invoked by =tools/gen-goldens.py=, which fails
   loudly when =emacs-indigo= and the reference =epam.indigo= disagree on the
   corpus.  New golden profiles: =legacy-lewis=, and extra =cross=/=entryexit=
