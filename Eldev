@@ -5,11 +5,11 @@
 ;; The reference mol2chemfigPy3 implementation and its golden output files are
 ;; used by the parity test suite.  During development a sibling emacs-indigo
 ;; checkout is preferred, so the pre-built dynamic module is picked up without
-;; needing to download and compile it again.
-(eldev-add-extra-dependencies 'test '(:package indigo))
-
-(when (file-directory-p "emacs-indigo")
-  (eldev-add-loading-roots "emacs-indigo"))
+;; needing to download and compile it again.  Only when no sibling checkout is
+;; available do we fall back to the package from MELPA.
+(if (file-directory-p "emacs-indigo")
+    (eldev-add-loading-roots "emacs-indigo")
+  (eldev-add-extra-dependencies 'test '(:package indigo)))
 
 (setf eldev-main-fileset
       '("tochemfig.el"
@@ -19,5 +19,4 @@
         "tochemfig-molecule.el"))
 
 (setf eldev-test-fileset
-      '("test/tochemfig-syntax-test.el"
-        "test/tochemfig-parity-test.el"))
+      '("test/tochemfig-test.el"))
