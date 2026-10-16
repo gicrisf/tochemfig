@@ -386,6 +386,33 @@ function used to read a new value."
   (interactive)
   (tochemfig-dispatch))
 
+;;; Keymap
+
+(defvar tochemfig-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c m d") #'tochemfig)
+    (define-key map (kbd "C-c m c") #'tochemfig-dispatch)
+    (define-key map (kbd "C-c m f") #'tochemfig-input-file)
+    (define-key map (kbd "C-c m w") #'tochemfig-wrap-chemfig)
+    (define-key map (kbd "C-c m t") #'tochemfig-terse)
+    (define-key map (kbd "C-c m r") #'tochemfig-rotate)
+    (define-key map (kbd "C-c m p") #'tochemfig-copy)
+    map)
+  "Keymap for `tochemfig-mode'.
+The commands are bound under the `C-c m' prefix.")
+
+(with-eval-after-load 'which-key
+  (when (fboundp 'which-key-add-keymap-based-replacements)
+    (which-key-add-keymap-based-replacements tochemfig-mode-map
+      "C-c m" "tochemfig"
+      "C-c m d" "Generate (region/point/prompt)"
+      "C-c m c" "Options menu"
+      "C-c m f" "Generate from file"
+      "C-c m w" "Wrap in \\chemfig{}"
+      "C-c m t" "Terse output"
+      "C-c m r" "Rotate"
+      "C-c m p" "Copy to kill ring")))
+
 ;;; Minor Mode
 
 (defun tochemfig-mode--latex-or-org-p ()
@@ -411,6 +438,7 @@ Makes the `tochemfig-default-*' options buffer-local and, in LaTeX and
 Org buffers, wraps generated code in \\chemfig{...}.  The commands are
 available under the `C-c m' prefix."
   :lighter " tochemfig"
+  :keymap tochemfig-mode-map
   :group 'tochemfig
   (if tochemfig-mode
       (tochemfig-mode--on)
