@@ -108,10 +108,14 @@ Return (KIND . STRING), where KIND is either `direct' or `file'."
     (cons 'direct (read-string "Enter SMILES: "))))
 
 (defun tochemfig-mode--generate (kind text)
-  "Generate chemfig code for TEXT, read according to KIND."
-  (if (eq kind 'file)
-      (tochemfig--generate-from-file text)
-    (tochemfig--generate-from-string text)))
+  "Generate chemfig code for TEXT, read according to KIND.
+Signals a `user-error' when generation fails, so interactive commands do not
+surface a raw Indigo error."
+  (condition-case err
+      (if (eq kind 'file)
+          (tochemfig--generate-from-file text)
+        (tochemfig--generate-from-string text))
+    (error (user-error "tochemfig: %s" (error-message-string err)))))
 
 (defun tochemfig-mode--insert (code bounds)
   "Insert CODE, replacing BOUNDS when non-nil."

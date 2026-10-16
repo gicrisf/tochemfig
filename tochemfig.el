@@ -242,6 +242,8 @@ OVERRIDES is an alist of option overrides."
 (defun tochemfig--generate-from-string (smiles &optional overrides)
   "Generate chemfig code from SMILES string.
 OVERRIDES is an alist of option overrides."
+  (when (or (null smiles) (string-empty-p (string-trim smiles)))
+    (user-error "Empty SMILES input"))
   (indigo-with-molecule (mol smiles)
     (tochemfig--generate-from-mol mol overrides)))
 

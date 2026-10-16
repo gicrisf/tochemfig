@@ -94,5 +94,19 @@
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d")) #'tochemfig))
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-dispatch)))
 
+(ert-deftest tochemfig-mode-convert-empty-region ()
+  "Converting an empty region signals a user-error."
+  (with-temp-buffer
+    (should-error (tochemfig-convert-region (point-min) (point-max))
+                  :type 'user-error)))
+
+(ert-deftest tochemfig-mode-invalid-input-is-user-error ()
+  "A generation failure surfaces as a user-error, not a raw Indigo error."
+  (with-temp-buffer
+    (insert "not a smiles")
+    (goto-char 6)
+    (should-error (tochemfig-convert-region (point-min) (point-max))
+                  :type 'user-error)))
+
 (provide 'tochemfig-mode-test)
 ;;; tochemfig-mode-test.el ends here

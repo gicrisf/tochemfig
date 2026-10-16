@@ -151,5 +151,35 @@
   (dolist (case (tochemfig-test--manifest))
     (should (tochemfig-test--syntax-ok-p (tochemfig-test--expected case)))))
 
+;;; Error paths and degenerate input
+
+(ert-deftest tochemfig-error-invalid-smiles ()
+  "An unparseable SMILES signals an error."
+  (should-error (tochemfig--generate-from-string "not a smiles")))
+
+(ert-deftest tochemfig-error-empty-smiles ()
+  "Blank input signals a user-error."
+  (should-error (tochemfig--generate-from-string "") :type 'user-error)
+  (should-error (tochemfig--generate-from-string "   ") :type 'user-error))
+
+(ert-deftest tochemfig-error-invalid-entry-exit ()
+  "Out-of-range entry/exit atoms signal an error."
+  (should-error (tochemfig--generate-from-string "CCO" '(("entry-atom" . 99))))
+  (should-error (tochemfig--generate-from-string "CCO" '(("exit-atom" . 99)))))
+
+(ert-deftest tochemfig-error-invalid-cross-bond ()
+  "A cross-bond naming a non-existent bond signals an error."
+  (should-error (tochemfig--generate-from-string "CCO" '(("cross-bond" . ((1 9)))))))
+
+(ert-deftest tochemfig-error-strict-implicit-hydrogens ()
+  "Under `strict' t an uncomputable hydrogen signals; nil degrades gracefully."
+  (should-error (tochemfig--generate-from-string "c1ccncc1" '(("strict" . t))))
+  (should (stringp (tochemfig--generate-from-string "c1ccncc1" '(("strict" . nil))))))
+
+(ert-deftest tochemfig-degenerate-single-atom ()
+  "Single-atom molecules (no bonds) generate valid, non-empty syntax."
+  (dolist (smiles '("C" "[Na+]" "[O]"))
+    (should (tochemfig-test--syntax-ok-p (tochemfig--generate-from-string smiles)))))
+
 (provide 'tochemfig-test)
 ;;; tochemfig-test.el ends here
