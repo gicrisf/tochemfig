@@ -63,6 +63,13 @@ Return (CONTENT . INDEX-AFTER)."
       (setq s (if j (substring s (1+ j)) ""))))
   s)
 
+(defun tochemfig-cp--marker-index (s)
+  "Return the atom index encoded in a leading `@{aN}' marker, or nil."
+  (when (and (string-prefix-p "@{" s) (cl-position ?} s))
+    (let ((inner (substring s 2 (cl-position ?} s))))
+      (when (string-match "\\([0-9]+\\)\\'" inner)
+        (string-to-number (match-string 1 inner))))))
+
 (defun tochemfig-cp--macro-groups (s name)
   "Return the brace groups following the first NAME macro in S."
   (when (string-match (regexp-quote name) s)
@@ -207,12 +214,20 @@ parser ids.  Invisible link bonds and aromatic-circle bonds are dropped."
                (comment (cdr split)))
           (cond
            ((and (string= c "") (string= comment "")) nil)
+           ;; Wrapper lines from `wrap-chemfig' / `submol-name': `\chemfig{',
+           ;; `\definesubmol{...}{' and the matching lone `}'.
+           ((or (string-prefix-p "\\chemfig{" c)
+                (string-prefix-p "\\definesubmol{" c)
+                (string= c "}"))
+            nil)
            ((string= c "(") (push current stack))
            ((string= c ")") (setq current (pop stack)))
            (t
             (let* ((bp (tochemfig-cp--parse-bond c))
                    (binfo (car bp))
-                   (rest (tochemfig-cp--strip-markers (cdr bp)))
+                   (raw (cdr bp))
+                   (marker (tochemfig-cp--marker-index raw))
+                   (rest (tochemfig-cp--strip-markers raw))
                    (target (tochemfig-cp--closure-target comment))
                    (link (plist-get binfo :link)))
               (cond
@@ -226,7 +241,7 @@ parser ids.  Invisible link bonds and aromatic-circle bonds are dropped."
                ((string-prefix-p "\\phantom{" rest) nil)
                ;; Real atom (empty label means a hidden carbon).
                (t
-                (let* ((orig (tochemfig-cp--atom-number comment))
+                (let* ((orig (or (tochemfig-cp--atom-number comment) marker))
                        (element (if (string= rest "")
                                     "C"
                                   (tochemfig-cp--element rest)))
