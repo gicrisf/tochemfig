@@ -18,18 +18,43 @@
 
 (ert-deftest tochemfig-mode-context-p ()
   "LaTeX and Org buffers are recognised as wrapping contexts."
-  (with-temp-buffer (latex-mode) (should (tochemfig-mode--latex-or-org-p)))
-  (with-temp-buffer (org-mode) (should (tochemfig-mode--latex-or-org-p)))
+  (with-temp-buffer (latex-mode) (should (tochemfig-mode--wrap-context-p)))
+  (with-temp-buffer (org-mode) (should (tochemfig-mode--wrap-context-p)))
   (with-temp-buffer (emacs-lisp-mode)
-    (should-not (tochemfig-mode--latex-or-org-p))))
+    (should-not (tochemfig-mode--wrap-context-p))))
 
-(ert-deftest tochemfig-mode-auto-wrap-on-enable ()
-  "Enabling the mode in a LaTeX buffer turns on wrapping locally."
+(ert-deftest tochemfig-mode-wrap-modes-configurable ()
+  "`tochemfig-mode-wrap-modes' selects the wrapping contexts."
+  (let ((tochemfig-mode-wrap-modes '(emacs-lisp-mode)))
+    (with-temp-buffer (emacs-lisp-mode)
+      (should (tochemfig-mode--wrap-context-p)))
+    (with-temp-buffer (latex-mode)
+      (should-not (tochemfig-mode--wrap-context-p)))))
+
+(ert-deftest tochemfig-mode-org-src-block ()
+  "A LaTeX source block in Org is a wrapping context."
+  (require 'org)
+  (with-temp-buffer
+    (org-mode)
+    (insert "#+begin_src latex\nCCO\n#+end_src\n")
+    (goto-char (point-min))
+    (search-forward "CCO")
+    (should (tochemfig-mode--org-latex-block-p))))
+
+(ert-deftest tochemfig-mode-wrap-per-command ()
+  "Wrapping is decided per command, not when the mode is enabled."
   (with-temp-buffer
     (latex-mode)
     (tochemfig-mode 1)
-    (should (local-variable-p 'tochemfig-default-wrap-chemfig))
-    (should tochemfig-default-wrap-chemfig)))
+    (insert "CCO")
+    (tochemfig-convert-region (point-min) (point-max))
+    (should (string-prefix-p "\\chemfig{" (buffer-string))))
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (insert "CCO")
+    (tochemfig-convert-region (point-min) (point-max))
+    (should-not (string-prefix-p "\\chemfig{" (buffer-string)))))
 
 (ert-deftest tochemfig-mode-options-localize-lazily ()
   "Enabling the mode does not freeze global options; editing localizes."

@@ -35,6 +35,15 @@ the buffer produce code ready to be pasted into a LaTeX document."
   :group 'tochemfig
   :type 'boolean)
 
+(defcustom tochemfig-mode-wrap-modes
+  '(tex-mode latex-mode LaTeX-mode org-mode markdown-mode)
+  "Major modes (and their derivatives) where output is wrapped.
+When `tochemfig-mode-auto-wrap' is non-nil and the current command runs in
+one of these modes (or inside an Org LaTeX source block), the generated
+code is wrapped in \\chemfig{...}."
+  :group 'tochemfig
+  :type '(repeat symbol))
+
 (defconst tochemfig-mode--option-vars
   '(tochemfig-default-input
     tochemfig-default-terse
@@ -107,14 +116,15 @@ Return (KIND . STRING), where KIND is either `direct' or `file'."
       (cons 'file (read-file-name "Molecule file: "))
     (cons 'direct (read-string "Enter SMILES: "))))
 
-(defun tochemfig-mode--generate (kind text)
+(defun tochemfig-mode--generate (kind text &optional overrides)
   "Generate chemfig code for TEXT, read according to KIND.
-Signals a `user-error' when generation fails, so interactive commands do not
-surface a raw Indigo error."
+OVERRIDES, when non-nil, is an alist of option overrides.  Signals a
+`user-error' when generation fails, so interactive commands do not surface
+a raw Indigo error."
   (condition-case err
       (if (eq kind 'file)
-          (tochemfig--generate-from-file text)
-        (tochemfig--generate-from-string text))
+          (tochemfig--generate-from-file text overrides)
+        (tochemfig--generate-from-string text overrides))
     (error (user-error "tochemfig: %s" (error-message-string err)))))
 
 (defun tochemfig-mode--insert (code bounds)
@@ -131,12 +141,13 @@ surface a raw Indigo error."
   "Generate chemfig code and either insert it or COPY it to the kill ring.
 SOURCE, when non-nil, is a (TEXT BOUNDS) list to use instead of the
 molecule at point or in the region."
-  (let ((src (or source (tochemfig-mode--source-at-point))))
+  (let ((src (or source (tochemfig-mode--source-at-point)))
+        (overrides (and (tochemfig-mode--wrap-p) '(("wrap-chemfig" . t)))))
     (if src
-        (let ((code (tochemfig-mode--generate 'direct (car src))))
+        (let ((code (tochemfig-mode--generate 'direct (car src) overrides)))
           (if copy (kill-new code) (tochemfig-mode--insert code (cadr src))))
       (let* ((input (tochemfig-mode--read-input))
-             (code (tochemfig-mode--generate (car input) (cdr input))))
+             (code (tochemfig-mode--generate (car input) (cdr input) overrides)))
         (if copy (kill-new code) (insert code))))))
 
 ;;;###autoload
@@ -157,8 +168,11 @@ The region is interpreted as a SMILES string."
   (let ((text (string-trim (buffer-substring-no-properties start end))))
     (when (string-empty-p text)
       (user-error "Empty region"))
-    (tochemfig-mode--insert (tochemfig-mode--generate 'direct text)
-                            (cons start end))))
+    (tochemfig-mode--insert
+     (tochemfig-mode--generate 'direct text
+                               (and (tochemfig-mode--wrap-p)
+                                    '(("wrap-chemfig" . t))))
+     (cons start end))))
 
 ;;;###autoload
 (defun tochemfig-copy ()
@@ -419,17 +433,24 @@ The commands are bound under the `C-c m' prefix.")
 
 ;;; Minor Mode
 
-(defun tochemfig-mode--latex-or-org-p ()
-  "Return non-nil in a LaTeX or Org buffer."
-  (derived-mode-p 'tex-mode 'latex-mode 'LaTeX-mode 'org-mode))
+(defun tochemfig-mode--org-latex-block-p ()
+  "Return non-nil when point is inside an Org LaTeX source block."
+  (and (derived-mode-p 'org-mode)
+       (fboundp 'org-babel-get-src-block-info)
+       (let ((info (ignore-errors (org-babel-get-src-block-info 'light))))
+         (and info (member (car info) '("latex" "tex"))))))
 
-(defun tochemfig-mode--on ()
-  "Set up buffer-local state for `tochemfig-mode'.
-Option variables are localized lazily, the first time they are edited (see
-`tochemfig-mode--set'), so changes to the global defaults keep reaching
-buffers the user has not customized."
-  (when (and tochemfig-mode-auto-wrap (tochemfig-mode--latex-or-org-p))
-    (set (make-local-variable 'tochemfig-default-wrap-chemfig) t)))
+(defun tochemfig-mode--wrap-context-p ()
+  "Return non-nil when the buffer (or point) is a wrapping context."
+  (or (apply #'derived-mode-p tochemfig-mode-wrap-modes)
+      (tochemfig-mode--org-latex-block-p)))
+
+(defun tochemfig-mode--wrap-p ()
+  "Return non-nil when generated code should be wrapped in \\chemfig{}."
+  (or tochemfig-default-wrap-chemfig
+      (and tochemfig-mode
+           tochemfig-mode-auto-wrap
+           (tochemfig-mode--wrap-context-p))))
 
 (defun tochemfig-mode--off ()
   "Remove buffer-local state installed by `tochemfig-mode'."
@@ -445,8 +466,7 @@ available under the `C-c m' prefix."
   :lighter " tochemfig"
   :keymap tochemfig-mode-map
   :group 'tochemfig
-  (if tochemfig-mode
-      (tochemfig-mode--on)
+  (unless tochemfig-mode
     (tochemfig-mode--off)))
 
 ;;; Global mode
@@ -465,7 +485,7 @@ contexts (LaTeX and Org); set this to t to enable it everywhere."
        (not (derived-mode-p 'special-mode))
        (not buffer-read-only)
        (or tochemfig-global-mode-all-buffers
-           (tochemfig-mode--latex-or-org-p))))
+           (tochemfig-mode--wrap-context-p))))
 
 (defun tochemfig-mode--turn-on ()
   "Enable `tochemfig-mode' in eligible buffers."
