@@ -16,9 +16,19 @@ Fully native, dependency-free chemfig generation.
   =\chemfig{...}= in LaTeX and Org buffers, and keeps options buffer-local.
 - A =transient= options menu, =tochemfig-dispatch= (=tochemfig-custom=),
   replacing the old completing-read wizard.
-- A parity test suite (265 ERT tests) comparing output against golden files
-  produced by the reference =mol2chemfigPy3= implementation, plus a chemfig
-  syntax validator and mode tests.
+- A parity test suite (about 330 ERT tests) comparing output against golden
+  files produced by the reference =mol2chemfigPy3= implementation, plus a
+  chemfig syntax validator and mode tests.
+- A structural correctness suite: generated chemfig is parsed back into a
+  molecular graph and compared with the Indigo input via canonical SMILES
+  (=test/tochemfig-chemfig-parser.el=, =test/tochemfig-graph-test.el=),
+  independent of the reference golden files.  It covers the SMILES/layout
+  path, an expanded MOL corpus (stereo, isotopes, charges, macrocycles, a
+  160-atom structure) and a randomized fuzz smoke test.
+- =tools/check-perception.py=, invoked by =tools/gen-goldens.py=, which fails
+  loudly when =emacs-indigo= and the reference =epam.indigo= disagree on the
+  corpus.  New golden profiles: =legacy-lewis=, and extra =cross=/=entryexit=
+  cases.
 - A =flake.nix= development shell providing the Python reference toolchain.
 - New options: =-aromatic-circles=, =-cross-bond=, =-markers=, =-strict=,
   =-recalculate-coordinates= and legacy Lewis radicals.
@@ -26,6 +36,9 @@ Fully native, dependency-free chemfig generation.
   =tochemfig-cross-bond=.
 
 ** Changed
+- Generation failures in =tochemfig-mode= now surface as =user-error= instead
+  of a raw Indigo error; blank SMILES input signals a =user-error= rather than
+  an internal error.
 - =tochemfig= now depends on =emacs-indigo= instead of a Python
   =mol2chemfig= installation, and requires Emacs 28.1 (for =transient=).
 - Ported the full rendering algorithm: trunk marking, fragment connection,

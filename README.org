@@ -234,10 +234,31 @@ To see all available commands, run =M-x tochemfig-= and explore the completion l
 * Testing
 
 The chemfig generator is a native port of the reference =mol2chemfig=
-implementation. To guard against regressions, a parity test suite compares its
-output against golden files produced by =mol2chemfigPy3= for a corpus of
-molecules and option combinations, and a syntax validator checks that the
-generated chemfig is well formed.
+implementation. Three layers of tests guard against regressions:
+
+1. *Parity*: ~330 ERT tests compare output against golden files produced by
+   =mol2chemfigPy3= for a corpus of molecules and option combinations, plus a
+   syntax validator that checks the generated chemfig is well formed.
+
+2. *Structural correctness*: =test/tochemfig-graph-test.el= parses the
+   generated chemfig back into a molecular graph and compares it, via
+   canonical SMILES, with the graph read directly from Indigo.  This proves the
+   output encodes the same molecule *independently of the reference*, and it
+   covers the SMILES/layout path that byte parity cannot.  A randomized
+   generator adds a fuzz smoke test.
+
+3. *Perception agreement*: =tools/check-perception.py= recomputes canonical
+   SMILES for every corpus MOL with both =emacs-indigo= and the reference
+   =epam.indigo=, and =tools/gen-goldens.py= refuses to regenerate goldens if
+   the two builds disagree.
+
+The corpus MOL files carry explicit 2D coordinates, so parity is independent of
+the Indigo *layout* implementation: both sides read the same coordinates.
+=indigo-unfold-hydrogens= (used by =hydrogens add=) is the exception, because
+Indigo itself places the added hydrogens; combinations that depend on that
+placement are kept out of the profiled subset.  Golden regeneration also runs
+=normalize_header=, which replaces the timestamped program line so output is
+byte-reproducible.
 
 The project provides a Nix flake with the required Python reference toolchain:
 
