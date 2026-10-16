@@ -180,6 +180,50 @@ The region is interpreted as a SMILES string."
   (interactive)
   (tochemfig-mode--produce t))
 
+;;; Option introspection
+
+;;;###autoload
+(defun tochemfig-describe-options ()
+  "Display the effective tochemfig options for the current buffer."
+  (interactive)
+  (let ((subject (current-buffer))
+        (out (get-buffer-create "*tochemfig options*")))
+    (with-current-buffer out
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert (format "tochemfig options for buffer `%s'\n\n"
+                        (buffer-name subject)))
+        (insert (format "%-32s %-22s %s\n" "OPTION" "EFFECTIVE" "SCOPE"))
+        (insert (make-string 72 ?-) "\n")
+        (dolist (var tochemfig-mode--option-vars)
+          (let* ((effective (buffer-local-value var subject))
+                 (local (local-variable-p var subject))
+                 (differs (and local (not (equal effective (default-value var)))))
+                 (scope (cond (differs "buffer-local")
+                              (local "buffer-local (= global)")
+                              (t "global"))))
+            (insert (format "%-32s %-22s %s\n"
+                            (symbol-name var)
+                            (tochemfig-mode--display effective)
+                            scope))))
+        (goto-char (point-min)))
+      (special-mode))
+    (display-buffer out)))
+
+;;;###autoload
+(defun tochemfig-reset-options (&optional global)
+  "Reset tochemfig options to their defaults.
+Without a prefix argument, remove the buffer-local option values in the
+current buffer.  With a prefix argument GLOBAL, reset the global defaults
+to their `defcustom' values everywhere."
+  (interactive "P")
+  (if global
+      (dolist (var tochemfig-mode--option-vars)
+        (set-default var (eval (car (get var 'standard-value)) t)))
+    (dolist (var tochemfig-mode--option-vars)
+      (kill-local-variable var)))
+  (message "tochemfig options reset%s" (if global " globally" "")))
+
 ;;; Transient menu
 
 (defvar tochemfig-mode--edit-buffer nil
