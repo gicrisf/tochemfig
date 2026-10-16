@@ -200,14 +200,36 @@ To see all available commands, run =M-x tochemfig-= and explore the completion l
 - [X] Show/hide methyl group labels
 - [X] Add or remove explicit hydrogen atoms
 - [X] *Draw fancier double and triple bonds*
+- [X] Draw circles inside aromatic rings
+- [X] Draw crossing bonds on top of others
+- [X] Add atom and bond markers
 - [X] Show atom numbers for debugging
+- [X] Render charges and radicals
 - [X] Scale or normalize bond lengths
+- [X] Recalculate or preserve input coordinates
 - [X] Wrap output in =\chemfig{...}= command
 - [X] *Define submols* with entry/exit atoms
 - [X] Export submols as external =.tex= files
 - [X] *Customizable defaults*
 - [X] *Step-by-step parameter wizard*
 - [X] Single-parameter override commands
+
+* Testing
+
+The chemfig generator is a native port of the reference =mol2chemfig=
+implementation. To guard against regressions, a parity test suite compares its
+output against golden files produced by =mol2chemfigPy3= for a corpus of
+molecules and option combinations, and a syntax validator checks that the
+generated chemfig is well formed.
+
+The project provides a Nix flake with the required Python reference toolchain:
+
+#+begin_src bash
+nix develop          # development shell (Emacs, eldev, reference Python)
+eldev test           # run the test suite
+tools/gen-goldens.sh # regenerate the corpus and golden files
+#+end_src
+
 
 * Donate
 
