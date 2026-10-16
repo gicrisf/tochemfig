@@ -154,6 +154,16 @@ def indigo():
     return Indigo()
 
 
+def normalize_header(path):
+    """Replace the timestamped program line so generation is deterministic."""
+    with open(path, "r", encoding="utf-8") as fh:
+        lines = fh.readlines()
+    if len(lines) > 1:
+        lines[1] = "  tochemfig-corpus\n"
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.writelines(lines)
+
+
 def smiles_to_mol(smiles, path):
     ind = indigo()
     mol = ind.loadMolecule(smiles)
@@ -167,6 +177,7 @@ def smiles_to_mol(smiles, path):
     except Exception:
         pass
     mol.saveMolfile(path)
+    normalize_header(path)
 
 
 def normalize_mol(src, dst):
@@ -177,6 +188,7 @@ def normalize_mol(src, dst):
     except Exception:
         pass
     mol.saveMolfile(dst)
+    normalize_header(dst)
 
 
 def elisp_value(value):
@@ -198,7 +210,10 @@ def elisp_value(value):
 def elisp_options(options):
     parts = []
     for key in options:
-        parts.append(":%s %s" % (key, elisp_value(options[key])))
+        if key in ("bond-scale", "hydrogens"):
+            parts.append(":%s %s" % (key, options[key]))
+        else:
+            parts.append(":%s %s" % (key, elisp_value(options[key])))
     return "(" + " ".join(parts) + ")"
 
 

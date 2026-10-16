@@ -322,23 +322,23 @@
    :golden "test/golden/ethanol__methyls.tex")
   (:name "ethanol__scale-keep"
    :input "test/corpus/ethanol.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/ethanol__scale-keep.tex")
   (:name "ethanol__scale-scale"
    :input "test/corpus/ethanol.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/ethanol__scale-scale.tex")
   (:name "ethanol__scale-normalize"
    :input "test/corpus/ethanol.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/ethanol__scale-normalize.tex")
   (:name "ethanol__hydrogens-add"
    :input "test/corpus/ethanol.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/ethanol__hydrogens-add.tex")
   (:name "ethanol__hydrogens-delete"
    :input "test/corpus/ethanol.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/ethanol__hydrogens-delete.tex")
   (:name "ethanol__wrap"
    :input "test/corpus/ethanol.mol"
@@ -382,23 +382,23 @@
    :golden "test/golden/isobutane__methyls.tex")
   (:name "isobutane__scale-keep"
    :input "test/corpus/isobutane.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/isobutane__scale-keep.tex")
   (:name "isobutane__scale-scale"
    :input "test/corpus/isobutane.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/isobutane__scale-scale.tex")
   (:name "isobutane__scale-normalize"
    :input "test/corpus/isobutane.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/isobutane__scale-normalize.tex")
   (:name "isobutane__hydrogens-add"
    :input "test/corpus/isobutane.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/isobutane__hydrogens-add.tex")
   (:name "isobutane__hydrogens-delete"
    :input "test/corpus/isobutane.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/isobutane__hydrogens-delete.tex")
   (:name "isobutane__wrap"
    :input "test/corpus/isobutane.mol"
@@ -442,23 +442,23 @@
    :golden "test/golden/benzene__methyls.tex")
   (:name "benzene__scale-keep"
    :input "test/corpus/benzene.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/benzene__scale-keep.tex")
   (:name "benzene__scale-scale"
    :input "test/corpus/benzene.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/benzene__scale-scale.tex")
   (:name "benzene__scale-normalize"
    :input "test/corpus/benzene.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/benzene__scale-normalize.tex")
   (:name "benzene__hydrogens-add"
    :input "test/corpus/benzene.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/benzene__hydrogens-add.tex")
   (:name "benzene__hydrogens-delete"
    :input "test/corpus/benzene.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/benzene__hydrogens-delete.tex")
   (:name "benzene__wrap"
    :input "test/corpus/benzene.mol"
@@ -502,23 +502,23 @@
    :golden "test/golden/naphthalene__methyls.tex")
   (:name "naphthalene__scale-keep"
    :input "test/corpus/naphthalene.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/naphthalene__scale-keep.tex")
   (:name "naphthalene__scale-scale"
    :input "test/corpus/naphthalene.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/naphthalene__scale-scale.tex")
   (:name "naphthalene__scale-normalize"
    :input "test/corpus/naphthalene.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/naphthalene__scale-normalize.tex")
   (:name "naphthalene__hydrogens-add"
    :input "test/corpus/naphthalene.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/naphthalene__hydrogens-add.tex")
   (:name "naphthalene__hydrogens-delete"
    :input "test/corpus/naphthalene.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/naphthalene__hydrogens-delete.tex")
   (:name "naphthalene__wrap"
    :input "test/corpus/naphthalene.mol"
@@ -562,23 +562,23 @@
    :golden "test/golden/pyridine__methyls.tex")
   (:name "pyridine__scale-keep"
    :input "test/corpus/pyridine.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/pyridine__scale-keep.tex")
   (:name "pyridine__scale-scale"
    :input "test/corpus/pyridine.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/pyridine__scale-scale.tex")
   (:name "pyridine__scale-normalize"
    :input "test/corpus/pyridine.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/pyridine__scale-normalize.tex")
   (:name "pyridine__hydrogens-add"
    :input "test/corpus/pyridine.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/pyridine__hydrogens-add.tex")
   (:name "pyridine__hydrogens-delete"
    :input "test/corpus/pyridine.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/pyridine__hydrogens-delete.tex")
   (:name "pyridine__wrap"
    :input "test/corpus/pyridine.mol"
@@ -622,23 +622,23 @@
    :golden "test/golden/glycine__methyls.tex")
   (:name "glycine__scale-keep"
    :input "test/corpus/glycine.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/glycine__scale-keep.tex")
   (:name "glycine__scale-scale"
    :input "test/corpus/glycine.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/glycine__scale-scale.tex")
   (:name "glycine__scale-normalize"
    :input "test/corpus/glycine.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/glycine__scale-normalize.tex")
   (:name "glycine__hydrogens-add"
    :input "test/corpus/glycine.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/glycine__hydrogens-add.tex")
   (:name "glycine__hydrogens-delete"
    :input "test/corpus/glycine.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/glycine__hydrogens-delete.tex")
   (:name "glycine__wrap"
    :input "test/corpus/glycine.mol"
@@ -682,23 +682,23 @@
    :golden "test/golden/ammonium__methyls.tex")
   (:name "ammonium__scale-keep"
    :input "test/corpus/ammonium.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/ammonium__scale-keep.tex")
   (:name "ammonium__scale-scale"
    :input "test/corpus/ammonium.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/ammonium__scale-scale.tex")
   (:name "ammonium__scale-normalize"
    :input "test/corpus/ammonium.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/ammonium__scale-normalize.tex")
   (:name "ammonium__hydrogens-add"
    :input "test/corpus/ammonium.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/ammonium__hydrogens-add.tex")
   (:name "ammonium__hydrogens-delete"
    :input "test/corpus/ammonium.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/ammonium__hydrogens-delete.tex")
   (:name "ammonium__wrap"
    :input "test/corpus/ammonium.mol"
@@ -742,23 +742,23 @@
    :golden "test/golden/acetate__methyls.tex")
   (:name "acetate__scale-keep"
    :input "test/corpus/acetate.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/acetate__scale-keep.tex")
   (:name "acetate__scale-scale"
    :input "test/corpus/acetate.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/acetate__scale-scale.tex")
   (:name "acetate__scale-normalize"
    :input "test/corpus/acetate.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/acetate__scale-normalize.tex")
   (:name "acetate__hydrogens-add"
    :input "test/corpus/acetate.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/acetate__hydrogens-add.tex")
   (:name "acetate__hydrogens-delete"
    :input "test/corpus/acetate.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/acetate__hydrogens-delete.tex")
   (:name "acetate__wrap"
    :input "test/corpus/acetate.mol"
@@ -802,23 +802,23 @@
    :golden "test/golden/caffeine__methyls.tex")
   (:name "caffeine__scale-keep"
    :input "test/corpus/caffeine.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/caffeine__scale-keep.tex")
   (:name "caffeine__scale-scale"
    :input "test/corpus/caffeine.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/caffeine__scale-scale.tex")
   (:name "caffeine__scale-normalize"
    :input "test/corpus/caffeine.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/caffeine__scale-normalize.tex")
   (:name "caffeine__hydrogens-add"
    :input "test/corpus/caffeine.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/caffeine__hydrogens-add.tex")
   (:name "caffeine__hydrogens-delete"
    :input "test/corpus/caffeine.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/caffeine__hydrogens-delete.tex")
   (:name "caffeine__wrap"
    :input "test/corpus/caffeine.mol"
@@ -862,23 +862,23 @@
    :golden "test/golden/alanine__methyls.tex")
   (:name "alanine__scale-keep"
    :input "test/corpus/alanine.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/alanine__scale-keep.tex")
   (:name "alanine__scale-scale"
    :input "test/corpus/alanine.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/alanine__scale-scale.tex")
   (:name "alanine__scale-normalize"
    :input "test/corpus/alanine.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/alanine__scale-normalize.tex")
   (:name "alanine__hydrogens-add"
    :input "test/corpus/alanine.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/alanine__hydrogens-add.tex")
   (:name "alanine__hydrogens-delete"
    :input "test/corpus/alanine.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/alanine__hydrogens-delete.tex")
   (:name "alanine__wrap"
    :input "test/corpus/alanine.mol"
@@ -922,23 +922,23 @@
    :golden "test/golden/salt_nacl__methyls.tex")
   (:name "salt_nacl__scale-keep"
    :input "test/corpus/salt_nacl.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/salt_nacl__scale-keep.tex")
   (:name "salt_nacl__scale-scale"
    :input "test/corpus/salt_nacl.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/salt_nacl__scale-scale.tex")
   (:name "salt_nacl__scale-normalize"
    :input "test/corpus/salt_nacl.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/salt_nacl__scale-normalize.tex")
   (:name "salt_nacl__hydrogens-add"
    :input "test/corpus/salt_nacl.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/salt_nacl__hydrogens-add.tex")
   (:name "salt_nacl__hydrogens-delete"
    :input "test/corpus/salt_nacl.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/salt_nacl__hydrogens-delete.tex")
   (:name "salt_nacl__wrap"
    :input "test/corpus/salt_nacl.mol"
@@ -982,23 +982,23 @@
    :golden "test/golden/oxygen_radical__methyls.tex")
   (:name "oxygen_radical__scale-keep"
    :input "test/corpus/oxygen_radical.mol"
-   :options (:bond-scale "keep")
+   :options (:bond-scale keep)
    :golden "test/golden/oxygen_radical__scale-keep.tex")
   (:name "oxygen_radical__scale-scale"
    :input "test/corpus/oxygen_radical.mol"
-   :options (:bond-scale "scale" :bond-stretch 2.0)
+   :options (:bond-scale scale :bond-stretch 2.0)
    :golden "test/golden/oxygen_radical__scale-scale.tex")
   (:name "oxygen_radical__scale-normalize"
    :input "test/corpus/oxygen_radical.mol"
-   :options (:bond-scale "normalize" :bond-stretch 1.5)
+   :options (:bond-scale normalize :bond-stretch 1.5)
    :golden "test/golden/oxygen_radical__scale-normalize.tex")
   (:name "oxygen_radical__hydrogens-add"
    :input "test/corpus/oxygen_radical.mol"
-   :options (:hydrogens "add")
+   :options (:hydrogens add)
    :golden "test/golden/oxygen_radical__hydrogens-add.tex")
   (:name "oxygen_radical__hydrogens-delete"
    :input "test/corpus/oxygen_radical.mol"
-   :options (:hydrogens "delete")
+   :options (:hydrogens delete)
    :golden "test/golden/oxygen_radical__hydrogens-delete.tex")
   (:name "oxygen_radical__wrap"
    :input "test/corpus/oxygen_radical.mol"
