@@ -31,12 +31,25 @@
     (should (local-variable-p 'tochemfig-default-wrap-chemfig))
     (should tochemfig-default-wrap-chemfig)))
 
-(ert-deftest tochemfig-mode-options-are-buffer-local ()
-  "Enabling the mode makes the option variables buffer-local."
+(ert-deftest tochemfig-mode-options-localize-lazily ()
+  "Enabling the mode does not freeze global options; editing localizes."
   (with-temp-buffer
     (emacs-lisp-mode)
+    (set-default 'tochemfig-default-terse nil)
     (tochemfig-mode 1)
-    (should (local-variable-p 'tochemfig-default-terse))))
+    (setq tochemfig-mode--edit-buffer (current-buffer))
+    (should-not (local-variable-p 'tochemfig-default-terse))
+    ;; a global change still reaches the buffer
+    (set-default 'tochemfig-default-terse t)
+    (should (tochemfig-mode--value 'tochemfig-default-terse))
+    ;; editing the option localizes it from now on
+    (call-interactively #'tochemfig-toggle-terse)
+    (should (local-variable-p 'tochemfig-default-terse))
+    (should-not (tochemfig-mode--value 'tochemfig-default-terse))
+    ;; global changes no longer leak in
+    (set-default 'tochemfig-default-terse t)
+    (should-not (tochemfig-mode--value 'tochemfig-default-terse)))
+  (set-default 'tochemfig-default-terse nil))
 
 (ert-deftest tochemfig-mode-region-conversion ()
   "Converting a region wraps the output in a LaTeX buffer."

@@ -424,11 +424,12 @@ The commands are bound under the `C-c m' prefix.")
   (derived-mode-p 'tex-mode 'latex-mode 'LaTeX-mode 'org-mode))
 
 (defun tochemfig-mode--on ()
-  "Set up buffer-local state for `tochemfig-mode'."
-  (dolist (var tochemfig-mode--option-vars)
-    (make-local-variable var))
+  "Set up buffer-local state for `tochemfig-mode'.
+Option variables are localized lazily, the first time they are edited (see
+`tochemfig-mode--set'), so changes to the global defaults keep reaching
+buffers the user has not customized."
   (when (and tochemfig-mode-auto-wrap (tochemfig-mode--latex-or-org-p))
-    (setq tochemfig-default-wrap-chemfig t)))
+    (set (make-local-variable 'tochemfig-default-wrap-chemfig) t)))
 
 (defun tochemfig-mode--off ()
   "Remove buffer-local state installed by `tochemfig-mode'."
