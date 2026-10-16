@@ -9,7 +9,7 @@
 ;; Version: 0.3.0
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools
 ;; Homepage: https://github.com/gicrisf/tochemfig
-;; Package-Requires: ((emacs "25.1") (indigo "0.11.1"))
+;; Package-Requires: ((emacs "28.1") (indigo "0.11.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -167,6 +167,23 @@ A list of (START END) atom number pairs, using 1-based molfile numbering."
   :group 'tochemfig
   :type 'boolean)
 
+(defcustom tochemfig-default-submol-name nil
+  "Wrap generated code into \\definesubmol{NAME}{...} when non-nil."
+  :group 'tochemfig
+  :type '(choice (const :tag "Disabled" nil) string))
+
+(defcustom tochemfig-default-entry-atom nil
+  "Number of the first atom to render, or nil to pick automatically.
+Relevant only when generated code is used as a sub-molecule."
+  :group 'tochemfig
+  :type '(choice (const :tag "Automatic" nil) integer))
+
+(defcustom tochemfig-default-exit-atom nil
+  "Number of the last atom to render, or nil to pick automatically.
+Relevant only when generated code is used as a sub-molecule."
+  :group 'tochemfig
+  :type '(choice (const :tag "Automatic" nil) integer))
+
 ;;; Internal Functions
 
 (defun tochemfig--build-options (overrides)
@@ -188,6 +205,9 @@ OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t))."
                     :cross-bond tochemfig-default-cross-bond
                     :legacy-lewis tochemfig-default-legacy-lewis
                     :wrap-chemfig tochemfig-default-wrap-chemfig
+                    :submol-name tochemfig-default-submol-name
+                    :entry-atom tochemfig-default-entry-atom
+                    :exit-atom tochemfig-default-exit-atom
                     :terse tochemfig-default-terse
                     :indent tochemfig-default-indent
                     :strict tochemfig-default-strict
@@ -226,59 +246,6 @@ OVERRIDES is an alist of option overrides."
 OVERRIDES is an alist of option overrides."
   (indigo-with-mol-file (mol path)
     (tochemfig--generate-from-mol mol overrides)))
-
-;;; Argument Selector (for custom command)
-
-(defconst tochemfig--wizard-args
-  '("input" "terse" "strict" "recalculate-coordinates" "indent" "angle"
-    "relative-angles" "flip" "flop" "show-carbons" "show-methyls" "hydrogens"
-    "aromatic-circles" "fancy-bonds" "atom-numbers" "bond-scale"
-    "bond-stretch" "wrap-chemfig" "submol-name" "entry-atom" "exit-atom"
-    "markers" "cross-bond" "legacy-lewis")
-  "Option names offered by the customization wizard.")
-
-(defun tochemfig--current-args ()
-  "Return an alist of all current option values for the wizard display."
-  (list (cons "input" tochemfig-default-input)
-        (cons "terse" (if tochemfig-default-terse t nil))
-        (cons "strict" (if tochemfig-default-strict t nil))
-        (cons "recalculate-coordinates"
-              (if tochemfig-default-recalculate-coordinates t nil))
-        (cons "indent" tochemfig-default-indent)
-        (cons "angle" tochemfig-default-angle)
-        (cons "relative-angles" (if tochemfig-default-relative-angles t nil))
-        (cons "flip" (if tochemfig-default-flip t nil))
-        (cons "flop" (if tochemfig-default-flop t nil))
-        (cons "show-carbons" (if tochemfig-default-show-carbons t nil))
-        (cons "show-methyls" (if tochemfig-default-show-methyls t nil))
-        (cons "hydrogens" tochemfig-default-hydrogens)
-        (cons "aromatic-circles" (if tochemfig-default-aromatic-circles t nil))
-        (cons "fancy-bonds" (if tochemfig-default-fancy-bonds t nil))
-        (cons "atom-numbers" (if tochemfig-default-atom-numbers t nil))
-        (cons "bond-scale" tochemfig-default-bond-scale)
-        (cons "bond-stretch" tochemfig-default-bond-stretch)
-        (cons "markers" (or tochemfig-default-markers ""))
-        (cons "cross-bond" (or tochemfig-default-cross-bond ""))
-        (cons "legacy-lewis" (if tochemfig-default-legacy-lewis t nil))
-        (cons "wrap-chemfig" (if tochemfig-default-wrap-chemfig t nil))
-        (cons "submol-name" "")
-        (cons "entry-atom" "")
-        (cons "exit-atom" "")))
-
-(defun tochemfig--custom-arg-selector (items)
-  "Show a list of arguments for editing, displaying current ITEMS values."
-  (let* ((current (tochemfig--current-args))
-         (merged (mapcar (lambda (arg)
-                           (let ((override (assoc (car arg) items)))
-                             (if override (cons (car arg) (cdr override)) arg)))
-                         current))
-         (choices (mapcar (lambda (arg)
-                            (cons (format "%s (selected: %s)" (car arg) (cdr arg))
-                                  (car arg)))
-                          merged))
-         (choice (completing-read "Select argument to edit: "
-                                  (mapcar #'car choices))))
-    (cdr (assoc choice choices))))
 
 ;;; Interactive Commands
 
@@ -481,72 +448,6 @@ FLIP mirrors horizontally, FLOP mirrors vertically."
            (list (cons "submol-name" submol)
                  (cons "entry-atom" entry)
                  (cons "exit-atom" exit)))))
-
-;;;###autoload
-(defun tochemfig-custom ()
-  "Interactively customize all options and generate chemfig code."
-  (interactive)
-  (let ((wizargs '())
-        (input tochemfig-default-input)
-        (continue t))
-    (while continue
-      (let ((selected (tochemfig--custom-arg-selector wizargs)))
-        (cond
-         ;; Boolean options.
-         ((member selected '("terse" "strict" "recalculate-coordinates"
-                             "relative-angles" "flip" "flop" "show-carbons"
-                             "show-methyls" "aromatic-circles" "fancy-bonds"
-                             "atom-numbers" "legacy-lewis" "wrap-chemfig"))
-          (push (cons selected
-                      (equal (completing-read (format "%s? " selected)
-                                              '("true" "false"))
-                             "true"))
-                wizargs))
-         ;; Input mode.
-         ((equal selected "input")
-          (let ((val (intern (completing-read "Select input mode: "
-                                              '("file" "direct")))))
-            (setq input val)
-            (push (cons selected val) wizargs)))
-         ;; Integer options.
-         ((equal selected "indent")
-          (push (cons selected (read-number "Indentation spaces: " 4)) wizargs))
-         ((member selected '("entry-atom" "exit-atom"))
-          (push (cons selected (read-number (format "%s index: " selected))) wizargs))
-         ;; Float options.
-         ((member selected '("angle" "bond-stretch"))
-          (push (cons selected (read-number (format "%s: " selected) 0.0)) wizargs))
-         ;; Choice options.
-         ((equal selected "hydrogens")
-          (push (cons selected
-                      (intern (completing-read "Hydrogen handling: "
-                                               '("add" "delete" "keep"))))
-                wizargs))
-         ((equal selected "bond-scale")
-          (push (cons selected
-                      (intern (completing-read "Bond scaling mode: "
-                                               '("scale" "normalize" "keep"))))
-                wizargs))
-         ;; String options.
-         ((equal selected "submol-name")
-          (push (cons selected (read-string "Submol name: ")) wizargs))
-         ((equal selected "markers")
-          (push (cons selected (read-string "Marker prefix: " "a")) wizargs))
-         ((equal selected "cross-bond")
-          (let ((s (read-string "Cross bond atoms (e.g. 5-6,7-8): ")))
-            (push (cons selected
-                        (mapcar (lambda (frag)
-                                  (mapcar #'string-to-number (split-string frag "-")))
-                                (split-string s "," t)))
-                  wizargs)))))
-      (unless (y-or-n-p "Edit another option? ")
-        (setq continue nil)))
-    (let ((molecule (if (eq input 'file)
-                        (read-file-name "Molecule file: ")
-                      (read-string "Enter SMILES: "))))
-      (insert (if (eq input 'file)
-                  (tochemfig--generate-from-file molecule wizargs)
-                (tochemfig--generate-from-string molecule wizargs))))))
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here
