@@ -224,6 +224,94 @@
    :input "test/corpus/oxygen_radical.mol"
    :options (:terse t)
    :golden "test/golden/oxygen_radical__terse.tex")
+  (:name "ethyl_radical__default"
+   :input "test/corpus/ethyl_radical.mol"
+   :options ()
+   :golden "test/golden/ethyl_radical__default.tex")
+  (:name "ethyl_radical__terse"
+   :input "test/corpus/ethyl_radical.mol"
+   :options (:terse t)
+   :golden "test/golden/ethyl_radical__terse.tex")
+  (:name "bromochloromethane_stereo__default"
+   :input "test/corpus/bromochloromethane_stereo.mol"
+   :options ()
+   :golden "test/golden/bromochloromethane_stereo__default.tex")
+  (:name "bromochloromethane_stereo__terse"
+   :input "test/corpus/bromochloromethane_stereo.mol"
+   :options (:terse t)
+   :golden "test/golden/bromochloromethane_stereo__terse.tex")
+  (:name "lactic_acid__default"
+   :input "test/corpus/lactic_acid.mol"
+   :options ()
+   :golden "test/golden/lactic_acid__default.tex")
+  (:name "lactic_acid__terse"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:terse t)
+   :golden "test/golden/lactic_acid__terse.tex")
+  (:name "isotope_methanol__default"
+   :input "test/corpus/isotope_methanol.mol"
+   :options ()
+   :golden "test/golden/isotope_methanol__default.tex")
+  (:name "isotope_methanol__terse"
+   :input "test/corpus/isotope_methanol.mol"
+   :options (:terse t)
+   :golden "test/golden/isotope_methanol__terse.tex")
+  (:name "pyridinium__default"
+   :input "test/corpus/pyridinium.mol"
+   :options ()
+   :golden "test/golden/pyridinium__default.tex")
+  (:name "pyridinium__terse"
+   :input "test/corpus/pyridinium.mol"
+   :options (:terse t)
+   :golden "test/golden/pyridinium__terse.tex")
+  (:name "nitrophenol__default"
+   :input "test/corpus/nitrophenol.mol"
+   :options ()
+   :golden "test/golden/nitrophenol__default.tex")
+  (:name "nitrophenol__terse"
+   :input "test/corpus/nitrophenol.mol"
+   :options (:terse t)
+   :golden "test/golden/nitrophenol__terse.tex")
+  (:name "cyclododecane__default"
+   :input "test/corpus/cyclododecane.mol"
+   :options ()
+   :golden "test/golden/cyclododecane__default.tex")
+  (:name "cyclododecane__terse"
+   :input "test/corpus/cyclododecane.mol"
+   :options (:terse t)
+   :golden "test/golden/cyclododecane__terse.tex")
+  (:name "decalin__default"
+   :input "test/corpus/decalin.mol"
+   :options ()
+   :golden "test/golden/decalin__default.tex")
+  (:name "decalin__terse"
+   :input "test/corpus/decalin.mol"
+   :options (:terse t)
+   :golden "test/golden/decalin__terse.tex")
+  (:name "salt_sodium_acetate__default"
+   :input "test/corpus/salt_sodium_acetate.mol"
+   :options ()
+   :golden "test/golden/salt_sodium_acetate__default.tex")
+  (:name "salt_sodium_acetate__terse"
+   :input "test/corpus/salt_sodium_acetate.mol"
+   :options (:terse t)
+   :golden "test/golden/salt_sodium_acetate__terse.tex")
+  (:name "mixture_water_ethanol__default"
+   :input "test/corpus/mixture_water_ethanol.mol"
+   :options ()
+   :golden "test/golden/mixture_water_ethanol__default.tex")
+  (:name "mixture_water_ethanol__terse"
+   :input "test/corpus/mixture_water_ethanol.mol"
+   :options (:terse t)
+   :golden "test/golden/mixture_water_ethanol__terse.tex")
+  (:name "long_alkane__default"
+   :input "test/corpus/long_alkane.mol"
+   :options ()
+   :golden "test/golden/long_alkane__default.tex")
+  (:name "long_alkane__terse"
+   :input "test/corpus/long_alkane.mol"
+   :options (:terse t)
+   :golden "test/golden/long_alkane__terse.tex")
   (:name "issue230__default"
    :input "test/corpus/issue230.mol"
    :options ()
@@ -348,6 +436,10 @@
    :input "test/corpus/ethanol.mol"
    :options (:submol-name "mol")
    :golden "test/golden/ethanol__submol.tex")
+  (:name "ethanol__legacy-lewis"
+   :input "test/corpus/ethanol.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/ethanol__legacy-lewis.tex")
   (:name "isobutane__rotate"
    :input "test/corpus/isobutane.mol"
    :options (:angle 30.0 :flip t)
@@ -408,6 +500,10 @@
    :input "test/corpus/isobutane.mol"
    :options (:submol-name "mol")
    :golden "test/golden/isobutane__submol.tex")
+  (:name "isobutane__legacy-lewis"
+   :input "test/corpus/isobutane.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/isobutane__legacy-lewis.tex")
   (:name "benzene__rotate"
    :input "test/corpus/benzene.mol"
    :options (:angle 30.0 :flip t)
@@ -468,6 +564,10 @@
    :input "test/corpus/benzene.mol"
    :options (:submol-name "mol")
    :golden "test/golden/benzene__submol.tex")
+  (:name "benzene__legacy-lewis"
+   :input "test/corpus/benzene.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/benzene__legacy-lewis.tex")
   (:name "naphthalene__rotate"
    :input "test/corpus/naphthalene.mol"
    :options (:angle 30.0 :flip t)
@@ -528,6 +628,74 @@
    :input "test/corpus/naphthalene.mol"
    :options (:submol-name "mol")
    :golden "test/golden/naphthalene__submol.tex")
+  (:name "naphthalene__legacy-lewis"
+   :input "test/corpus/naphthalene.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/naphthalene__legacy-lewis.tex")
+  (:name "indole__rotate"
+   :input "test/corpus/indole.mol"
+   :options (:angle 30.0 :flip t)
+   :golden "test/golden/indole__rotate.tex")
+  (:name "indole__relative"
+   :input "test/corpus/indole.mol"
+   :options (:relative-angles t)
+   :golden "test/golden/indole__relative.tex")
+  (:name "indole__fancy"
+   :input "test/corpus/indole.mol"
+   :options (:fancy-bonds t)
+   :golden "test/golden/indole__fancy.tex")
+  (:name "indole__circles"
+   :input "test/corpus/indole.mol"
+   :options (:aromatic-circles t)
+   :golden "test/golden/indole__circles.tex")
+  (:name "indole__atomnums"
+   :input "test/corpus/indole.mol"
+   :options (:atom-numbers t)
+   :golden "test/golden/indole__atomnums.tex")
+  (:name "indole__markers"
+   :input "test/corpus/indole.mol"
+   :options (:markers "a")
+   :golden "test/golden/indole__markers.tex")
+  (:name "indole__carbons"
+   :input "test/corpus/indole.mol"
+   :options (:show-carbons t)
+   :golden "test/golden/indole__carbons.tex")
+  (:name "indole__methyls"
+   :input "test/corpus/indole.mol"
+   :options (:show-methyls t)
+   :golden "test/golden/indole__methyls.tex")
+  (:name "indole__scale-keep"
+   :input "test/corpus/indole.mol"
+   :options (:bond-scale keep)
+   :golden "test/golden/indole__scale-keep.tex")
+  (:name "indole__scale-scale"
+   :input "test/corpus/indole.mol"
+   :options (:bond-scale scale :bond-stretch 2.0)
+   :golden "test/golden/indole__scale-scale.tex")
+  (:name "indole__scale-normalize"
+   :input "test/corpus/indole.mol"
+   :options (:bond-scale normalize :bond-stretch 1.5)
+   :golden "test/golden/indole__scale-normalize.tex")
+  (:name "indole__hydrogens-add"
+   :input "test/corpus/indole.mol"
+   :options (:hydrogens add)
+   :golden "test/golden/indole__hydrogens-add.tex")
+  (:name "indole__hydrogens-delete"
+   :input "test/corpus/indole.mol"
+   :options (:hydrogens delete)
+   :golden "test/golden/indole__hydrogens-delete.tex")
+  (:name "indole__wrap"
+   :input "test/corpus/indole.mol"
+   :options (:wrap-chemfig t)
+   :golden "test/golden/indole__wrap.tex")
+  (:name "indole__submol"
+   :input "test/corpus/indole.mol"
+   :options (:submol-name "mol")
+   :golden "test/golden/indole__submol.tex")
+  (:name "indole__legacy-lewis"
+   :input "test/corpus/indole.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/indole__legacy-lewis.tex")
   (:name "pyridine__rotate"
    :input "test/corpus/pyridine.mol"
    :options (:angle 30.0 :flip t)
@@ -588,6 +756,10 @@
    :input "test/corpus/pyridine.mol"
    :options (:submol-name "mol")
    :golden "test/golden/pyridine__submol.tex")
+  (:name "pyridine__legacy-lewis"
+   :input "test/corpus/pyridine.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/pyridine__legacy-lewis.tex")
   (:name "glycine__rotate"
    :input "test/corpus/glycine.mol"
    :options (:angle 30.0 :flip t)
@@ -648,6 +820,10 @@
    :input "test/corpus/glycine.mol"
    :options (:submol-name "mol")
    :golden "test/golden/glycine__submol.tex")
+  (:name "glycine__legacy-lewis"
+   :input "test/corpus/glycine.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/glycine__legacy-lewis.tex")
   (:name "ammonium__rotate"
    :input "test/corpus/ammonium.mol"
    :options (:angle 30.0 :flip t)
@@ -708,6 +884,10 @@
    :input "test/corpus/ammonium.mol"
    :options (:submol-name "mol")
    :golden "test/golden/ammonium__submol.tex")
+  (:name "ammonium__legacy-lewis"
+   :input "test/corpus/ammonium.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/ammonium__legacy-lewis.tex")
   (:name "acetate__rotate"
    :input "test/corpus/acetate.mol"
    :options (:angle 30.0 :flip t)
@@ -768,6 +948,10 @@
    :input "test/corpus/acetate.mol"
    :options (:submol-name "mol")
    :golden "test/golden/acetate__submol.tex")
+  (:name "acetate__legacy-lewis"
+   :input "test/corpus/acetate.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/acetate__legacy-lewis.tex")
   (:name "caffeine__rotate"
    :input "test/corpus/caffeine.mol"
    :options (:angle 30.0 :flip t)
@@ -828,6 +1012,10 @@
    :input "test/corpus/caffeine.mol"
    :options (:submol-name "mol")
    :golden "test/golden/caffeine__submol.tex")
+  (:name "caffeine__legacy-lewis"
+   :input "test/corpus/caffeine.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/caffeine__legacy-lewis.tex")
   (:name "alanine__rotate"
    :input "test/corpus/alanine.mol"
    :options (:angle 30.0 :flip t)
@@ -888,6 +1076,10 @@
    :input "test/corpus/alanine.mol"
    :options (:submol-name "mol")
    :golden "test/golden/alanine__submol.tex")
+  (:name "alanine__legacy-lewis"
+   :input "test/corpus/alanine.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/alanine__legacy-lewis.tex")
   (:name "salt_nacl__rotate"
    :input "test/corpus/salt_nacl.mol"
    :options (:angle 30.0 :flip t)
@@ -948,6 +1140,10 @@
    :input "test/corpus/salt_nacl.mol"
    :options (:submol-name "mol")
    :golden "test/golden/salt_nacl__submol.tex")
+  (:name "salt_nacl__legacy-lewis"
+   :input "test/corpus/salt_nacl.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/salt_nacl__legacy-lewis.tex")
   (:name "oxygen_radical__rotate"
    :input "test/corpus/oxygen_radical.mol"
    :options (:angle 30.0 :flip t)
@@ -1008,6 +1204,74 @@
    :input "test/corpus/oxygen_radical.mol"
    :options (:submol-name "mol")
    :golden "test/golden/oxygen_radical__submol.tex")
+  (:name "oxygen_radical__legacy-lewis"
+   :input "test/corpus/oxygen_radical.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/oxygen_radical__legacy-lewis.tex")
+  (:name "lactic_acid__rotate"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:angle 30.0 :flip t)
+   :golden "test/golden/lactic_acid__rotate.tex")
+  (:name "lactic_acid__relative"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:relative-angles t)
+   :golden "test/golden/lactic_acid__relative.tex")
+  (:name "lactic_acid__fancy"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:fancy-bonds t)
+   :golden "test/golden/lactic_acid__fancy.tex")
+  (:name "lactic_acid__circles"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:aromatic-circles t)
+   :golden "test/golden/lactic_acid__circles.tex")
+  (:name "lactic_acid__atomnums"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:atom-numbers t)
+   :golden "test/golden/lactic_acid__atomnums.tex")
+  (:name "lactic_acid__markers"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:markers "a")
+   :golden "test/golden/lactic_acid__markers.tex")
+  (:name "lactic_acid__carbons"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:show-carbons t)
+   :golden "test/golden/lactic_acid__carbons.tex")
+  (:name "lactic_acid__methyls"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:show-methyls t)
+   :golden "test/golden/lactic_acid__methyls.tex")
+  (:name "lactic_acid__scale-keep"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:bond-scale keep)
+   :golden "test/golden/lactic_acid__scale-keep.tex")
+  (:name "lactic_acid__scale-scale"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:bond-scale scale :bond-stretch 2.0)
+   :golden "test/golden/lactic_acid__scale-scale.tex")
+  (:name "lactic_acid__scale-normalize"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:bond-scale normalize :bond-stretch 1.5)
+   :golden "test/golden/lactic_acid__scale-normalize.tex")
+  (:name "lactic_acid__hydrogens-add"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:hydrogens add)
+   :golden "test/golden/lactic_acid__hydrogens-add.tex")
+  (:name "lactic_acid__hydrogens-delete"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:hydrogens delete)
+   :golden "test/golden/lactic_acid__hydrogens-delete.tex")
+  (:name "lactic_acid__wrap"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:wrap-chemfig t)
+   :golden "test/golden/lactic_acid__wrap.tex")
+  (:name "lactic_acid__submol"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:submol-name "mol")
+   :golden "test/golden/lactic_acid__submol.tex")
+  (:name "lactic_acid__legacy-lewis"
+   :input "test/corpus/lactic_acid.mol"
+   :options (:legacy-lewis t)
+   :golden "test/golden/lactic_acid__legacy-lewis.tex")
   (:name "benzene__entryexit"
    :input "test/corpus/benzene.mol"
    :options (:entry-atom 1 :exit-atom 4)
@@ -1015,4 +1279,12 @@
   (:name "benzene__cross"
    :input "test/corpus/benzene.mol"
    :options (:cross-bond ((1 2)))
-   :golden "test/golden/benzene__cross.tex"))
+   :golden "test/golden/benzene__cross.tex")
+  (:name "caffeine__entryexit"
+   :input "test/corpus/caffeine.mol"
+   :options (:entry-atom 4 :exit-atom 10)
+   :golden "test/golden/caffeine__entryexit.tex")
+  (:name "indole__entryexit"
+   :input "test/corpus/indole.mol"
+   :options (:entry-atom 3 :exit-atom 8)
+   :golden "test/golden/indole__entryexit.tex"))
