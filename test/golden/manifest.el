@@ -1014,5 +1014,5 @@
    :golden "test/golden/benzene__entryexit.tex")
   (:name "benzene__cross"
    :input "test/corpus/benzene.mol"
-   :options (:cross-bond ((1 . 2)))
+   :options (:cross-bond ((1 2)))
    :golden "test/golden/benzene__cross.tex"))

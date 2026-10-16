@@ -203,7 +203,7 @@ def elisp_value(value):
     if isinstance(value, float):
         return repr(value)
     if isinstance(value, list):
-        return "(" + " ".join("(%d . %d)" % (a, b) for a, b in value) + ")"
+        return "(" + " ".join("(%d %d)" % (a, b) for a, b in value) + ")"
     raise TypeError(f"cannot encode {value!r}")
 
 
