@@ -17,9 +17,19 @@
 
 (require 'cl-lib)
 (require 'indigo)
+;; See the note in tochemfig.el: the iterator macros live in `indigo-iter',
+;; which indigo only loads once its module has loaded.  Require it explicitly so
+;; compilation does not depend on the module.
+(eval-when-compile (require 'indigo-iter))
 (require 'tochemfig-atom)
 (require 'tochemfig-bond)
 (require 'tochemfig-mappings)
+
+(unless (macrop 'indigo-with-atoms-iterator)
+  (error "tochemfig requires emacs-indigo (>= 0.10.1), but the \
+`indigo-with-atoms-iterator' macro is unavailable.  Install or upgrade \
+emacs-indigo (e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') \
+and rebuild tochemfig"))
 
 (cl-defstruct (tochemfig-molecule (:constructor tochemfig-molecule-create))
   options

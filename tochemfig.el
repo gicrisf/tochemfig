@@ -9,7 +9,7 @@
 ;; Version: 0.3.0
 ;; Keywords: chemistry mol smiles chemfig convenience data extensions files languages lisp tex tools
 ;; Homepage: https://github.com/gicrisf/tochemfig
-;; Package-Requires: ((emacs "29.1") (indigo "0.11.1"))
+;; Package-Requires: ((emacs "29.1") (indigo "0.10.1"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -35,7 +35,21 @@
 ;;; Code:
 
 (require 'indigo)
+;; Emacs-indigo only defines its resource-management macros (`indigo-with-*')
+;; once its dynamic module has loaded (they live in `indigo-mol'/`indigo-iter',
+;; required from inside `indigo-load-module').  When byte-compilation happens in
+;; an environment where the module cannot be loaded, those macros are absent and
+;; the compiler bakes in unexpanded calls (which then fail at runtime with
+;; "void-function mol").  Load the pure-Elisp macro libraries explicitly so
+;; compilation never depends on the module.
+(eval-when-compile (require 'indigo-mol))
 (require 'tochemfig-molecule)
+
+(unless (macrop 'indigo-with-molecule)
+  (error "tochemfig requires emacs-indigo (>= 0.10.1), but the \
+`indigo-with-molecule' macro is unavailable.  Install or upgrade emacs-indigo \
+\(e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') and rebuild \
+tochemfig"))
 
 ;;; Customization
 
