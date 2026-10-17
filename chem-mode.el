@@ -1,9 +1,13 @@
-;;; chem-mode.el --- Generic chemical drawing mode -*- lexical-binding: t; -*-
+;;; chem-mode.el --- Generate chemical drawings from molecules -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022, 2025 Giovanni Crisalfi
 
 ;; Author: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 ;; Maintainer: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
+;; Version: 0.4.0
+;; Keywords: chemistry mol smiles convenience languages
+;; Homepage: https://github.com/gicrisf/tochemfig
+;; Package-Requires: ((emacs "29.1") (indigo "0.10.1") (transient "0.7.0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -16,18 +20,12 @@
 ;;; Code:
 
 (require 'thingatpt)
-(require 'tochemfig)
 (require 'chem-indigo)
 (require 'chem-options)
 (require 'chem-export)
 (require 'chem-exp-chemfig)
 
 (declare-function chem-dispatch-menu "chem-dispatch" ())
-
-(defgroup chem-mode nil
-  "Generate chemical drawings from molecular structures."
-  :prefix "chem-"
-  :group 'applications)
 
 (defcustom chem-default-exporter 'chemfig
   "Exporter used by `chem-export' and `chem-copy'."
@@ -141,7 +139,7 @@ Set it to nil to rely on other persistence."
 (defun chem-mode--read-input ()
   "Read a molecule from the minibuffer.
 Return (KIND . STRING), where KIND is either `direct' or `file'."
-  (if (eq tochemfig-default-input 'file)
+  (if (eq chem-default-input 'file)
       (cons 'file (read-file-name "Molecule file: "))
     (cons 'direct (read-string "Enter SMILES: "))))
 
@@ -149,7 +147,7 @@ Return (KIND . STRING), where KIND is either `direct' or `file'."
   "Generate output for TEXT, read according to KIND.
 OVERRIDES is an alist of option overrides."
   (condition-case err
-      (let* ((options (tochemfig--build-options overrides))
+      (let* ((options (chem--build-options overrides))
              (drawing (if (eq kind 'file)
                           (chem-from-file text options)
                         (chem-from-string text options))))
@@ -181,7 +179,7 @@ OVERRIDES is an alist of option overrides."
 
 (defun chem-mode--wrap-p ()
   "Return non-nil when generated code should be wrapped."
-  (or tochemfig-default-wrap-chemfig
+  (or chem-exp-chemfig-default-wrap-chemfig
       (and (bound-and-true-p chem-mode)
            chem-mode-auto-wrap
            (chem-mode--wrap-context-p))))
@@ -223,12 +221,19 @@ The selected exporter is `chem-default-exporter'."
   (require 'chem-dispatch)
   (chem-dispatch-menu))
 
+;;;###autoload
+(defun tochemfig ()
+  "Generate chemfig code for the molecule at point or in the region."
+  (interactive)
+  (let ((chem-default-exporter 'chemfig))
+    (chem-export)))
+
 ;;; Option introspection
 
 (defun chem-mode--option-vars ()
   "Return all option variables used by the generic UI."
   (delete-dups
-   (append (list 'tochemfig-default-input)
+   (append (list 'chem-default-input)
            (mapcar (lambda (spec) (plist-get spec :variable))
                    chem-common-option-specs)
            (mapcar (lambda (spec) (plist-get spec :variable))

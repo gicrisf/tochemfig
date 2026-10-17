@@ -12,24 +12,19 @@
   (eldev-add-extra-dependencies 'test '(:package indigo)))
 
 (setf eldev-main-fileset
-      '("tochemfig.el"
+      '("chem-mode.el"
         "chem-ir.el"
-        "tochemfig-atom.el"
-        "tochemfig-bond.el"
+        "chem-bond.el"
         "chem-indigo.el"
         "chem-options.el"
         "chem-exp-chemfig-mappings.el"
         "chem-export.el"
         "chem-exp-chemfig.el"
-        "chem-mode.el"
-        "chem-dispatch.el"
-        "tochemfig-molecule.el"
-        "tochemfig-transient.el"
-        "tochemfig-mode.el"))
+        "chem-dispatch.el"))
 
 (setf eldev-test-fileset
-      '("test/tochemfig-test.el"
+      '("test/chem-parity-test.el"
         "test/chem-ir-test.el"
         "test/chem-mode-test.el"
-        "test/tochemfig-mode-test.el"
-        "test/tochemfig-graph-test.el"))
+        "test/chem-mode-ui-test.el"
+        "test/chem-graph-test.el"))

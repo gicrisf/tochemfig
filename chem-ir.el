@@ -21,15 +21,6 @@
 
 (require 'cl-lib)
 
-(eval-and-compile
-  (defun chem-ir-alias-accessor (old new)
-    "Alias struct accessor OLD to NEW, copying accessor properties.
-This keeps `setf' working for the transitional aliases."
-    (defalias old new)
-    (dolist (prop '(compiler-macro side-effect-free gv-expander gv-setter
-                                   setf-method document-generalized-variable))
-      (put old prop (get new prop)))))
-
 (cl-defstruct (chem-atom (:constructor chem-atom-create))
   options                        ; Option plist (shared with the drawing)
   idx                            ; Integer index (0-based)
@@ -119,17 +110,6 @@ render these attributes; they must not re-read the options."
                'plain)))
      (chem-drawing-bonds drawing)))
   drawing)
-
-;; Transitional aliases while the drawing struct uses its neutral name.
-(eval-and-compile
-  (chem-ir-alias-accessor 'tochemfig-molecule-create 'chem-drawing-create)
-  (chem-ir-alias-accessor 'tochemfig-molecule-p 'chem-drawing-p)
-  (chem-ir-alias-accessor 'copy-tochemfig-molecule 'copy-chem-drawing)
-  (dolist (slot '(options toolkit atoms bonds atom-pairs seen-atoms seen-bonds
-                         entry-atom exit-atom exit-bond root bond-scale))
-    (chem-ir-alias-accessor
-     (intern (concat "tochemfig-molecule-" (symbol-name slot)))
-     (intern (concat "chem-drawing-" (symbol-name slot))))))
 
 (provide 'chem-ir)
 ;;; chem-ir.el ends here

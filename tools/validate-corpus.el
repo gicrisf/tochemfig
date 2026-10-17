@@ -26,8 +26,8 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'tochemfig)
-(require 'tochemfig-chemfig-parser)
+(require 'chem-mode)
+(require 'chem-exp-chemfig-parser)
 
 (defun chem-validate-corpus--mol-files (root)
   "Return all MOL files under ROOT in a stable order."
@@ -45,6 +45,11 @@ ROOT is the corpus root.  The relative directory layout is preserved."
   "Create the parent directory of PATH when needed."
   (make-directory (file-name-directory path) t))
 
+(defun chem-validate-corpus--generate (mol-file)
+  "Generate chemfig output for MOL-FILE with the validation options."
+  (let ((options (chem--build-options '(("strict" . nil)))))
+    (chem-render (chem-from-file mol-file options) 'chemfig options)))
+
 (defun chem-validate-corpus-write (root output-dir)
   "Generate default chemfig output for every MOL file under ROOT.
 Write the results under OUTPUT-DIR, preserving the directory layout."
@@ -53,7 +58,7 @@ Write the results under OUTPUT-DIR, preserving the directory layout."
     (make-directory output-dir t)
     (dolist (mol-file files)
       (let* ((out (chem-validate-corpus--output-path root output-dir mol-file))
-             (code (tochemfig--generate-from-file mol-file '(("strict" . nil)))))
+             (code (chem-validate-corpus--generate mol-file)))
         (chem-validate-corpus--ensure-parent out)
         (with-temp-file out (insert code))
         (setq count (1+ count))
@@ -70,7 +75,7 @@ Signal an error when any output differs.  Return the number of files checked."
         (failures 0))
     (dolist (mol-file files)
       (let* ((baseline (chem-validate-corpus--output-path root baseline-dir mol-file))
-             (code (tochemfig--generate-from-file mol-file '(("strict" . nil))))
+             (code (chem-validate-corpus--generate mol-file))
              (expected (when (file-readable-p baseline)
                          (with-temp-buffer
                            (insert-file-contents baseline)
@@ -90,13 +95,13 @@ Signal an error when any output differs.  Return the number of files checked."
 (defun chem-validate-corpus-graph (root)
   "Check graph round-trip for every MOL file under ROOT.
 Return the number of files checked.  Signal an error on the first failure."
-  (require 'tochemfig-graph-test)
+  (require 'chem-graph-test)
   (let ((files (chem-validate-corpus--mol-files root))
         (count 0))
     (dolist (mol-file files)
       (condition-case err
           (indigo-with-mol-file (mol mol-file)
-            (tochemfig-graph-test--assert-mol mol '(("strict" . nil))))
+            (chem-graph-test--assert-mol mol '(("strict" . nil))))
         (error
          (error "graph validation failed for %s: %s"
                 (file-relative-name mol-file root)

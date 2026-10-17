@@ -6,9 +6,8 @@
 
 ;;; Commentary:
 
-;; Smoke tests for the generic commands, keymap, and dispatch.  The old
-;; tochemfig command tests remain intact until the compatibility layer is
-;; removed.
+;; Smoke tests for the generic commands, keymap, and dispatch.  The direct
+;; `tochemfig` command remains available for chemfig users.
 
 ;;; Code:
 

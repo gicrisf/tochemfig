@@ -25,7 +25,7 @@
   (when (file-directory-p sibling)
     (add-to-list 'load-path sibling)))
 
-(require 'tochemfig)
+(require 'chem-mode)
 (require 'chem-indigo)
 (require 'chem-options)
 (require 'chem-export)
@@ -41,21 +41,21 @@
 
 (defun chem-ir-test--drawing (smiles overrides)
   "Build a prepared drawing from SMILES with OVERRIDES."
-  (let ((options (tochemfig--build-options overrides)))
+  (let ((options (chem--build-options overrides)))
     (indigo-with-molecule (mol smiles)
-      (tochemfig--prepare-mol mol options)
+      (chem--prepare-mol mol options)
       (chem-indigo-build mol options))))
 
 (defun chem-ir-test--drawing-from-file (relative overrides)
   "Build a prepared drawing from a corpus MOL file with OVERRIDES."
-  (let ((options (tochemfig--build-options overrides)))
+  (let ((options (chem--build-options overrides)))
     (indigo-with-mol-file (mol (chem-ir-test--path relative))
-      (tochemfig--prepare-mol mol options)
+      (chem--prepare-mol mol options)
       (chem-indigo-build mol options))))
 
 (defun chem-ir-test--render (drawing &optional overrides)
   "Render DRAWING as chemfig with OVERRIDES."
-  (chem-render drawing 'chemfig (tochemfig--build-options overrides)))
+  (chem-render drawing 'chemfig (chem--build-options overrides)))
 
 (ert-deftest chem-option-registry ()
   "Common and exporter options are registered."

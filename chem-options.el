@@ -1,14 +1,16 @@
-;;; chem-options.el --- Common option registry for chem-mode -*- lexical-binding: t; -*-
+;;; chem-options.el --- Options and registry for chem-mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2025 Giovanni Crisalfi
+;; Copyright (C) 2022, 2025 Giovanni Crisalfi
+
+;; Author: Giovanni Crisalfi <giovanni.crisalfi@protonmail.com>
 
 ;; This file is not part of GNU Emacs.
 
 ;;; Commentary:
 
-;; Metadata for the common drawing options.  These options are applied by
-;; `chem-indigo' and `chem-apply-drawing-options'; exporters render the
-;; resulting IR attributes.
+;; Common drawing options, chemfig output options, and metadata shared by the
+;; generic UI.  Common options are applied by `chem-indigo' and
+;; `chem-apply-drawing-options'; exporters render the resulting IR attributes.
 ;;
 ;; The transient menu is manually grouped around these specs.  The metadata
 ;; is shared so future frontends can expose the same common surface.
@@ -17,91 +19,246 @@
 
 (require 'cl-lib)
 
+(defgroup chem-mode nil
+  "Generate chemical drawings from molecular structures."
+  :prefix "chem-"
+  :group 'applications)
+
+;;; Common drawing options
+
+(defcustom chem-default-input 'direct
+  "Default input mode for molecule specification.
+With `file', expects a filename.
+With `direct', the argument is interpreted as a SMILES string."
+  :group 'chem-mode
+  :type '(choice (const :tag "SMILES string" direct)
+                 (const :tag "File path" file)))
+
+(defcustom chem-default-strict t
+  "Abide by Indigo's chemical structure validation when non-nil.
+When nil, atoms whose implicit hydrogens cannot be computed are silently
+treated as having none instead of signalling an error."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-recalculate-coordinates nil
+  "Discard existing coordinates and calculate new ones when non-nil.
+For SMILES input this is performed implicitly."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-angle 0.0
+  "Rotate molecule counterclockwise by this angle (in degrees)."
+  :group 'chem-mode
+  :type 'number)
+
+(defcustom chem-default-flip nil
+  "Flip the structure horizontally when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-flop nil
+  "Flip the structure vertically when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-show-carbons nil
+  "Show element symbol for carbon atoms when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-show-methyls nil
+  "Show element symbols for methyl groups when non-nil.
+Implied if `chem-default-show-carbons' is non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-hydrogens 'keep
+  "How to deal with explicit hydrogen atoms.
+One of `keep', `add', or `delete'.
+Note that `add' will also trigger calculation of new coordinates."
+  :group 'chem-mode
+  :type '(choice (const :tag "Keep as-is" keep)
+                 (const :tag "Add explicit H" add)
+                 (const :tag "Remove explicit H" delete)))
+
+(defcustom chem-default-aromatic-circles nil
+  "Draw a circle instead of double bonds inside aromatic rings when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-fancy-bonds nil
+  "Draw fancier double and triple bonds when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-atom-numbers nil
+  "Show the molfile number of each atom next to it when non-nil.
+When this option is set, charges and implicit hydrogens will not be shown."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-default-bond-scale 'normalize
+  "How to scale the lengths of bonds.
+One of `keep', `scale', or `normalize'."
+  :group 'chem-mode
+  :type '(choice (const :tag "Keep original lengths" keep)
+                 (const :tag "Scale by factor" scale)
+                 (const :tag "Normalize to average" normalize)))
+
+(defcustom chem-default-bond-stretch 1.0
+  "Scaling factor or target average for bond lengths.
+The meaning depends on `chem-default-bond-scale':
+- With `scale': multiplication factor for all bond lengths
+- With `normalize': target average bond length"
+  :group 'chem-mode
+  :type 'number)
+
+(defcustom chem-default-markers nil
+  "Prefix for atom and bond markers, or nil to disable them.
+With value \"a\", atom 2 will be labeled @{a2} and its bond to atom 5
+@{a2-5}."
+  :group 'chem-mode
+  :type '(choice (const :tag "Disabled" nil) string))
+
+(defcustom chem-default-cross-bond nil
+  "Bonds to draw on top of others they cross over.
+A list of (START END) atom number pairs, using 1-based molfile numbering."
+  :group 'chem-mode
+  :type '(repeat (list integer integer)))
+
+(defcustom chem-default-entry-atom nil
+  "Number of the first atom to render, or nil to pick automatically.
+Relevant only when generated code is used as a sub-molecule."
+  :group 'chem-mode
+  :type '(choice (const :tag "Automatic" nil) integer))
+
+(defcustom chem-default-exit-atom nil
+  "Number of the last atom to render, or nil to pick automatically.
+Relevant only when generated code is used as a sub-molecule."
+  :group 'chem-mode
+  :type '(choice (const :tag "Automatic" nil) integer))
+
+;;; Chemfig output options
+
+(defcustom chem-exp-chemfig-default-terse nil
+  "Remove all whitespace from the output when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-exp-chemfig-default-indent 4
+  "Number of spaces to use for indenting molecule branches in generated code.
+Without effect when `chem-exp-chemfig-default-terse' is non-nil."
+  :group 'chem-mode
+  :type 'integer)
+
+(defcustom chem-exp-chemfig-default-relative-angles nil
+  "Use relative bond angles when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-exp-chemfig-default-legacy-lewis nil
+  "Use the legacy \\lewis macro for radicals (ChemFig < 1.6) when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-exp-chemfig-default-wrap-chemfig nil
+  "Wrap generated code into \\chemfig{...} when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-exp-chemfig-default-submol-name nil
+  "Wrap generated code into \\definesubmol{NAME}{...} when non-nil."
+  :group 'chem-mode
+  :type '(choice (const :tag "Disabled" nil) string))
+
+;;; Option registry
+
 (defconst chem-common-option-specs
   '((:key :strict
-     :variable tochemfig-default-strict
+     :variable chem-default-strict
      :label "Strict validation"
      :type boolean
      :group input)
     (:key :hydrogens
-     :variable tochemfig-default-hydrogens
+     :variable chem-default-hydrogens
      :label "Hydrogens"
      :type choice
      :choices (keep add delete)
      :group input)
     (:key :recalculate-coordinates
-     :variable tochemfig-default-recalculate-coordinates
+     :variable chem-default-recalculate-coordinates
      :label "Recalculate coordinates"
      :type boolean
      :group input)
     (:key :angle
-     :variable tochemfig-default-angle
+     :variable chem-default-angle
      :label "Rotation angle"
      :type number
      :group geometry)
     (:key :flip
-     :variable tochemfig-default-flip
+     :variable chem-default-flip
      :label "Flip horizontally"
      :type boolean
      :group geometry)
     (:key :flop
-     :variable tochemfig-default-flop
+     :variable chem-default-flop
      :label "Flip vertically"
      :type boolean
      :group geometry)
     (:key :bond-scale
-     :variable tochemfig-default-bond-scale
+     :variable chem-default-bond-scale
      :label "Bond scaling"
      :type choice
      :choices (normalize keep scale)
      :group bonds)
     (:key :bond-stretch
-     :variable tochemfig-default-bond-stretch
+     :variable chem-default-bond-stretch
      :label "Bond stretch"
      :type number
      :group bonds)
     (:key :show-carbons
-     :variable tochemfig-default-show-carbons
+     :variable chem-default-show-carbons
      :label "Show carbons"
      :type boolean
      :group atoms)
     (:key :show-methyls
-     :variable tochemfig-default-show-methyls
+     :variable chem-default-show-methyls
      :label "Show methyls"
      :type boolean
      :group atoms)
     (:key :atom-numbers
-     :variable tochemfig-default-atom-numbers
+     :variable chem-default-atom-numbers
      :label "Atom numbers"
      :type boolean
      :group atoms)
     (:key :aromatic-circles
-     :variable tochemfig-default-aromatic-circles
+     :variable chem-default-aromatic-circles
      :label "Aromatic circles"
      :type boolean
      :group bonds)
     (:key :fancy-bonds
-     :variable tochemfig-default-fancy-bonds
+     :variable chem-default-fancy-bonds
      :label "Fancy bonds"
      :type boolean
      :group bonds)
     (:key :markers
-     :variable tochemfig-default-markers
+     :variable chem-default-markers
      :label "Marker prefix"
      :type string
      :group output)
     (:key :cross-bond
-     :variable tochemfig-default-cross-bond
+     :variable chem-default-cross-bond
      :label "Cross bonds"
      :type cross-bond
      :group advanced)
     (:key :entry-atom
-     :variable tochemfig-default-entry-atom
+     :variable chem-default-entry-atom
      :label "Entry atom"
      :type optional-number
      :group sub-molecule)
     (:key :exit-atom
-     :variable tochemfig-default-exit-atom
+     :variable chem-default-exit-atom
      :label "Exit atom"
      :type optional-number
      :group sub-molecule))
@@ -111,6 +268,41 @@
   "Return the common option specs in GROUP."
   (cl-remove-if-not (lambda (spec) (eq (plist-get spec :group) group))
                     chem-common-option-specs))
+
+;;; Option construction
+
+(defun chem--build-options (overrides)
+  "Build the option plist from defaults and OVERRIDES alist.
+OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t))."
+  (let ((opts (list :angle chem-default-angle
+                    :relative-angles chem-exp-chemfig-default-relative-angles
+                    :flip chem-default-flip
+                    :flop chem-default-flop
+                    :show-carbons chem-default-show-carbons
+                    :show-methyls chem-default-show-methyls
+                    :hydrogens chem-default-hydrogens
+                    :aromatic-circles chem-default-aromatic-circles
+                    :fancy-bonds chem-default-fancy-bonds
+                    :atom-numbers chem-default-atom-numbers
+                    :bond-scale chem-default-bond-scale
+                    :bond-stretch chem-default-bond-stretch
+                    :markers chem-default-markers
+                    :cross-bond chem-default-cross-bond
+                    :legacy-lewis chem-exp-chemfig-default-legacy-lewis
+                    :wrap-chemfig chem-exp-chemfig-default-wrap-chemfig
+                    :submol-name chem-exp-chemfig-default-submol-name
+                    :entry-atom chem-default-entry-atom
+                    :exit-atom chem-default-exit-atom
+                    :terse chem-exp-chemfig-default-terse
+                    :indent chem-exp-chemfig-default-indent
+                    :strict chem-default-strict
+                    :recalculate-coordinates chem-default-recalculate-coordinates
+                    :angle-round 1 :bond-round 3 :quadrant-tolerance 0.1)))
+    (dolist (override overrides)
+      (let ((key (intern (concat ":" (car override))))
+            (val (cdr override)))
+        (setq opts (plist-put opts key val))))
+    opts))
 
 (provide 'chem-options)
 ;;; chem-options.el ends here

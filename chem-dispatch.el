@@ -124,66 +124,66 @@ function used to read a new value, and GUARD an optional form."
     (message "chem-mode exporter: %s" choice)))
 
 (chem-dispatch--define-option chem-dispatch-option-input
-  "i" tochemfig-default-input "Input"
+  "i" chem-default-input "Input"
   (chem-dispatch--choice-reader '("direct" "file")))
 (chem-dispatch--define-option chem-dispatch-option-hydrogens
-  "y" tochemfig-default-hydrogens "Hydrogens"
+  "y" chem-default-hydrogens "Hydrogens"
   (chem-dispatch--choice-reader '("keep" "add" "delete")))
 
 (chem-dispatch--define-option chem-dispatch-option-angle
-  "a" tochemfig-default-angle "Rotation angle" #'chem-dispatch--number-reader)
+  "a" chem-default-angle "Rotation angle" #'chem-dispatch--number-reader)
 (chem-dispatch--define-toggle chem-dispatch-toggle-flip
-  "p" tochemfig-default-flip "Flip horizontally")
+  "p" chem-default-flip "Flip horizontally")
 (chem-dispatch--define-toggle chem-dispatch-toggle-flop
-  "q" tochemfig-default-flop "Flip vertically")
+  "q" chem-default-flop "Flip vertically")
 (chem-dispatch--define-toggle chem-dispatch-toggle-relative-angles
-  "v" tochemfig-default-relative-angles "Relative angles")
+  "v" chem-exp-chemfig-default-relative-angles "Relative angles")
 
 (chem-dispatch--define-toggle chem-dispatch-toggle-show-carbons
-  "c" tochemfig-default-show-carbons "Show carbons")
+  "c" chem-default-show-carbons "Show carbons")
 (chem-dispatch--define-toggle chem-dispatch-toggle-show-methyls
-  "m" tochemfig-default-show-methyls "Show methyls")
+  "m" chem-default-show-methyls "Show methyls")
 (chem-dispatch--define-toggle chem-dispatch-toggle-atom-numbers
-  "n" tochemfig-default-atom-numbers "Atom numbers")
+  "n" chem-default-atom-numbers "Atom numbers")
 (chem-dispatch--define-toggle chem-dispatch-toggle-aromatic-circles
-  "o" tochemfig-default-aromatic-circles "Aromatic circles")
+  "o" chem-default-aromatic-circles "Aromatic circles")
 
 (chem-dispatch--define-toggle chem-dispatch-toggle-fancy-bonds
-  "f" tochemfig-default-fancy-bonds "Fancy bonds")
+  "f" chem-default-fancy-bonds "Fancy bonds")
 (chem-dispatch--define-option chem-dispatch-option-bond-scale
-  "s" tochemfig-default-bond-scale "Bond scaling"
+  "s" chem-default-bond-scale "Bond scaling"
   (chem-dispatch--choice-reader '("normalize" "keep" "scale")))
 (chem-dispatch--define-option chem-dispatch-option-bond-stretch
-  "t" tochemfig-default-bond-stretch "Bond stretch" #'chem-dispatch--number-reader)
+  "t" chem-default-bond-stretch "Bond stretch" #'chem-dispatch--number-reader)
 
 (chem-dispatch--define-toggle chem-dispatch-toggle-terse
-  "z" tochemfig-default-terse "Terse output")
+  "z" chem-exp-chemfig-default-terse "Terse output")
 (chem-dispatch--define-option chem-dispatch-option-indent
-  "d" tochemfig-default-indent "Indentation" #'chem-dispatch--number-reader)
+  "d" chem-exp-chemfig-default-indent "Indentation" #'chem-dispatch--number-reader)
 (chem-dispatch--define-toggle chem-dispatch-toggle-wrap-chemfig
-  "w" tochemfig-default-wrap-chemfig "Wrap in \\chemfig{}")
+  "w" chem-exp-chemfig-default-wrap-chemfig "Wrap in \\chemfig{}")
 (chem-dispatch--define-option chem-dispatch-option-markers
-  "g" tochemfig-default-markers "Marker prefix" #'chem-dispatch--string-reader)
+  "g" chem-default-markers "Marker prefix" #'chem-dispatch--string-reader)
 
 (chem-dispatch--define-option chem-dispatch-option-submol-name
-  "l" tochemfig-default-submol-name "Submol name" #'chem-dispatch--string-reader)
+  "l" chem-exp-chemfig-default-submol-name "Submol name" #'chem-dispatch--string-reader)
 (chem-dispatch--define-option chem-dispatch-option-entry-atom
-  "e" tochemfig-default-entry-atom "Entry atom"
+  "e" chem-default-entry-atom "Entry atom"
   #'chem-dispatch--optional-number-reader
-  (lambda () (chem-dispatch--value 'tochemfig-default-submol-name)))
+  (lambda () (chem-dispatch--value 'chem-exp-chemfig-default-submol-name)))
 (chem-dispatch--define-option chem-dispatch-option-exit-atom
-  "x" tochemfig-default-exit-atom "Exit atom"
+  "x" chem-default-exit-atom "Exit atom"
   #'chem-dispatch--optional-number-reader
-  (lambda () (chem-dispatch--value 'tochemfig-default-submol-name)))
+  (lambda () (chem-dispatch--value 'chem-exp-chemfig-default-submol-name)))
 
 (chem-dispatch--define-toggle chem-dispatch-toggle-strict
-  "r" tochemfig-default-strict "Strict validation")
+  "r" chem-default-strict "Strict validation")
 (chem-dispatch--define-toggle chem-dispatch-toggle-recalculate-coordinates
-  "u" tochemfig-default-recalculate-coordinates "Recalculate coordinates")
+  "u" chem-default-recalculate-coordinates "Recalculate coordinates")
 (chem-dispatch--define-toggle chem-dispatch-toggle-legacy-lewis
-  "j" tochemfig-default-legacy-lewis "Legacy \\lewis (ChemFig < 1.6)")
+  "j" chem-exp-chemfig-default-legacy-lewis "Legacy \\lewis (ChemFig < 1.6)")
 (chem-dispatch--define-option chem-dispatch-option-cross-bond
-  "k" tochemfig-default-cross-bond "Cross bonds"
+  "k" chem-default-cross-bond "Cross bonds"
   #'chem-dispatch--cross-bond-reader)
 
 (defun chem-dispatch--consume-overrides ()
@@ -241,7 +241,7 @@ function used to read a new value, and GUARD an optional form."
                      "Rotate once...")))
   (interactive)
   (let ((angle (read-number "Rotation angle: "
-                            (chem-dispatch--value 'tochemfig-default-angle))))
+                            (chem-dispatch--value 'chem-default-angle))))
     (setq chem-dispatch--pending-overrides
           (cons (cons "angle" angle)
                 (assoc-delete-all "angle" chem-dispatch--pending-overrides)))
