@@ -73,9 +73,10 @@ and rebuild chem-mode"))
           (setq atom (indigo-next iter)))))
     atoms))
 
-(defun chem--parse-bonds (options mol edges edge-lookup)
+(defun chem--parse-bonds (options mol atoms edges edge-lookup)
   "Extract bonds from MOL into canonical EDGES and EDGE-LOOKUP.
-OPTIONS supplies marker settings.  Returns atom-index pairs in input order."
+OPTIONS supplies marker settings; ATOMS is used for stereo configuration.
+Returns atom-index pairs in input order."
   (let ((pairs nil))
     (indigo-with-bonds-iterator (iter mol)
       (let ((bond (indigo-next iter)))
@@ -92,13 +93,17 @@ OPTIONS supplies marker settings.  Returns atom-index pairs in input order."
                         :id id :a a :b b-index
                         :order order
                         :stereo (chem--canonical-stereo stereo start end)
-                        :source-a-p (= start a)
+                        :stereo-center (when (memq stereo '(:up :down)) start)
+                        :configuration nil
                         :link-p nil :cross-p nil
                         :marker (if marker-opt
                                     (format "%s%d-%d" marker-opt
                                             (1+ a) (1+ b-index))
                                   "")
                         :decoration 'plain)))
+            (when (chem-edge-stereo-center edge)
+              (setf (chem-edge-configuration edge)
+                    (chem-stereo-sign atoms edge)))
             (puthash id edge edges)
             (puthash (cons a b-index) edge edge-lookup)
             (push (cons start end) pairs))
@@ -153,7 +158,6 @@ OPTIONS supplies marker settings.  Returns atom-index pairs in input order."
          (edge (chem-edge-create
                 :id id :a a :b b
                 :order :single :stereo :none
-                :source-a-p t
                 :link-p t :cross-p nil
                 :marker "" :decoration 'plain)))
     (puthash id edge (chem-drawing-edges mol))
@@ -483,19 +487,17 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
                  :atoms atoms
                  :edges (make-hash-table :test 'eql)
                  :edge-lookup (make-hash-table :test 'equal)
-                 :adjacency (make-hash-table :test 'eql)
-                 :parity (if (eq (and (plist-get options :flip) t)
-                                 (and (plist-get options :flop) t))
-                             0 1))))
-    ;; Apply coordinate transforms before bonds are parsed.
-    (when (plist-get options :flip)
-      (chem-flip-horizontal state))
-    (when (plist-get options :flop)
-      (chem-flip-vertical state))
-    (let* ((rotation (or (plist-get options :angle) 0.0))
-           (pairs (chem--parse-bonds options mol
+                 :adjacency (make-hash-table :test 'eql))))
+    (let* ((pairs (chem--parse-bonds options mol atoms
                                      (chem-drawing-edges state)
-                                     (chem-drawing-edge-lookup state))))
+                                     (chem-drawing-edge-lookup state)))
+           (rotation (or (plist-get options :angle) 0.0)))
+      ;; Configuration signs are computed from the original coordinates.
+      ;; Apply depiction transforms before deriving label angles.
+      (when (plist-get options :flip)
+        (chem-flip-horizontal state))
+      (when (plist-get options :flop)
+        (chem-flip-vertical state))
       ;; Record label-placement angles using the legacy rotation offset.
       (dolist (pair pairs)
         (let* ((start (car pair))

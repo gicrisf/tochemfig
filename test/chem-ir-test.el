@@ -163,6 +163,9 @@
          (edge (cl-find-if (lambda (e) (memq (chem-edge-stereo e) '(:up :down)))
                            (chem-edges drawing))))
     (should edge)
+    (should (memq (chem-edge-stereo-center edge)
+                  (list (chem-edge-a edge) (chem-edge-b edge))))
+    (should (memq (chem-edge-configuration edge) '(-1 1)))
     (let ((from-a (chem-edge-stereo-directed edge (chem-edge-a edge)))
           (from-b (chem-edge-stereo-directed edge (chem-edge-b edge))))
       (should (memq from-a '(:up :down)))
@@ -175,6 +178,23 @@
          (edge (cl-find-if (lambda (edge) (eq :double (chem-edge-order edge)))
                            (chem-edges z))))
     (should (eq :cis (chem-edge-stereo edge)))))
+
+(ert-deftest chem-ir-stereo-derivation ()
+  "Wedge direction is derived from configuration and geometry."
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/bromochloromethane_stereo.mol" nil))
+         (edge (cl-find-if #'chem-edge-stereo-center (chem-edges drawing)))
+         (atoms (chem-drawing-atoms drawing))
+         (configuration (chem-edge-configuration edge))
+         (before (chem-stereo-wedge-up-p atoms edge configuration)))
+    (should (memq configuration '(-1 1)))
+    (should (booleanp before))
+    (chem-flip-horizontal drawing)
+    (let ((mirrored (chem-stereo-wedge-up-p atoms edge configuration)))
+      (should (not (eq before mirrored))))
+    (chem-flip-vertical drawing)
+    (let ((rotated (chem-stereo-wedge-up-p atoms edge configuration)))
+      (should (eq before rotated)))))
 
 (ert-deftest chem-ir-link-edge ()
   "Fragment links are canonical edges with link-p set."
@@ -408,15 +428,18 @@
   "The finished drawing carries no ingestion scratch or option snapshots."
   (let ((drawing-slots (mapcar #'car (cl-struct-slot-info 'chem-drawing)))
         (atom-slots (mapcar #'car (cl-struct-slot-info 'chem-atom)))
-        (node-slots (mapcar #'car (cl-struct-slot-info 'chem-node))))
+        (node-slots (mapcar #'car (cl-struct-slot-info 'chem-node)))
+        (edge-slots (mapcar #'car (cl-struct-slot-info 'chem-edge))))
     (dolist (slot '(bonds options toolkit seen-atoms seen-bonds
-                    bond-scale exit-bond))
+                    bond-scale exit-bond parity))
       (should-not (memq slot drawing-slots)))
-    (should (memq 'parity drawing-slots))
     (should-not (memq 'options atom-slots))
     (dolist (slot '(edge-id from to link-p))
       (should (memq slot node-slots)))
-    (should-not (memq 'bond node-slots))))
+    (should-not (memq 'bond node-slots))
+    (dolist (slot '(stereo-center configuration))
+      (should (memq slot edge-slots)))
+    (should-not (memq 'source-a-p edge-slots))))
 
 ;;; Rings
 

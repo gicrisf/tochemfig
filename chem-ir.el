@@ -28,7 +28,8 @@
   order                          ; :single :double :triple :aromatic :query
   stereo                         ; :none :up :down :either :cis :trans
                                  ; relative to a -> b
-  source-a-p                     ; Indigo source was the canonical a end
+  stereo-center                  ; Atom at the wide end of a wedge, or nil
+  configuration                  ; +1/-1 wedge configuration sign, or nil
   link-p                         ; Invisible fragment connector
   cross-p                        ; Draw over crossing bonds
   marker                         ; Marker string
@@ -75,8 +76,7 @@
   rings                          ; list of chem-ring, stable order
   entry-atom exit-atom
   exit-node                      ; Traversal exit node
-  root                           ; Traversal root node
-  parity)                        ; 1 after a single mirror transform, else 0
+  root)                          ; Traversal root node
 
 (defun chem-edge-at (drawing id)
   "Return DRAWING's canonical edge with ID, or nil."

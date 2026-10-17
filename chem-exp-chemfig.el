@@ -88,12 +88,14 @@
     (when (and parent (chem-node-from parent))
       (chem-exp-chemfig--node-angle drawing parent))))
 
-(defun chem-exp-chemfig--flip-stereo (stereo)
-  "Return STEREO with up/down swapped."
-  (pcase stereo
-    (:up :down)
-    (:down :up)
-    (_ stereo)))
+(defun chem-exp-chemfig--order-display-type (edge)
+  "Return EDGE's display type from its bond order."
+  (pcase (chem-edge-order edge)
+    (:single 'single)
+    (:double 'double)
+    (:triple 'triple)
+    (:aromatic 'either)
+    (_ 'query)))
 
 (defun chem-exp-chemfig--node-display-type (state drawing node)
   "Return NODE's chemfig display type."
@@ -107,26 +109,24 @@
          ((chem-edge-link-p edge) 'link)
          ((gethash node (chem-exp-chemfig-state-display-type state)))
          (t
-          (let* ((stereo (chem-edge-stereo edge))
-                 (source-a-p (chem-edge-source-a-p edge))
-                 (node-forward-p (= (chem-node-from node) (chem-edge-a edge)))
-                 (raw (if source-a-p stereo
-                        (chem-exp-chemfig--flip-stereo stereo)))
-                 (raw (if (= 1 (or (chem-drawing-parity drawing) 0))
-                          (chem-exp-chemfig--flip-stereo raw)
-                        raw))
-                 (forward-p (eq source-a-p node-forward-p)))
-            (if (memq raw '(:up :down :either))
-                (pcase raw
-                  (:up (if forward-p 'upto 'upfrom))
-                  (:down (if forward-p 'downto 'downfrom))
-                  (:either 'either))
-              (pcase (chem-edge-order edge)
-                (:single 'single)
-                (:double 'double)
-                (:triple 'triple)
-                (:aromatic 'either)
-                (_ 'query)))))))))))
+          (let ((stereo (chem-edge-stereo edge))
+                (center (chem-edge-stereo-center edge))
+                (configuration (chem-edge-configuration edge)))
+            (cond
+             ((eq stereo :either) 'either)
+             ((and center configuration (memq stereo '(:up :down)))
+              (let ((wedge-up-p
+                     (chem-stereo-wedge-up-p
+                      (chem-drawing-atoms drawing) edge configuration)))
+                (if (= center (chem-node-to node))
+                    (if wedge-up-p 'upfrom 'downfrom)
+                  (if wedge-up-p 'upto 'downto))))
+             ((memq stereo '(:up :down))
+              (pcase (chem-edge-stereo-directed edge (chem-node-from node))
+                (:up 'upto)
+                (:down 'downto)
+                (_ (chem-exp-chemfig--order-display-type edge))))
+             (t (chem-exp-chemfig--order-display-type edge)))))))))))
 
 (defun chem-exp-chemfig--node-clockwise (state node)
   "Return NODE's derived ring orientation, or 0."
