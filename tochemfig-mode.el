@@ -189,7 +189,11 @@ buffer has been killed, CODE is inserted without deleting anything."
                    (marker-buffer (car bounds))))
       (goto-char (car bounds))
       (delete-region (car bounds) (cdr bounds)))
-    (insert code)))
+    (insert code))
+  ;; Deactivate the mark so Evil leaves visual state after the region was
+  ;; consumed (its `deactivate-mark-hook' does this).  Harmless in vanilla
+  ;; Emacs.
+  (when bounds (deactivate-mark t)))
 
 ;;; Commands
 
@@ -201,7 +205,9 @@ molecule at point or in the region."
         (overrides (and (tochemfig-mode--wrap-p) '(("wrap-chemfig" . t)))))
     (if src
         (let ((code (tochemfig-mode--generate 'direct (car src) overrides)))
-          (if copy (kill-new code) (tochemfig-mode--insert code (cadr src))))
+          (if copy
+              (progn (kill-new code) (deactivate-mark t))
+            (tochemfig-mode--insert code (cadr src))))
       (let* ((input (tochemfig-mode--read-input))
              (code (tochemfig-mode--generate (car input) (cdr input) overrides)))
         (if copy (kill-new code) (insert code))))))
@@ -263,7 +269,12 @@ The region is interpreted as a SMILES string."
                             (tochemfig-mode--display effective)
                             scope))))
         (goto-char (point-min)))
-      (special-mode))
+      (special-mode)
+      ;; `special-mode' is not one of Evil's Emacs-state modes, so without this
+      ;; the buffer would open in normal state where `q' records a macro
+      ;; instead of quitting.  Guarded so vanilla Emacs is unaffected.
+      (when (and (bound-and-true-p evil-mode) (fboundp 'evil-emacs-state))
+        (evil-emacs-state)))
     (display-buffer out)))
 
 ;;;###autoload
