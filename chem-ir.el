@@ -39,7 +39,6 @@
   decoration)                    ; :plain or :fancy
 
 (cl-defstruct (chem-atom (:constructor chem-atom-create))
-  options                        ; Option plist (shared with the drawing)
   idx                            ; Integer index (0-based)
   x y                            ; 2D coordinates
   element                        ; Element symbol string ("C", "N", ...)
@@ -53,18 +52,13 @@
   marker)                        ; Marker string
 
 (cl-defstruct (chem-bond (:constructor chem-bond-create))
-  options                        ; Option plist
   kind                           ; `bond' or `aromatic-ring'
   edge-id                        ; Canonical `chem-edge' id, or nil for pseudo bonds
   start-atom end-atom            ; Atom structs (nil for aromatic ring)
-  bond-type                      ; Bond type / display type
-  descendants                    ; List of child bonds
-  length angle                   ; Geometry
+  bond-type                      ; Transitional display type for chemfig
+  length angle                   ; Derived geometry cache
   marker                         ; Marker string
   decoration                     ; :plain or :fancy
-  cross-p cross-last-p           ; Cross-bond drawing flags
-  to-phantom is-trunk            ; Flags
-  parent                         ; Parent bond (nil for root)
   clockwise                      ; Transitional ring double-bond orientation
   parent-angle                   ; Transitional aromatic ring parent angle
   radius)                        ; Transitional aromatic ring radius
@@ -86,22 +80,15 @@
   bonds)                         ; Ordered canonical edge ids following the cycle
 
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
-  options
-  toolkit                        ; Transitional Indigo handle
   atoms                          ; hash: idx -> atom
   bonds                          ; Transitional hash: (start . end) -> directed bond
   edges                          ; hash: edge id -> canonical edge
   edge-lookup                    ; hash: canonical (a . b) -> edge
   adjacency                      ; hash: atom idx -> ordered (edge-id . neighbor-idx)
   rings                          ; list of chem-ring, stable order
-  atom-pairs                     ; list of (start . end)
-  seen-atoms                     ; hash: idx -> t
-  seen-bonds                     ; hash: (start . end) -> t
   entry-atom exit-atom
-  exit-bond                      ; Transitional directed exit bond
   exit-node                      ; Traversal exit node
-  root                           ; Traversal root node
-  bond-scale)
+  root)                          ; Traversal root node
 
 (defun chem-edge-at (drawing id)
   "Return DRAWING's canonical edge with ID, or nil."

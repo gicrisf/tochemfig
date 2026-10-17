@@ -32,13 +32,14 @@
   is-last display-type)
 
 (cl-defstruct (chem-exp-chemfig-state (:constructor chem-exp-chemfig-state-create))
-  atoms bonds)
+  atoms bonds options)
 
-(defun chem-exp-chemfig--make-state ()
-  "Create an empty renderer state."
+(defun chem-exp-chemfig--make-state (options)
+  "Create an empty renderer state with exporter OPTIONS."
   (chem-exp-chemfig-state-create
    :atoms (make-hash-table :test 'eql)
-   :bonds (make-hash-table :test 'eq)))
+   :bonds (make-hash-table :test 'eq)
+   :options options))
 
 (defun chem-exp-chemfig--atom-state (state atom)
   "Return the renderer state for ATOM in STATE."
@@ -120,7 +121,7 @@
 (defun chem-atom-render (atom state)
   "Render ATOM using STATE, caching its phantom.
 Return (atom-code . comment-code)."
-  (let* ((options (chem-atom-options atom))
+  (let* ((options (chem-exp-chemfig-state-options state))
          (idx (1+ (chem-atom-idx atom)))
          (atom-state (chem-exp-chemfig--atom-state state atom))
          (rendered (chem--format-atom
@@ -149,7 +150,7 @@ Return (atom-code . comment-code)."
 Return (phantom-code . comment-code)."
   (cons (chem-exp-chemfig-atom-state-phantom (chem-exp-chemfig--atom-state state atom))
         (chem--format-closure-comment
-         (chem-atom-options atom) (1+ (chem-atom-idx atom)))))
+         (chem-exp-chemfig-state-options state) (1+ (chem-atom-idx atom)))))
 
 ;;; Fancy bond geometry
 
@@ -268,7 +269,7 @@ STATE supplies renderer-only atom flags."
 (defun chem-bond-to-chemfig (node state)
   "Render NODE's bond (without its atom) to chemfig using STATE."
   (let* ((bond (chem-node-bond node))
-         (options (chem-bond-options bond))
+         (options (chem-exp-chemfig-state-options state))
          (to-phantom (chem-node-phantom-p node))
          (parent-angle (let ((parent (chem-node-parent node)))
                          (when (and parent (chem-node-bond parent))
@@ -340,10 +341,10 @@ MOL supplies the atom table for the traversal root."
              (chem-atom-render
               (gethash (chem-node-to node) (chem-drawing-atoms mol))
               state)))
-        (chem-bond-indent (chem-drawing-options mol) level
+        (chem-bond-indent (chem-exp-chemfig-state-options state) level
                           "" (car atom-render) (cdr atom-render))))
      ((eq (chem-bond-kind bond) 'aromatic-ring)
-      (let* ((options (chem-bond-options bond))
+      (let* ((options (chem-exp-chemfig-state-options state))
              (rendered (chem--format-aromatic-ring
                         options (chem-bond-angle bond)
                         (chem-bond-parent-angle bond)
@@ -358,7 +359,7 @@ MOL supplies the atom table for the traversal root."
                               (chem-atom-render-phantom atom state)
                             (chem-atom-render atom state)))
              (bond-code (chem-bond-to-chemfig node state)))
-        (chem-bond-indent (chem-bond-options bond) level
+        (chem-bond-indent (chem-exp-chemfig-state-options state) level
                           bond-code (car atom-render) (cdr atom-render)))))))
 
 ;;; Drawing walk
@@ -366,7 +367,7 @@ MOL supplies the atom table for the traversal root."
 (defun chem--render-branches (mol state output level nodes)
   "Append NODES rendered as indented branches to OUTPUT.
 OUTPUT is the reversed line accumulator; returns the updated accumulator."
-  (let ((indent (or (plist-get (chem-drawing-options mol) :indent) 4)))
+  (let ((indent (or (plist-get (chem-exp-chemfig-state-options state) :indent) 4)))
     (dolist (node nodes output)
       (let ((width (+ (* level indent) chem--bond-code-width)))
         (setq output (cons (concat (make-string (1- width) ?\s) "(") output))
@@ -419,7 +420,7 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
 
 (defun chem-exp-chemfig-render (drawing options)
   "Render DRAWING as chemfig using OPTIONS."
-  (let ((state (chem-exp-chemfig--make-state)))
+  (let ((state (chem-exp-chemfig--make-state options)))
     (chem-exp-chemfig--prepare-cross-state state drawing)
     (maphash (lambda (_ atom) (chem-atom-score-angles atom state))
              (chem-drawing-atoms drawing))

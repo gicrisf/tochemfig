@@ -86,19 +86,14 @@ EDGE-ID links the directed bond to its canonical `chem-edge'."
            (ids (sort (list (1+ (chem-atom-idx start-atom))
                             (1+ (chem-atom-idx end-atom))) #'<)))
       (chem-bond-create
-       :options options
        :kind 'bond
        :edge-id edge-id
        :start-atom start-atom
        :end-atom end-atom
        :bond-type bond-type
-       :descendants nil
        :length (nth 0 dims)
        :angle (nth 1 dims)
        :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")
-       :to-phantom nil
-       :is-trunk nil
-       :parent nil
        :clockwise 0))))
 
 (defun chem-bond-refresh-geometry (drawing)

@@ -425,6 +425,20 @@
     (should (= 1 (length link-nodes)))
     (should-not (chem-node-cross-p (car link-nodes)))))
 
+;;; Contract boundaries
+
+(ert-deftest chem-ir-no-ingestion-state ()
+  "The finished drawing carries no ingestion scratch or option snapshots."
+  (let ((drawing-slots (mapcar #'car (cl-struct-slot-info 'chem-drawing)))
+        (atom-slots (mapcar #'car (cl-struct-slot-info 'chem-atom)))
+        (bond-slots (mapcar #'car (cl-struct-slot-info 'chem-bond))))
+    (dolist (slot '(options toolkit seen-atoms seen-bonds bond-scale exit-bond))
+      (should-not (memq slot drawing-slots)))
+    (should-not (memq 'options atom-slots))
+    (dolist (slot '(options parent descendants to-phantom is-trunk
+                    cross-p cross-last-p))
+      (should-not (memq slot bond-slots)))))
+
 ;;; Rings
 
 (defun chem-ir-test--ring-cycle-consistent-p (drawing ring)
