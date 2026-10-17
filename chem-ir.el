@@ -39,14 +39,7 @@ This keeps `setf' working for the transitional aliases."
   charge                         ; Integer formal charge
   radical                        ; Number of radical electrons
   neighbors                      ; List of neighbor atom indices
-  first-quadrant                 ; Transitional chemfig placement slot
-  second-quadrant                ; Transitional chemfig placement slot
-  charge-angle                   ; Transitional chemfig placement slot
-  string-pos                     ; Transitional chemfig attachment position
-  phantom                        ; Transitional chemfig phantom code
-  phantom-pos                    ; Transitional chemfig phantom position
   bond-angles                    ; Angles of all attached bonds
-  explicit                       ; Transitional chemfig explicit-label flag
   label                          ; Display label, or nil for a hidden carbon
   number                         ; 1-based number when numbering is requested
   marker)                        ; Marker string
@@ -55,14 +48,13 @@ This keeps `setf' working for the transitional aliases."
   options                        ; Option plist
   kind                           ; `bond', `dummy-first' or `aromatic-ring'
   start-atom end-atom            ; Atom structs (nil for aromatic ring)
-  tikz-styles                    ; Transitional chemfig style names
-  tikz-values                    ; Transitional chemfig style values
   bond-type                      ; Bond type / display type
   descendants                    ; List of child bonds
   length angle                   ; Geometry
   marker                         ; Marker string
   decoration                     ; :plain or :fancy
-  is-last to-phantom is-trunk    ; Flags
+  cross-p cross-last-p           ; Cross-bond drawing flags
+  to-phantom is-trunk            ; Flags
   parent                         ; Parent bond (nil for root)
   clockwise                      ; Transitional ring double-bond orientation
   parent-angle                   ; Transitional aromatic ring parent angle
@@ -78,6 +70,21 @@ This keeps `setf' working for the transitional aliases."
   seen-bonds                     ; hash: (start . end) -> t
   entry-atom exit-atom exit-bond root
   bond-scale)
+
+(defun chem-tree-bonds (drawing)
+  "Return all bonds in DRAWING's tree, excluding the dummy first bond."
+  (let ((all-bonds nil))
+    (cl-labels ((recurse (bond)
+                  (push bond all-bonds)
+                  (dolist (child (chem-bond-descendants bond))
+                    (recurse child))))
+      (when (chem-drawing-root drawing)
+        (recurse (chem-drawing-root drawing))))
+    (setq all-bonds (nreverse all-bonds))
+    (if (and all-bonds
+             (eq (chem-bond-kind (car all-bonds)) 'dummy-first))
+        (cdr all-bonds)
+      all-bonds)))
 
 (defun chem-apply-drawing-options (drawing options)
   "Apply common drawing OPTIONS to DRAWING.

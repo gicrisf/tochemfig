@@ -179,15 +179,7 @@ Returns (bonds . atom-pairs)."
 
 (defun tochemfig--treebonds (mol)
   "Return all bonds in MOL's tree, excluding the dummy first bond."
-  (let ((all-bonds nil))
-    (cl-labels ((recurse (bond)
-                  (push bond all-bonds)
-                  (dolist (d (tochemfig-bond-descendants bond)) (recurse d))))
-      (recurse (tochemfig-molecule-root mol)))
-    (setq all-bonds (nreverse all-bonds))
-    (if (eq (tochemfig-bond-kind (car all-bonds)) 'dummy-first)
-        (cdr all-bonds)
-      all-bonds)))
+  (chem-tree-bonds mol))
 
 (defun tochemfig--get-bond (mol tk-bond)
   "Return the tree bond of MOL corresponding to TK-BOND."
@@ -247,8 +239,8 @@ Returns the bond (or nil when the bond was already seen)."
           (if (null start-atom)
               (tochemfig-bond-create
                :options options :kind 'dummy-first :start-atom nil :end-atom end-atom
-               :tikz-styles nil :tikz-values nil :bond-type nil :descendants nil
-               :length nil :angle nil :marker "" :is-last nil :to-phantom nil
+               :bond-type nil :descendants nil
+               :length nil :angle nil :marker "" :to-phantom nil
                :is-trunk nil :parent nil :clockwise 0)
             (if (or (gethash (cons start-idx end-idx) (tochemfig-molecule-seen-bonds mol))
                     (gethash (cons end-idx start-idx) (tochemfig-molecule-seen-bonds mol)))
@@ -315,18 +307,9 @@ Returns the bond (or nil when the bond was already seen)."
                     (append (tochemfig-bond-descendants exit-bond) (list bond-copy))))))))))
 
 (defun tochemfig-bond-set-cross (bond &optional last)
-  "Configure BOND to be drawn crossing over another."
-  (let* ((start-angles (mapcar #'cdr (tochemfig-bond-upstream-angles bond)))
-         (end-angles (mapcar #'cdr (tochemfig-bond-downstream-angles bond)))
-         (start-angle (apply #'min (delq nil start-angles)))
-         (end-angle (apply #'min (delq nil end-angles)))
-         (start (max 10 (tochemfig--cotan100 start-angle)))
-         (end (max 10 (tochemfig--cotan100 end-angle))))
-    (cl-pushnew "cross" (tochemfig-bond-tikz-styles bond) :test #'equal)
-    (setf (tochemfig-bond-tikz-values bond)
-          (append (list (cons 'bgstart start) (cons 'bgend end))
-                  (tochemfig-bond-tikz-values bond)))
-    (setf (tochemfig-bond-is-last bond) last)))
+  "Mark BOND as a cross bond, with LAST as the departure flag."
+  (setf (tochemfig-bond-cross-p bond) t)
+  (setf (tochemfig-bond-cross-last-p bond) last))
 
 (defun tochemfig--scale-bonds (mol)
   "Scale bond lengths according to the options."
@@ -382,8 +365,8 @@ Returns the bond (or nil when the bond was already seen)."
                  :parent-angle (tochemfig-bond-angle bond)
                  :length (tochemfig--num-round outer-r 2)
                  :radius (tochemfig--num-round (* tochemfig--aromatic-ring-scale inner-r) 2)
-                 :tikz-styles nil :tikz-values nil :bond-type 'aromatic :descendants nil
-                 :marker "" :is-last nil :to-phantom nil :is-trunk nil :clockwise 0)))
+                 :bond-type 'aromatic :descendants nil
+                 :marker "" :to-phantom nil :is-trunk nil :clockwise 0)))
       (setf (tochemfig-bond-descendants bond)
             (append (tochemfig-bond-descendants bond) (list arb))))))
 

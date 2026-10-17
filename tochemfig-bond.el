@@ -37,9 +37,9 @@ implementation where the dict literal overrides the aromatic entry.")
   (chem-ir-alias-accessor 'tochemfig-bond-create 'chem-bond-create)
   (chem-ir-alias-accessor 'tochemfig-bond-p 'chem-bond-p)
   (chem-ir-alias-accessor 'copy-tochemfig-bond 'copy-chem-bond)
-  (dolist (slot '(options kind start-atom end-atom tikz-styles tikz-values
-                         bond-type descendants length angle marker decoration
-                         is-last to-phantom is-trunk parent clockwise parent-angle
+  (dolist (slot '(options kind start-atom end-atom bond-type descendants
+                         length angle marker decoration cross-p cross-last-p
+                         to-phantom is-trunk parent clockwise parent-angle
                          radius))
     (chem-ir-alias-accessor
      (intern (concat "tochemfig-bond-" (symbol-name slot)))
@@ -92,14 +92,11 @@ BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
        :kind 'bond
        :start-atom start-atom
        :end-atom end-atom
-       :tikz-styles nil
-       :tikz-values nil
        :bond-type bond-type
        :descendants nil
        :length (nth 0 dims)
        :angle (+ (nth 1 dims) (or (plist-get options :angle) 0.0))
        :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")
-       :is-last nil
        :to-phantom nil
        :is-trunk nil
        :parent nil
@@ -119,8 +116,6 @@ BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
 (defun tochemfig-bond-set-link (bond)
   "Make BOND an invisible link."
   (setf (tochemfig-bond-bond-type bond) 'link)
-  (setf (tochemfig-bond-tikz-styles bond) nil)
-  (setf (tochemfig-bond-tikz-values bond) nil)
   (setf (tochemfig-bond-marker bond) ""))
 
 (defun tochemfig-bond-is-clockwise (bond center-x center-y)
@@ -133,117 +128,6 @@ BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
            (center-angle (+ (nth 1 dims) (or (plist-get (tochemfig-bond-options bond) :angle) 0.0)))
            (center-kink (mod (- center-angle (tochemfig-bond-angle bond)) 360)))
       (setf (tochemfig-bond-clockwise bond) (if (> center-kink 180) 1 -1)))))
-
-;;; Fancy double / triple bond geometry
-
-(defun tochemfig--angle-penalty (angle)
-  "Scoring function for choosing the side of a double bond stroke."
-  (if (null angle) 0 (expt (- angle 105) 2)))
-
-(defun tochemfig--cotan100 (angle)
-  "Return 100 times the cotangent of ANGLE degrees, rounded."
-  (round (/ 100.0 (tan (* angle (/ float-pi 180.0))))))
-
-(defun tochemfig--adjoining-angles (bond atom inversion-angle)
-  "Return the narrowest adjoining angles on ATOM's left and right."
-  (let* ((raw (mapcar (lambda (a) (mod (round a) 360))
-                      (tochemfig-atom-bond-angles atom)))
-         (reference (mod (round (- (tochemfig-bond-angle bond) inversion-angle)) 360)))
-    (let ((pos (cl-position reference raw :test #'equal)))
-      (when pos
-        (setq raw (append (cl-subseq raw 0 pos) (cl-subseq raw (1+ pos))))))
-    (if (null raw)
-        (list nil nil)
-      (let* ((angles (sort (mapcar (lambda (a) (mod (- a reference) 360)) raw) #'<)))
-        (list (round (car angles)) (round (car (last angles))))))))
-
-(defun tochemfig-bond-upstream-angles (bond)
-  "Return the narrowest upstream left and right angles of BOND."
-  (let* ((pair (tochemfig--adjoining-angles bond (tochemfig-bond-start-atom bond) 0))
-         (first (nth 0 pair))
-         (last (nth 1 pair)))
-    (when (not (null last)) (setq last (- 360 last)))
-    (list (cons 'left first) (cons 'right last))))
-
-(defun tochemfig-bond-downstream-angles (bond)
-  "Return the narrowest downstream left and right angles of BOND."
-  (let* ((pair (tochemfig--adjoining-angles bond (tochemfig-bond-end-atom bond) 180))
-         (first (nth 0 pair))
-         (last (nth 1 pair)))
-    (when (not (null last)) (setq last (- 360 last)))
-    (list (cons 'left last) (cons 'right first))))
-
-(defun tochemfig-bond-shorten-stroke (_bond same-angle other-angle)
-  "Determine how much to shorten the second stroke of a double bond."
-  (if (null same-angle)
-      0
-    (let ((angle (cond
-                  ((<= same-angle 180) (* 0.5 same-angle))
-                  ((and (> same-angle 210) (< same-angle 270)) (- same-angle 180))
-                  ((and other-angle (> other-angle 210) (< other-angle 270)) (- other-angle 180))
-                  (t 90))))
-      (tochemfig--cotan100 angle))))
-
-(defun tochemfig-bond-fancy-double (bond)
-  "Return (side start end) for a fancy double bond, or nil."
-  (let* ((start-atom (tochemfig-bond-start-atom bond))
-         (end-atom (tochemfig-bond-end-atom bond))
-         (start-angles (tochemfig-bond-upstream-angles bond))
-         (end-angles (tochemfig-bond-downstream-angles bond))
-         (s-left (cdr (assq 'left start-angles)))
-         (s-right (cdr (assq 'right start-angles)))
-         (e-left (cdr (assq 'left end-angles)))
-         (e-right (cdr (assq 'right end-angles)))
-         (clockwise (tochemfig-bond-clockwise bond))
-         (s-exp (tochemfig-atom-explicit start-atom))
-         (e-exp (tochemfig-atom-explicit end-atom)))
-    (if (and (zerop clockwise)
-             (or s-exp e-exp)
-             (or (and s-exp e-exp)
-                 (and s-exp (or (null e-left)
-                                (and (<= 90 (abs e-left) 135)
-                                     (<= 90 (abs e-right) 135))))
-                 (and e-exp (or (null s-left)
-                                (and (<= 90 (abs s-left) 135)
-                                     (<= 90 (abs s-right) 135))))))
-        nil
-      (let* ((side (cond ((= clockwise -1) "left")
-                         ((= clockwise 1) "right")
-                         (t (let ((lp (+ (tochemfig--angle-penalty s-left)
-                                         (tochemfig--angle-penalty e-left)))
-                                  (rp (+ (tochemfig--angle-penalty s-right)
-                                         (tochemfig--angle-penalty e-right))))
-                              (cond ((< lp rp) "left")
-                                    ((> lp rp) "right")
-                                    ((< (abs (- (tochemfig-bond-angle bond) 44.5)) 90) "left")
-                                    (t "right"))))))
-             (start (if s-exp
-                        0
-                      (if (equal side "left")
-                          (tochemfig-bond-shorten-stroke bond s-left s-right)
-                        (tochemfig-bond-shorten-stroke bond s-right s-left))))
-             (end (if e-exp
-                      0
-                    (if (equal side "left")
-                        (tochemfig-bond-shorten-stroke bond e-left e-right)
-                      (tochemfig-bond-shorten-stroke bond e-right e-left)))))
-        (list side start end)))))
-
-(defun tochemfig-bond-fancy-triple (bond)
-  "Return (start end) for a fancy triple bond."
-  (let* ((start-atom (tochemfig-bond-start-atom bond))
-         (end-atom (tochemfig-bond-end-atom bond))
-         (start (if (tochemfig-atom-explicit start-atom)
-                    0
-                  (let* ((vals (mapcar #'cdr (tochemfig-bond-upstream-angles bond)))
-                         (non-nil (delq nil vals)))
-                    (if (car vals) (tochemfig--cotan100 (* 0.5 (apply #'min non-nil))) 0))))
-         (end (if (tochemfig-atom-explicit end-atom)
-                  0
-                (let* ((vals (mapcar #'cdr (tochemfig-bond-downstream-angles bond)))
-                       (non-nil (delq nil vals)))
-                  (if (car vals) (tochemfig--cotan100 (* 0.5 (apply #'min non-nil))) 0)))))
-    (list start end)))
 
 (provide 'tochemfig-bond)
 ;;; tochemfig-bond.el ends here
