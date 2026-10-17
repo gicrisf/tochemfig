@@ -85,27 +85,16 @@ You can also set these as defaults in your config:
 
 ** Prerequisites: emacs-indigo
 
-First, install =emacs-indigo=, which provides the molecular structure handling capabilities:
+=chem-mode= uses =emacs-indigo= (the =indigo= package) for molecular input.
+Package managers install it automatically because it is declared in
+=Package-Requires=.
 
-#+begin_src bash
-git clone https://github.com/gicrisf/emacs-indigo.git
-cd emacs-indigo
-./install.sh
-#+end_src
+After installing =chem-mode=, build the native module once with
+=M-x indigo-install RET=, then verify it with =M-x indigo-doctor=.  If you
+update emacs-indigo later, rerun =indigo-install= and restart Emacs.
 
-The install script automatically downloads and builds all dependencies (zlib, TinyXML, Indigo library) locally, then compiles the Emacs dynamic module.
-
-Note: =emacs-indigo= defines its =indigo-with-*= resource macros only after its
-dynamic module has loaded.  chem-mode works around this at byte-compilation time,
-but you should still make sure a stale install is up to date: if you installed
-=emacs-indigo= via Doom/straight and have not updated it recently, run
-=M-x straight-pull-package RET indigo= (or =doom sync -u=) and rebuild chem-mode.
-
-Add to your Emacs config:
-
-#+begin_src emacs-lisp
-(add-to-list 'load-path "/path/to/emacs-indigo")
-#+end_src
+Straight, Doom, and =package.el= handle the load path.  Manual installs must
+add the emacs-indigo directory to =load-path= (see [[*Manual][Manual]]).
 
 ** Installing chem-mode
 
@@ -118,7 +107,6 @@ Add to your Emacs config:
 
 #+begin_src emacs-lisp
 ;; in ~/.doom.d/config.el
-(add-to-list 'load-path "/path/to/emacs-indigo")
 (use-package! chem-mode)
 #+end_src
 
@@ -127,7 +115,6 @@ Add to your Emacs config:
 #+begin_src emacs-lisp
 (straight-use-package
  '(chem-mode :type git :host github :repo "gicrisf/tochemfig"))
-(add-to-list 'load-path "/path/to/emacs-indigo")
 #+end_src
 
 *** Manual
