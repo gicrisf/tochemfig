@@ -126,11 +126,84 @@
     (should (local-variable-p 'tochemfig-default-terse))))
 
 (ert-deftest tochemfig-mode-transient-defined ()
-  "The transient prefix and its alias exist, and keys are bound."
+  "The transient prefix and its alias exist."
   (should (get 'tochemfig-dispatch 'transient--prefix))
-  (should (fboundp 'tochemfig-custom))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d")) #'tochemfig))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-dispatch)))
+  (should (fboundp 'tochemfig-custom)))
+
+(ert-deftest tochemfig-mode-keymap ()
+  "The mode keymap binds the mode-aware commands under `C-c m'."
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m g")) #'tochemfig))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m o")) #'tochemfig-dispatch))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-copy))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m f")) #'tochemfig-input-file))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d"))
+              #'tochemfig-describe-options))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m t"))
+              #'tochemfig-mode-toggle-terse))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m w"))
+              #'tochemfig-mode-toggle-wrap-chemfig))
+  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m r"))
+              #'tochemfig-mode-rotate))
+  ;; The old one-shot bindings are gone (clean break).
+  (should-not (lookup-key tochemfig-mode-map (kbd "C-c m p"))))
+
+(ert-deftest tochemfig-mode-toggle-terse-buffer-local ()
+  "The mode-aware terse toggle is buffer-local."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (setq tochemfig-default-terse nil)
+    (tochemfig-mode-toggle-terse)
+    (should (local-variable-p 'tochemfig-default-terse))
+    (should tochemfig-default-terse)
+    (tochemfig-mode-toggle-terse)
+    (should-not tochemfig-default-terse))
+  (setq tochemfig-default-terse nil))
+
+(ert-deftest tochemfig-mode-toggle-wrap-buffer-local ()
+  "The mode-aware wrap toggle is buffer-local."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (setq tochemfig-default-wrap-chemfig nil)
+    (tochemfig-mode-toggle-wrap-chemfig)
+    (should (local-variable-p 'tochemfig-default-wrap-chemfig))
+    (should tochemfig-default-wrap-chemfig)
+    (tochemfig-mode-toggle-wrap-chemfig)
+    (should-not tochemfig-default-wrap-chemfig))
+  (setq tochemfig-default-wrap-chemfig nil))
+
+(ert-deftest tochemfig-mode-toggle-stale-edit-buffer ()
+  "Direct toggles target the current buffer, not a stale transient buffer."
+  (let ((stale (generate-new-buffer "tochemfig-stale"))
+        (current (generate-new-buffer "tochemfig-current")))
+    (unwind-protect
+        (progn
+          (setq tochemfig-default-terse nil)
+          (setq tochemfig-mode--edit-buffer stale)
+          (with-current-buffer current
+            (emacs-lisp-mode)
+            (tochemfig-mode 1)
+            (tochemfig-mode-toggle-terse))
+          (should (local-variable-p 'tochemfig-default-terse current))
+          (should (buffer-local-value 'tochemfig-default-terse current))
+          (should-not (local-variable-p 'tochemfig-default-terse stale)))
+      (setq tochemfig-mode--edit-buffer nil)
+      (setq tochemfig-default-terse nil)
+      (kill-buffer stale)
+      (kill-buffer current))))
+
+(ert-deftest tochemfig-mode-rotate ()
+  "Rotate generates the at-point molecule with a one-off angle."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (tochemfig-mode 1)
+    (insert "CCO")
+    (goto-char 2)
+    (tochemfig-mode-rotate 30)
+    (should (equal (buffer-string)
+                   (tochemfig--generate-from-string
+                    "CCO" '(("angle" . 30)))))))
 
 (ert-deftest tochemfig-mode-global-eligibility ()
   "The global mode enables only in eligible buffers by default."
