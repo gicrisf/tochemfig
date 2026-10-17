@@ -107,5 +107,116 @@
     (should (string-match-p "mcfcringle" circles-without-option))
     (should-not (string-match-p "mcfcringle" plain-with-option))))
 
+;;; Canonical edge graph
+
+(ert-deftest chem-ir-canonical-edges ()
+  "Each chemical bond has one canonical edge and a symmetric lookup."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+         (edges (chem-edges drawing)))
+    (should (= 6 (length edges)))
+    (should (= 6 (length (chem-visible-edges drawing))))
+    (should (equal (number-sequence 0 5)
+                   (mapcar #'chem-edge-id edges)))
+    (dolist (edge edges)
+      (should (< (chem-edge-a edge) (chem-edge-b edge)))
+      (should (eq edge (chem-get-edge drawing
+                                      (chem-edge-a edge)
+                                      (chem-edge-b edge))))
+      (should (eq edge (chem-get-edge drawing
+                                      (chem-edge-b edge)
+                                      (chem-edge-a edge))))
+      (should (eq edge (chem-edge-at drawing (chem-edge-id edge)))))))
+
+(ert-deftest chem-ir-edge-adjacency ()
+  "Adjacency is symmetric and references canonical edges."
+  (dolist (file '("corpus/benzene.mol" "corpus/salt_nacl.mol"))
+    (let ((drawing (chem-ir-test--drawing-from-file file nil)))
+      (maphash
+       (lambda (idx _atom)
+         (dolist (entry (chem-atom-adjacency drawing idx))
+           (let* ((edge-id (car entry))
+                  (neighbor (cdr entry))
+                  (edge (chem-edge-at drawing edge-id)))
+             (should edge)
+             (should (= neighbor (chem-edge-other-atom edge idx)))
+             (should (assoc edge-id (chem-atom-adjacency drawing neighbor))))))
+       (chem-drawing-atoms drawing)))))
+
+(ert-deftest chem-ir-edge-order ()
+  "Canonical edges preserve the chemical bond order."
+  (let ((kekule (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+        (aromatic (chem-ir-test--drawing "c1ccccc1" nil))
+        (butene (chem-ir-test--drawing-from-file "corpus/butene_e.mol" nil)))
+    (let ((orders (mapcar #'chem-edge-order (chem-edges kekule))))
+      (should (= 3 (cl-count :single orders)))
+      (should (= 3 (cl-count :double orders))))
+    (should (= 6 (cl-count :aromatic
+                           (mapcar #'chem-edge-order (chem-edges aromatic)))))
+    (let ((orders (mapcar #'chem-edge-order (chem-edges butene))))
+      (should (= 2 (cl-count :single orders)))
+      (should (= 1 (cl-count :double orders))))))
+
+(ert-deftest chem-ir-edge-stereo ()
+  "Canonical stereo is relative to a -> b and flips for directed views."
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/bromochloromethane_stereo.mol" nil))
+         (edge (cl-find-if (lambda (e) (memq (chem-edge-stereo e) '(:up :down)))
+                           (chem-edges drawing))))
+    (should edge)
+    (let ((from-a (chem-edge-stereo-directed edge (chem-edge-a edge)))
+          (from-b (chem-edge-stereo-directed edge (chem-edge-b edge))))
+      (should (memq from-a '(:up :down)))
+      (should (eq from-b (if (eq from-a :up) :down :up)))))
+  (let* ((e (chem-ir-test--drawing-from-file "corpus/butene_e.mol" nil))
+         (edge (cl-find-if (lambda (edge) (eq :double (chem-edge-order edge)))
+                           (chem-edges e))))
+    (should (eq :trans (chem-edge-stereo edge))))
+  (let* ((z (chem-ir-test--drawing-from-file "corpus/butene_z.mol" nil))
+         (edge (cl-find-if (lambda (edge) (eq :double (chem-edge-order edge)))
+                           (chem-edges z))))
+    (should (eq :cis (chem-edge-stereo edge)))))
+
+(ert-deftest chem-ir-link-edge ()
+  "Fragment links are canonical edges with link-p set."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/salt_nacl.mol" nil))
+         (edges (chem-edges drawing)))
+    (should (= 1 (length edges)))
+    (let ((edge (car edges)))
+      (should (chem-edge-link-p edge))
+      (should (eq :single (chem-edge-order edge)))
+      (should (eq :none (chem-edge-stereo edge)))
+      (should-not (chem-visible-edges drawing)))))
+
+(ert-deftest chem-ir-edge-decoration ()
+  "Canonical edge decoration mirrors the resolved directed decoration."
+  (let* ((fancy (chem-ir-test--drawing-from-file "corpus/benzene.mol" '(("fancy-bonds" . t))))
+         (plain (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+         (circles (chem-ir-test--drawing-from-file "corpus/benzene.mol" '(("aromatic-circles" . t)))))
+    (dolist (edge (chem-edges fancy))
+      (should (eq (if (eq :double (chem-edge-order edge)) 'fancy 'plain)
+                  (chem-edge-decoration edge))))
+    (dolist (edge (chem-edges plain))
+      (should (eq 'plain (chem-edge-decoration edge))))
+    (dolist (edge (chem-edges circles))
+      (should (eq 'plain (chem-edge-decoration edge))))))
+
+(ert-deftest chem-ir-edge-markers ()
+  "Canonical edges carry the same marker as their directed bonds."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/ethanol.mol" '(("markers" . "a"))))
+         (bonds (chem-drawing-bonds drawing)))
+    (dolist (edge (chem-edges drawing))
+      (let ((bond (gethash (cons (chem-edge-a edge) (chem-edge-b edge)) bonds)))
+        (should (equal (chem-edge-marker edge) (chem-bond-marker bond)))))))
+
+(ert-deftest chem-ir-edge-cross ()
+  "Cross-bond selection is recorded on the canonical edge."
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/benzene.mol" '(("cross-bond" . ((1 2))))))
+         (crossed (cl-remove-if-not #'chem-edge-cross-p (chem-edges drawing))))
+    (should (= 1 (length crossed)))
+    (should (equal '(0 . 1)
+                   (cons (chem-edge-a (car crossed))
+                         (chem-edge-b (car crossed)))))))
+
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here

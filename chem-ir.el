@@ -11,6 +11,12 @@
 ;; The drawing IR shared by all exporters.  It holds the molecular graph, the
 ;; drawing tree, and the geometry needed to render a structure.
 ;;
+;; `chem-edge' is the canonical chemical graph: one record per real or link
+;; edge, with a stable id and a canonical `a' -> `b' orientation.  The
+;; `chem-bond' records in `chem-drawing-bonds' are a transitional directed view
+;; used by the current chemfig pipeline; they carry the old display vocabulary
+;; until the renderer consumes the canonical graph and traversal directly.
+;;
 ;; This is a transitional extraction: the atom and bond structs still carry a
 ;; few slots used by the chemfig renderer.  They will move into the chemfig
 ;; exporter as the renderer is separated from the core.
@@ -20,6 +26,17 @@
 ;;; Code:
 
 (require 'cl-lib)
+
+(cl-defstruct (chem-edge (:constructor chem-edge-create))
+  id                             ; Stable integer id within the drawing
+  a b                            ; Canonical atom indices, with a < b
+  order                          ; :single :double :triple :aromatic :query
+  stereo                         ; :none :up :down :either :cis :trans
+                                 ; relative to a -> b
+  link-p                         ; Invisible fragment connector
+  cross-p                        ; Draw over crossing bonds
+  marker                         ; Marker string
+  decoration)                    ; :plain or :fancy
 
 (cl-defstruct (chem-atom (:constructor chem-atom-create))
   options                        ; Option plist (shared with the drawing)
@@ -38,6 +55,7 @@
 (cl-defstruct (chem-bond (:constructor chem-bond-create))
   options                        ; Option plist
   kind                           ; `bond', `dummy-first' or `aromatic-ring'
+  edge-id                        ; Canonical `chem-edge' id, or nil for pseudo bonds
   start-atom end-atom            ; Atom structs (nil for aromatic ring)
   bond-type                      ; Bond type / display type
   descendants                    ; List of child bonds
@@ -55,12 +73,59 @@
   options
   toolkit                        ; Transitional Indigo handle
   atoms                          ; hash: idx -> atom
-  bonds                          ; hash: (start . end) -> bond
+  bonds                          ; Transitional hash: (start . end) -> directed bond
+  edges                          ; hash: edge id -> canonical edge
+  edge-lookup                    ; hash: canonical (a . b) -> edge
+  adjacency                      ; hash: atom idx -> ordered (edge-id . neighbor-idx)
   atom-pairs                     ; list of (start . end)
   seen-atoms                     ; hash: idx -> t
   seen-bonds                     ; hash: (start . end) -> t
   entry-atom exit-atom exit-bond root
   bond-scale)
+
+(defun chem-edge-at (drawing id)
+  "Return DRAWING's canonical edge with ID, or nil."
+  (and id (gethash id (chem-drawing-edges drawing))))
+
+(defun chem-get-edge (drawing a b)
+  "Return the canonical edge between atom indices A and B, or nil."
+  (gethash (if (< a b) (cons a b) (cons b a))
+           (chem-drawing-edge-lookup drawing)))
+
+(defun chem-edge-other-atom (edge idx)
+  "Return the atom index at the other end of EDGE from IDX."
+  (if (= idx (chem-edge-a edge))
+      (chem-edge-b edge)
+    (chem-edge-a edge)))
+
+(defun chem-edge-stereo-directed (edge from)
+  "Return EDGE's stereo relative to FROM.
+Wedge/hash stereo is inverted when traversing from the canonical `b' end.
+`:cis' and `:trans' are orientation-independent."
+  (let ((stereo (chem-edge-stereo edge)))
+    (if (= from (chem-edge-a edge))
+        stereo
+      (pcase stereo
+        ((or :up :down)
+         (if (eq stereo :up) :down :up))
+        (_ stereo)))))
+
+(defun chem-atom-adjacency (drawing idx)
+  "Return DRAWING's ordered adjacency for atom IDX.
+Each entry is (EDGE-ID . NEIGHBOR-IDX)."
+  (gethash idx (chem-drawing-adjacency drawing)))
+
+(defun chem-edges (drawing)
+  "Return DRAWING's canonical edges ordered by id."
+  (let (edges)
+    (maphash (lambda (_ edge) (push edge edges))
+             (chem-drawing-edges drawing))
+    (sort edges (lambda (a b) (< (chem-edge-id a) (chem-edge-id b))))))
+
+(defun chem-visible-edges (drawing)
+  "Return DRAWING's canonical edges that should be drawn.
+Invisible fragment links are excluded."
+  (cl-remove-if #'chem-edge-link-p (chem-edges drawing)))
 
 (defun chem-tree-bonds (drawing)
   "Return all bonds in DRAWING's tree, excluding the dummy first bond."
@@ -79,8 +144,8 @@
 
 (defun chem-apply-drawing-options (drawing options)
   "Apply common drawing OPTIONS to DRAWING.
-Set atom labels and numbers and bond decorations in the IR.  Exporters
-render these attributes; they must not re-read the options."
+Set atom labels and numbers, and bond/edge decorations in the IR.
+Exporters render these attributes; they must not re-read the options."
   (let ((show-carbons (plist-get options :show-carbons))
         (show-methyls (plist-get options :show-methyls))
         (atom-numbers (plist-get options :atom-numbers))
@@ -108,7 +173,16 @@ render these attributes; they must not re-read the options."
                       (memq (chem-bond-bond-type bond) '(double triple)))
                  'fancy
                'plain)))
-     (chem-drawing-bonds drawing)))
+     (chem-drawing-bonds drawing))
+    ;; Mirror the resolved directed decoration onto the canonical edge.
+    ;; The canonical direction is always present in the transitional cache.
+    (maphash
+     (lambda (_ edge)
+       (let ((bond (gethash (cons (chem-edge-a edge) (chem-edge-b edge))
+                            (chem-drawing-bonds drawing))))
+         (setf (chem-edge-decoration edge)
+               (if bond (chem-bond-decoration bond) 'plain))))
+     (chem-drawing-edges drawing)))
   drawing)
 
 (provide 'chem-ir)

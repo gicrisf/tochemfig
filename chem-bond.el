@@ -35,6 +35,16 @@ implementation where the dict literal overrides the aromatic entry.")
   "Convert RADIANS to degrees."
   (* radians (/ 180.0 float-pi)))
 
+(defun chem--canonical-stereo (stereo start end)
+  "Return STEREO relative to the canonical (lower-index) bond orientation.
+START and END are the original Indigo source and destination indices."
+  (if (<= start end)
+      (or stereo :none)
+    (pcase (or stereo :none)
+      ((or :up :down)
+       (if (eq stereo :up) :down :up))
+      (other other))))
+
 (defun chem--compare-positions (x1 y1 x2 y2)
   "Return (distance angle) between (X1,Y1) and (X2,Y2).
 The angle follows mol2chemfig's convention and may be negative."
@@ -48,9 +58,11 @@ The angle follows mol2chemfig's convention and may be negative."
                 (cond ((>= yd 0) (if (> xd 0) raw (- 180 raw)))
                       (t (if (> xd 0) (- raw) (+ 180 raw))))))))))
 
-(defun chem-bond-create-from (options start-atom end-atom bond-order stereo)
+(defun chem-bond-create-from (options start-atom end-atom bond-order stereo
+                                      &optional edge-id)
   "Create a bond from START-ATOM to END-ATOM.
-BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
+BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword.
+EDGE-ID links the directed bond to its canonical `chem-edge'."
   (let* ((stereo-code (cond ((eq stereo :up) chem--stereo-up)
                             ((eq stereo :down) chem--stereo-down)
                             ((eq stereo :either) chem--stereo-either)
@@ -76,6 +88,7 @@ BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
       (chem-bond-create
        :options options
        :kind 'bond
+       :edge-id edge-id
        :start-atom start-atom
        :end-atom end-atom
        :bond-type bond-type

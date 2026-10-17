@@ -73,8 +73,9 @@ and rebuild chem-mode"))
           (setq atom (indigo-next iter)))))
     atoms))
 
-(defun chem--parse-bonds (options mol atoms)
+(defun chem--parse-bonds (options mol atoms edges edge-lookup)
   "Extract bonds from MOL into a hash keyed by (START . END).
+Populate EDGES and EDGE-LOOKUP with one canonical edge per bond.
 Returns (bonds . atom-pairs)."
   (let ((bonds (make-hash-table :test 'equal))
         (pairs nil))
@@ -85,11 +86,26 @@ Returns (bonds . atom-pairs)."
                  (end (indigo-index (indigo-destination bond)))
                  (start-atom (gethash start atoms))
                  (end-atom (gethash end atoms))
+                 (order (or (indigo-bond-order bond) :query))
+                 (stereo (or (indigo-bond-stereo bond) :none))
+                 (a (min start end))
+                 (b-index (max start end))
+                 (id (hash-table-count edges))
+                 (edge (chem-edge-create
+                        :id id :a a :b b-index
+                        :order order
+                        :stereo (chem--canonical-stereo stereo start end)
+                        :link-p nil :cross-p nil
+                        :marker nil
+                        :decoration 'plain))
                  (b (chem-bond-create-from
-                     options start-atom end-atom
-                     (indigo-bond-order bond) (indigo-bond-stereo bond))))
+                     options start-atom end-atom order stereo id))
+                 (inverted (chem-bond-invert b)))
+            (setf (chem-edge-marker edge) (chem-bond-marker b))
+            (puthash id edge edges)
+            (puthash (cons a b-index) edge edge-lookup)
             (puthash (cons start end) b bonds)
-            (puthash (cons end start) (chem-bond-invert b) bonds)
+            (puthash (cons end start) inverted bonds)
             (push (cons start end) pairs))
           (setq bond (indigo-next iter)))))
     (cons bonds (nreverse pairs))))
@@ -136,14 +152,25 @@ Returns (bonds . atom-pairs)."
                 (setq remaining rest)))))))))
 
 (defun chem--link-atoms (mol x y)
-  "Connect atoms X and Y of MOL with a pseudo (link) bond."
+  "Connect atoms X and Y of MOL with an invisible link edge."
   (let* ((options (chem-drawing-options mol))
          (start (gethash x (chem-drawing-atoms mol)))
          (end (gethash y (chem-drawing-atoms mol)))
-         (bond (chem-bond-create-from options start end :single :none)))
+         (a (min x y))
+         (b (max x y))
+         (id (hash-table-count (chem-drawing-edges mol)))
+         (edge (chem-edge-create
+                :id id :a a :b b
+                :order :single :stereo :none
+                :link-p t :cross-p nil
+                :marker "" :decoration 'plain))
+         (bond (chem-bond-create-from options start end :single :none id)))
     (chem-bond-set-link bond)
-    (puthash (cons x y) bond (chem-drawing-bonds mol))
-    (puthash (cons y x) (chem-bond-invert bond) (chem-drawing-bonds mol))
+    (let ((inverted (chem-bond-invert bond)))
+      (puthash (cons x y) bond (chem-drawing-bonds mol))
+      (puthash (cons y x) inverted (chem-drawing-bonds mol)))
+    (puthash id edge (chem-drawing-edges mol))
+    (puthash (cons a b) edge (chem-drawing-edge-lookup mol))
     (setf (chem-atom-neighbors start)
           (append (chem-atom-neighbors start) (list y)))
     (setf (chem-atom-neighbors end)
@@ -174,6 +201,28 @@ Returns (bonds . atom-pairs)."
                         (prog1 (car un-bonded) (setq un-bonded (cdr un-bonded))))))
           (dolist (atom un-bonded)
             (chem--link-atoms mol anchor atom)))))))
+
+;;; Adjacency
+
+(defun chem--build-adjacency (mol)
+  "Populate MOL's adjacency from atom neighbors and canonical edges.
+The neighbor order is the existing encounter order, so tree building and
+the chemfig exporter remain byte-identical."
+  (let ((adjacency (chem-drawing-adjacency mol))
+        (lookup (chem-drawing-edge-lookup mol)))
+    (clrhash adjacency)
+    (maphash
+     (lambda (idx atom)
+       (let (entries)
+         (dolist (neighbor (chem-atom-neighbors atom))
+           (let ((edge (gethash (cons (min idx neighbor) (max idx neighbor))
+                                lookup)))
+             (when edge
+               (cl-pushnew (cons (chem-edge-id edge) neighbor)
+                           entries :test #'equal))))
+         (puthash idx (nreverse entries) adjacency)))
+     (chem-drawing-atoms mol))
+    mol))
 
 ;;; Tree building
 
@@ -304,7 +353,10 @@ Returns the bond (or nil when the bond was already seen)."
                   (setf (chem-bond-descendants exit-bond)
                         (append (chem-bond-descendants exit-bond) (list pseudo))))
               (setf (chem-bond-descendants exit-bond)
-                    (append (chem-bond-descendants exit-bond) (list bond-copy))))))))))
+                    (append (chem-bond-descendants exit-bond) (list bond-copy))))))
+        (let ((edge (chem-edge-at mol (chem-bond-edge-id bond))))
+          (when edge
+            (setf (chem-edge-cross-p edge) t)))))))
 
 (defun chem-bond-set-cross (bond &optional last)
   "Mark BOND as a cross bond, with LAST as the departure flag."
@@ -440,10 +492,16 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
       (maphash (lambda (_ atom) (setf (chem-atom-x atom) (- (chem-atom-x atom)))) atoms))
     (when (plist-get options :flop)
       (maphash (lambda (_ atom) (setf (chem-atom-y atom) (- (chem-atom-y atom)))) atoms))
-    (let* ((parsed (chem--parse-bonds options mol atoms))
+    (let* ((edges (make-hash-table :test 'eql))
+           (edge-lookup (make-hash-table :test 'equal))
+           (parsed (chem--parse-bonds options mol atoms edges edge-lookup))
            (state (chem-drawing-create
                    :options options :toolkit mol :atoms atoms
-                   :bonds (car parsed) :atom-pairs (cdr parsed)
+                   :bonds (car parsed)
+                   :edges edges
+                   :edge-lookup edge-lookup
+                   :adjacency (make-hash-table :test 'eql)
+                   :atom-pairs (cdr parsed)
                    :seen-atoms (make-hash-table :test 'equal)
                    :seen-bonds (make-hash-table :test 'equal)
                    :bond-scale 1.0)))
@@ -458,6 +516,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
                 (append (chem-atom-bond-angles (gethash end atoms))
                         (list (chem-bond-angle (gethash (cons end start) bonds)))))))
       (chem--connect-fragments state)
+      (chem--build-adjacency state)
       (chem--pick-first-last-atoms state)
       (setf (chem-drawing-root state)
             (chem--parse-tree state nil (chem-drawing-entry-atom state)))
