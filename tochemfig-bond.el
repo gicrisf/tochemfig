@@ -16,7 +16,6 @@
 
 (require 'cl-lib)
 (require 'chem-ir)
-(require 'tochemfig-mappings)
 (require 'tochemfig-atom)
 
 ;; Indigo stereo constants.
@@ -245,78 +244,6 @@ BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword."
                        (non-nil (delq nil vals)))
                   (if (car vals) (tochemfig--cotan100 (* 0.5 (apply #'min non-nil))) 0)))))
     (list start end)))
-
-(defun tochemfig-bond-to-chemfig (bond)
-  "Render BOND (without its atom) to chemfig."
-  (let* ((options (tochemfig-bond-options bond))
-         (to-phantom (tochemfig-bond-to-phantom bond))
-         (end-atom (tochemfig-bond-end-atom bond))
-         (end-string-pos (if to-phantom
-                             (tochemfig-atom-phantom-pos end-atom)
-                           (tochemfig-atom-string-pos end-atom)))
-         (bond-type (tochemfig-bond-bond-type bond)))
-    (when (and (plist-get options :fancy-bonds)
-               (memq bond-type '(double triple)))
-      (if (eq bond-type 'double)
-          (let ((fd (tochemfig-bond-fancy-double bond)))
-            (when fd
-              (cl-pushnew "double" (tochemfig-bond-tikz-styles bond) :test #'equal)
-              (cl-pushnew (nth 0 fd) (tochemfig-bond-tikz-styles bond) :test #'equal)
-              (setf (tochemfig-bond-tikz-values bond)
-                    (append (list (cons 'start (nth 1 fd)) (cons 'end (nth 2 fd)))
-                            (tochemfig-bond-tikz-values bond)))
-              (setf (tochemfig-bond-bond-type bond) 'decorated)))
-        (cl-pushnew "triple" (tochemfig-bond-tikz-styles bond) :test #'equal)
-        (let ((ft (tochemfig-bond-fancy-triple bond)))
-          (setf (tochemfig-bond-tikz-values bond)
-                (append (list (cons 'start (nth 0 ft)) (cons 'end (nth 1 ft)))
-                        (tochemfig-bond-tikz-values bond)))
-          (setf (tochemfig-bond-bond-type bond) 'decorated))))
-    (tochemfig--format-bond options (tochemfig-bond-angle bond)
-                            (tochemfig-bond-angle (tochemfig-bond-parent bond))
-                            (tochemfig-bond-bond-type bond)
-                            (tochemfig-bond-clockwise bond)
-                            (tochemfig-bond-is-last bond)
-                            (tochemfig-bond-length bond)
-                            (tochemfig-atom-string-pos (tochemfig-bond-start-atom bond))
-                            end-string-pos
-                            (tochemfig-bond-tikz-styles bond)
-                            (tochemfig-bond-tikz-values bond)
-                            (tochemfig-bond-marker bond))))
-
-(defun tochemfig-bond-indent (bond level bond-code atom-code comment-code)
-  "Indent BOND-CODE and ATOM-CODE for LEVEL, padding the bond code."
-  (let* ((code-str (tochemfig--str bond-code))
-         (padded (concat (make-string (max 0 (- tochemfig--bond-code-width (length code-str))) ?\s)
-                         code-str))
-         (indent-len (* (or (plist-get (tochemfig-bond-options bond) :indent) 4) level))
-         (stuff (concat (make-string indent-len ?\s) padded (or atom-code ""))))
-    (when (and comment-code (not (equal comment-code "")))
-      (setq stuff (concat stuff "% " comment-code)))
-    (replace-regexp-in-string "[ \t\n]+\\'" "" stuff)))
-
-(defun tochemfig-bond-render (bond level)
-  "Render BOND and its trailing atom at LEVEL."
-  (cond
-   ((eq (tochemfig-bond-kind bond) 'aromatic-ring)
-    (let* ((options (tochemfig-bond-options bond))
-           (rendered (tochemfig--format-aromatic-ring
-                      options (tochemfig-bond-angle bond)
-                      (tochemfig-bond-parent-angle bond)
-                      (tochemfig-bond-length bond)
-                      (tochemfig-bond-radius bond))))
-      (tochemfig-bond-indent bond level (nth 0 rendered) (nth 1 rendered) (nth 2 rendered))))
-   ((eq (tochemfig-bond-kind bond) 'dummy-first)
-    (let ((atom-render (tochemfig-atom-render (tochemfig-bond-end-atom bond))))
-      (tochemfig-bond-indent bond level "" (car atom-render) (cdr atom-render))))
-   (t
-    (let* ((to-phantom (tochemfig-bond-to-phantom bond))
-           (atom (tochemfig-bond-end-atom bond))
-           (atom-render (if to-phantom
-                            (tochemfig-atom-render-phantom atom)
-                          (tochemfig-atom-render atom)))
-           (bond-code (tochemfig-bond-to-chemfig bond)))
-      (tochemfig-bond-indent bond level bond-code (car atom-render) (cdr atom-render))))))
 
 (provide 'tochemfig-bond)
 ;;; tochemfig-bond.el ends here

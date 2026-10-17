@@ -26,7 +26,7 @@
 (require 'chem-ir)
 (require 'tochemfig-atom)
 (require 'tochemfig-bond)
-(require 'tochemfig-mappings)
+(require 'chem-exp-chemfig-mappings)
 
 (unless (macrop 'indigo-with-atoms-iterator)
   (error "tochemfig requires emacs-indigo (>= 0.10.1), but the \

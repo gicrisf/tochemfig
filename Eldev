@@ -14,13 +14,15 @@
 (setf eldev-main-fileset
       '("tochemfig.el"
         "chem-ir.el"
-        "chem-indigo.el"
-        "tochemfig-transient.el"
-        "tochemfig-mode.el"
         "tochemfig-atom.el"
         "tochemfig-bond.el"
-        "tochemfig-mappings.el"
-        "tochemfig-molecule.el"))
+        "chem-indigo.el"
+        "chem-exp-chemfig-mappings.el"
+        "chem-export.el"
+        "chem-exp-chemfig.el"
+        "tochemfig-molecule.el"
+        "tochemfig-transient.el"
+        "tochemfig-mode.el"))
 
 (setf eldev-test-fileset
       '("test/tochemfig-test.el"

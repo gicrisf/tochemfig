@@ -1,4 +1,4 @@
-;;; tochemfig-mappings.el --- chemfig code formatting -*- lexical-binding: t; -*-
+;;; chem-exp-chemfig-mappings.el --- Chemfig code formatting -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022, 2025 Giovanni Crisalfi
 
@@ -312,5 +312,5 @@ Return (atom-code string-position phantom phantom-position).  IDX is 1-based."
         (mapconcat #'identity (tochemfig--strip-output out) "%\n")
       (mapconcat #'identity out "\n"))))
 
-(provide 'tochemfig-mappings)
-;;; tochemfig-mappings.el ends here
+(provide 'chem-exp-chemfig-mappings)
+;;; chem-exp-chemfig-mappings.el ends here
