@@ -201,12 +201,14 @@
       (should (eq 'plain (chem-edge-decoration edge))))))
 
 (ert-deftest chem-ir-edge-markers ()
-  "Canonical edges carry the same marker as their directed bonds."
-  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/ethanol.mol" '(("markers" . "a"))))
-         (bonds (chem-drawing-bonds drawing)))
+  "Canonical edges carry markers in sorted atom order."
+  (let ((drawing (chem-ir-test--drawing-from-file
+                  "corpus/ethanol.mol" '(("markers" . "a")))))
     (dolist (edge (chem-edges drawing))
-      (let ((bond (gethash (cons (chem-edge-a edge) (chem-edge-b edge)) bonds)))
-        (should (equal (chem-edge-marker edge) (chem-bond-marker bond)))))))
+      (should (string-match-p
+               (format "\\`a%d-%d\\'" (1+ (chem-edge-a edge))
+                       (1+ (chem-edge-b edge)))
+               (chem-edge-marker edge))))))
 
 (ert-deftest chem-ir-edge-cross ()
   "Cross-bond selection is recorded on the canonical edge."
@@ -249,26 +251,17 @@
     (should (chem-ir-test--close-p -2.0 (chem-atom-y atom)))))
 
 (ert-deftest chem-ir-derived-geometry ()
-  "Stored bond geometry matches coordinates after transforms."
+  "Traversal nodes derive finite geometry from coordinates."
   (dolist (case '(("corpus/ethanol.mol" nil)
                   ("corpus/ethanol.mol" (("angle" . 30.0) ("flip" . t)))
                   ("corpus/benzene.mol" (("bond-scale" . scale)
                                          ("bond-stretch" . 2.0)))
                   ("corpus/benzene.mol" (("aromatic-circles" . t)))))
     (let ((drawing (chem-ir-test--drawing-from-file (car case) (cadr case))))
-      (maphash
-       (lambda (_ bond)
-         (let ((start (chem-bond-start-atom bond))
-               (end (chem-bond-end-atom bond)))
-           (when (and start end)
-             (let ((dims (chem--compare-positions
-                          (chem-atom-x start) (chem-atom-y start)
-                          (chem-atom-x end) (chem-atom-y end))))
-               (should (chem-ir-test--close-p (nth 0 dims)
-                                              (chem-bond-length bond)))
-               (should (chem-ir-test--angle-close-p (nth 1 dims)
-                                                    (chem-bond-angle bond)))))))
-       (chem-drawing-bonds drawing)))))
+      (dolist (node (chem-tree-nodes drawing))
+        (let ((dims (chem-exp-chemfig--node-geometry drawing node)))
+          (should (> (nth 0 dims) 0))
+          (should (numberp (nth 1 dims))))))))
 
 (ert-deftest chem-ir-rotation-coordinates ()
   "Rotation is applied to coordinates before bond geometry is derived."
@@ -300,11 +293,9 @@
                                         (chem-atom-y other)))))
      (chem-drawing-atoms keep))
     (dolist (edge (chem-edges keep))
-      (let* ((pair (cons (chem-edge-a edge) (chem-edge-b edge)))
-             (before (gethash pair (chem-drawing-bonds keep)))
-             (after (gethash pair (chem-drawing-bonds scaled))))
-        (should (chem-ir-test--close-p (* 2.0 (chem-bond-length before))
-                                       (chem-bond-length after)))))))
+      (let ((after (chem-get-edge scaled (chem-edge-a edge) (chem-edge-b edge))))
+        (should (chem-ir-test--close-p (* 2.0 (chem-edge-length keep edge))
+                                       (chem-edge-length scaled after)))))))
 
 (ert-deftest chem-ir-flip-coordinates ()
   "Flip and flop are applied to coordinates before bond geometry is derived."
@@ -335,20 +326,16 @@
          (root (chem-drawing-root drawing))
          (nodes (chem-tree-nodes drawing)))
     (should (chem-node-p root))
-    (should-not (chem-node-bond root))
+    (should-not (chem-node-edge-id root))
     (should (= 6 (length nodes)))
-    (should (= 6 (length (chem-tree-bonds drawing))))
     (should (eq root (chem-node-parent (car nodes))))
     (dolist (node nodes)
       (should (chem-node-p node))
-      (should (chem-node-bond node))
-      (should (chem-edge-at drawing
-                            (chem-bond-edge-id (chem-node-bond node))))
-      (should (= (chem-node-to node)
-                 (chem-atom-idx (chem-bond-end-atom (chem-node-bond node)))))
+      (should (chem-node-edge-id node))
+      (should (chem-edge-at drawing (chem-node-edge-id node)))
       (should (memq node (chem-node-children (chem-node-parent node))))
-      (should (eq node (chem-tree-node-for-bond
-                        drawing (chem-node-bond node)))))
+      (should (eq node (chem-tree-node-for-edge
+                        drawing (chem-node-edge-id node)))))
     ;; Every node reaches the root through parent links.
     (dolist (node nodes)
       (let ((cursor node))
@@ -389,11 +376,6 @@
                    "corpus/benzene.mol" '(("aromatic-circles" . t)))))
     (should (= (length (chem-tree-nodes plain))
                (length (chem-tree-nodes circles))))
-    (should-not (cl-find-if
-                 (lambda (node)
-                   (let ((bond (chem-node-bond node)))
-                     (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
-                 (chem-tree-nodes circles)))
     (should (string-match-p "mcfcringle"
                             (chem-ir-test--render
                              circles '(("aromatic-circles" . t)))))))
@@ -407,16 +389,16 @@
          (edge (chem-get-edge drawing 0 1))
          (link-nodes (cl-remove-if-not
                       (lambda (node)
-                        (let ((bond (chem-node-bond node)))
-                          (and bond
-                               (chem-bond-edge-id bond)
-                               (= (chem-bond-edge-id bond) (chem-edge-id edge))
-                               (eq (chem-bond-bond-type bond) 'link))))
+                        (and (chem-node-link-p node)
+                             (equal (chem-node-edge-id node)
+                                    (chem-edge-id edge))))
                       nodes)))
     (should (= 1 (length crossed)))
     (should (chem-edge-cross-p edge))
     (should (chem-node-phantom-p (car crossed)))
-    (should (eq 'double (chem-bond-bond-type (chem-node-bond (car crossed)))))
+    (should (equal (chem-edge-id edge)
+                   (chem-node-edge-id (car crossed))))
+    (should (eq :double (chem-edge-order edge)))
     (should (= 1 (length link-nodes)))
     (should-not (chem-node-cross-p (car link-nodes)))))
 
@@ -426,13 +408,15 @@
   "The finished drawing carries no ingestion scratch or option snapshots."
   (let ((drawing-slots (mapcar #'car (cl-struct-slot-info 'chem-drawing)))
         (atom-slots (mapcar #'car (cl-struct-slot-info 'chem-atom)))
-        (bond-slots (mapcar #'car (cl-struct-slot-info 'chem-bond))))
-    (dolist (slot '(options toolkit seen-atoms seen-bonds bond-scale exit-bond))
+        (node-slots (mapcar #'car (cl-struct-slot-info 'chem-node))))
+    (dolist (slot '(bonds options toolkit seen-atoms seen-bonds
+                    bond-scale exit-bond))
       (should-not (memq slot drawing-slots)))
+    (should (memq 'parity drawing-slots))
     (should-not (memq 'options atom-slots))
-    (dolist (slot '(options parent descendants to-phantom is-trunk
-                    cross-p cross-last-p clockwise))
-      (should-not (memq slot bond-slots)))))
+    (dolist (slot '(edge-id from to link-p))
+      (should (memq slot node-slots)))
+    (should-not (memq 'bond node-slots))))
 
 ;;; Rings
 
@@ -473,7 +457,7 @@
         (should (chem-atom-in-ring-p drawing idx))
         (should (= 1 (length (chem-rings-for-atom drawing idx)))))
       (dolist (edge-id (chem-ring-bonds ring))
-        (should (chem-bond-in-ring-p drawing edge-id))
+        (should (chem-edge-in-ring-p drawing edge-id))
         (should (= 1 (length (chem-rings-for-edge drawing edge-id)))))))
   (let* ((drawing (chem-ir-test--drawing-from-file "corpus/naphthalene.mol" nil))
          (rings (chem-drawing-rings drawing)))
@@ -517,16 +501,11 @@
                                         (chem-drawing-rings drawing)))
                          :test #'=)))
         (dolist (edge-id ring-bonds)
-          (let ((node (cl-find-if
-                       (lambda (node)
-                         (let ((bond (chem-node-bond node)))
-                           (and bond (= (chem-bond-edge-id bond) edge-id))))
-                       (chem-tree-nodes drawing))))
+          (let ((node (chem-tree-node-for-edge drawing edge-id)))
             (when node
-              (let* ((bond (chem-node-bond node))
-                     (from (chem-atom-idx (chem-bond-start-atom bond)))
-                     (to (chem-atom-idx (chem-bond-end-atom bond)))
-                     (clockwise (chem-exp-chemfig--bond-clockwise state bond)))
+              (let* ((from (chem-node-from node))
+                     (to (chem-node-to node))
+                     (clockwise (chem-exp-chemfig--node-clockwise state node)))
                 (unless (zerop clockwise)
                   (let ((expected (if (= clockwise -1) :left :right)))
                     (should (cl-find expected
@@ -541,31 +520,30 @@
                    "corpus/benzene.mol" '(("aromatic-circles" . t))))
          (state (chem-exp-chemfig--make-state options)))
     (chem-exp-chemfig--prepare-rings state drawing options)
-    (let (circle-nodes)
-      (maphash (lambda (_ nodes) (setq circle-nodes (append circle-nodes nodes)))
+    (let (circles)
+      (maphash (lambda (_ items) (setq circles (append circles items)))
                (chem-exp-chemfig-state-circle-children state))
-      (should (= 1 (length circle-nodes)))
-      (let* ((circle (car circle-nodes))
-             (aromatic-bond (chem-node-bond circle))
-             (parent-bond (chem-node-bond (chem-node-parent circle)))
-             (edge-id (chem-bond-edge-id parent-bond))
-             (rings (chem-rings-for-edge drawing edge-id))
-             (ring (car rings))
+      (should (= 1 (length circles)))
+      (let* ((circle (car circles))
+             (ring (car (chem-drawing-rings drawing)))
+             (anchor-node (chem-tree-node-for-edge
+                           drawing (chem-ring-anchor ring)))
              (center (chem-ring-center drawing ring))
-             (atom (chem-bond-end-atom parent-bond))
+             (atom (gethash (chem-node-to anchor-node)
+                            (chem-drawing-atoms drawing)))
              (outer-r (sqrt (+ (expt (- (chem-atom-x atom) (nth 0 center)) 2)
                                (expt (- (chem-atom-y atom) (nth 1 center)) 2))))
              (n (length (chem-ring-atoms ring)))
              (alpha (- (/ float-pi 2) (/ float-pi n)))
              (inner-r (* (sin alpha) outer-r)))
-        (should (= 1 (length rings)))
         (should (chem-ring-aromatic-p ring))
-        (should (= (chem-ring-anchor ring) edge-id))
-        (should (chem-ir-test--close-p outer-r
-                                       (chem-bond-length aromatic-bond) 0.01))
-        (should (chem-ir-test--close-p inner-r
-                                       (/ (chem-bond-radius aromatic-bond) 1.5)
-                                       0.01))))))
+        (should (chem-ir-test--close-p
+                 outer-r (chem-exp-chemfig-circle-length circle) 0.01))
+        (should (chem-ir-test--close-p
+                 inner-r (/ (chem-exp-chemfig-circle-radius circle) 1.5) 0.01))
+        (should (chem-ir-test--close-p
+                 (chem-exp-chemfig--node-angle drawing anchor-node)
+                 (chem-exp-chemfig-circle-parent-angle circle)))))))
 
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here

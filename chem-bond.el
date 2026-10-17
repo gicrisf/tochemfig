@@ -1,4 +1,4 @@
-;;; chem-bond.el --- Bond creation and geometry -*- lexical-binding: t; -*-
+;;; chem-bond.el --- Geometry helpers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022, 2025 Giovanni Crisalfi
 
@@ -8,26 +8,12 @@
 
 ;;; Commentary:
 
-;; Translation of mol2chemfigPy3's `bond.py'.  A bond is also a node in the
-;; drawing tree: it knows its parent and descendants.  Exporter-specific
-;; rendering lives elsewhere.
+;; Geometry helpers shared by ingestion and exporters.
 
 ;;; Code:
 
 (require 'cl-lib)
 (require 'chem-ir)
-
-;; Indigo stereo constants.
-(defconst chem--stereo-up 5)
-(defconst chem--stereo-down 6)
-(defconst chem--stereo-either 4)
-
-(defconst chem--bond-mapping
-  '((1 . single) (2 . double) (3 . triple) (4 . either)
-    (5 . upto) (6 . downto))
-  "Raw Indigo bond type/stereo to mol2chemfig bond type.
-Note that order 4 (aromatic) maps to `either' (wavy), mirroring the reference
-implementation where the dict literal overrides the aromatic entry.")
 
 (defun chem--rad-to-deg (radians)
   "Convert RADIANS to degrees."
@@ -55,81 +41,6 @@ The angle follows mol2chemfig's convention and may be negative."
            (t (let ((raw (chem--rad-to-deg (atan (abs (/ yd xd))))))
                 (cond ((>= yd 0) (if (> xd 0) raw (- 180 raw)))
                       (t (if (> xd 0) (- raw) (+ 180 raw))))))))))
-
-(defun chem-bond-create-from (options start-atom end-atom bond-order stereo
-                                      &optional edge-id)
-  "Create a bond from START-ATOM to END-ATOM.
-BOND-ORDER is an Indigo keyword; STEREO an Indigo stereo keyword.
-EDGE-ID links the directed bond to its canonical `chem-edge'."
-  (let* ((stereo-code (cond ((eq stereo :up) chem--stereo-up)
-                            ((eq stereo :down) chem--stereo-down)
-                            ((eq stereo :either) chem--stereo-either)
-                            (t 0)))
-         (flip (plist-get options :flip))
-         (flop (plist-get options :flop)))
-    (when (and (memq stereo-code (list chem--stereo-up chem--stereo-down))
-               (not (eq flip flop)))
-      (setq stereo-code (- (+ chem--stereo-up chem--stereo-down) stereo-code)))
-    (let* ((bond-type
-            (if (memq stereo-code (list chem--stereo-up chem--stereo-down
-                                        chem--stereo-either))
-                (cdr (assq stereo-code chem--bond-mapping))
-              (let ((raw (pcase bond-order
-                           (:single 1) (:double 2) (:triple 3) (:aromatic 4) (_ 0))))
-                (or (cdr (assq raw chem--bond-mapping)) 'query))))
-           (dims (chem--compare-positions
-                  (chem-atom-x start-atom) (chem-atom-y start-atom)
-                  (chem-atom-x end-atom) (chem-atom-y end-atom)))
-           (marker-opt (plist-get options :markers))
-           (ids (sort (list (1+ (chem-atom-idx start-atom))
-                            (1+ (chem-atom-idx end-atom))) #'<)))
-      (chem-bond-create
-       :kind 'bond
-       :edge-id edge-id
-       :start-atom start-atom
-       :end-atom end-atom
-       :bond-type bond-type
-       :length (nth 0 dims)
-       :angle (nth 1 dims)
-       :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")))))
-
-(defun chem-bond-refresh-geometry (drawing)
-  "Recompute directed bond lengths and angles from atom coordinates.
-Include traversal-only bonds such as cross-bond overlays."
-  (let ((seen (make-hash-table :test 'eq)))
-    (cl-labels
-        ((refresh (bond)
-           (unless (gethash bond seen)
-             (puthash bond t seen)
-             (let ((start (chem-bond-start-atom bond))
-                   (end (chem-bond-end-atom bond)))
-               (when (and start end)
-                 (let ((dims (chem--compare-positions
-                              (chem-atom-x start) (chem-atom-y start)
-                              (chem-atom-x end) (chem-atom-y end))))
-                   (setf (chem-bond-length bond) (nth 0 dims))
-                   (setf (chem-bond-angle bond) (nth 1 dims))))))))
-      (maphash (lambda (_ bond) (refresh bond))
-               (chem-drawing-bonds drawing))
-      (dolist (bond (chem-tree-bonds drawing))
-        (refresh bond))))
-  drawing)
-
-(defun chem-bond-invert (bond)
-  "Return a reversed copy of BOND."
-  (let ((c (copy-chem-bond bond)))
-    (setf (chem-bond-start-atom c) (chem-bond-end-atom bond))
-    (setf (chem-bond-end-atom c) (chem-bond-start-atom bond))
-    (setf (chem-bond-angle c) (mod (+ (chem-bond-angle c) 180) 360))
-    (pcase (chem-bond-bond-type c)
-      ('upto (setf (chem-bond-bond-type c) 'upfrom))
-      ('downto (setf (chem-bond-bond-type c) 'downfrom)))
-    c))
-
-(defun chem-bond-set-link (bond)
-  "Make BOND an invisible link."
-  (setf (chem-bond-bond-type bond) 'link)
-  (setf (chem-bond-marker bond) ""))
 
 (provide 'chem-bond)
 ;;; chem-bond.el ends here

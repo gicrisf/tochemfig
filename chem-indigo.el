@@ -73,42 +73,37 @@ and rebuild chem-mode"))
           (setq atom (indigo-next iter)))))
     atoms))
 
-(defun chem--parse-bonds (options mol atoms edges edge-lookup)
-  "Extract bonds from MOL into a hash keyed by (START . END).
-Populate EDGES and EDGE-LOOKUP with one canonical edge per bond.
-Returns (bonds . atom-pairs)."
-  (let ((bonds (make-hash-table :test 'equal))
-        (pairs nil))
+(defun chem--parse-bonds (options mol edges edge-lookup)
+  "Extract bonds from MOL into canonical EDGES and EDGE-LOOKUP.
+OPTIONS supplies marker settings.  Returns atom-index pairs in input order."
+  (let ((pairs nil))
     (indigo-with-bonds-iterator (iter mol)
       (let ((bond (indigo-next iter)))
         (while bond
           (let* ((start (indigo-index (indigo-source bond)))
                  (end (indigo-index (indigo-destination bond)))
-                 (start-atom (gethash start atoms))
-                 (end-atom (gethash end atoms))
                  (order (or (indigo-bond-order bond) :query))
                  (stereo (or (indigo-bond-stereo bond) :none))
                  (a (min start end))
                  (b-index (max start end))
                  (id (hash-table-count edges))
+                 (marker-opt (plist-get options :markers))
                  (edge (chem-edge-create
                         :id id :a a :b b-index
                         :order order
                         :stereo (chem--canonical-stereo stereo start end)
+                        :source-a-p (= start a)
                         :link-p nil :cross-p nil
-                        :marker nil
-                        :decoration 'plain))
-                 (b (chem-bond-create-from
-                     options start-atom end-atom order stereo id))
-                 (inverted (chem-bond-invert b)))
-            (setf (chem-edge-marker edge) (chem-bond-marker b))
+                        :marker (if marker-opt
+                                    (format "%s%d-%d" marker-opt
+                                            (1+ a) (1+ b-index))
+                                  "")
+                        :decoration 'plain)))
             (puthash id edge edges)
             (puthash (cons a b-index) edge edge-lookup)
-            (puthash (cons start end) b bonds)
-            (puthash (cons end start) inverted bonds)
             (push (cons start end) pairs))
           (setq bond (indigo-next iter)))))
-    (cons bonds (nreverse pairs))))
+    (nreverse pairs)))
 
 ;;; Fragment handling
 
@@ -150,34 +145,29 @@ Returns (bonds . atom-pairs)."
                  (cl-return-from chem--molecule-fragments (nreverse fragments))
                (setq remaining rest))))))))
 
-(defun chem--link-atoms (mol options x y)
-  "Connect atoms X and Y of MOL with an invisible link edge.
-OPTIONS is the common option plist."
-  (let* ((start (gethash x (chem-drawing-atoms mol)))
-         (end (gethash y (chem-drawing-atoms mol)))
-         (a (min x y))
+(defun chem--link-atoms (mol x y)
+  "Connect atoms X and Y of MOL with an invisible link edge."
+  (let* ((a (min x y))
          (b (max x y))
          (id (hash-table-count (chem-drawing-edges mol)))
          (edge (chem-edge-create
                 :id id :a a :b b
                 :order :single :stereo :none
+                :source-a-p t
                 :link-p t :cross-p nil
-                :marker "" :decoration 'plain))
-         (bond (chem-bond-create-from options start end :single :none id)))
-    (chem-bond-set-link bond)
-    (let ((inverted (chem-bond-invert bond)))
-      (puthash (cons x y) bond (chem-drawing-bonds mol))
-      (puthash (cons y x) inverted (chem-drawing-bonds mol)))
+                :marker "" :decoration 'plain)))
     (puthash id edge (chem-drawing-edges mol))
     (puthash (cons a b) edge (chem-drawing-edge-lookup mol))
-    (setf (chem-atom-neighbors start)
-          (append (chem-atom-neighbors start) (list y)))
-    (setf (chem-atom-neighbors end)
-          (append (chem-atom-neighbors end) (list x)))))
+    (let ((start (gethash x (chem-drawing-atoms mol)))
+          (end (gethash y (chem-drawing-atoms mol))))
+      (setf (chem-atom-neighbors start)
+            (append (chem-atom-neighbors start) (list y)))
+      (setf (chem-atom-neighbors end)
+            (append (chem-atom-neighbors end) (list x))))))
 
-(defun chem--connect-fragments (mol options pairs)
+(defun chem--connect-fragments (mol pairs)
   "Connect fragments, if any, with invisible bonds.
-OPTIONS is the common option plist; PAIRS lists the graph edges."
+PAIRS lists the graph edges."
   (let ((fragments (chem--molecule-fragments pairs)))
     (when (> (length fragments) 1)
       (let ((fs fragments))
@@ -185,7 +175,7 @@ OPTIONS is the common option plist; PAIRS lists the graph edges."
           (let* ((head (car fs)) (tail (cadr fs))
                  (head-last (cdr (car (last head))))
                  (tail-first (car (car tail))))
-            (chem--link-atoms mol options head-last tail-first))
+            (chem--link-atoms mol head-last tail-first))
           (setq fs (cdr fs)))))
     (let* ((atoms (chem-drawing-atoms mol))
            (bonded nil)
@@ -200,7 +190,7 @@ OPTIONS is the common option plist; PAIRS lists the graph edges."
                           (cdr (car (last (car (last fragments)))))
                         (prog1 (car un-bonded) (setq un-bonded (cdr un-bonded))))))
           (dolist (atom un-bonded)
-            (chem--link-atoms mol options anchor atom)))))))
+            (chem--link-atoms mol anchor atom)))))))
 
 ;;; Adjacency
 
@@ -225,10 +215,6 @@ the chemfig exporter remain byte-identical."
     mol))
 
 ;;; Tree building
-
-(defun chem--treebonds (mol)
-  "Return all directed bonds in MOL's traversal, excluding the root."
-  (chem-tree-bonds mol))
 
 (defun chem--default-exit-node (mol)
   "Pick the traversal node farthest from the entry atom along the tree."
@@ -277,15 +263,15 @@ Returns the node, or nil when the bond was already seen."
          (start-idx (when start-atom (chem-atom-idx start-atom)))
          (node
           (if (null start-atom)
-              (chem-node-create :bond nil :from nil :to end-idx)
+              (chem-node-create :edge-id nil :from nil :to end-idx)
             (if (or (gethash (cons start-idx end-idx) seen-bonds)
                     (gethash (cons end-idx start-idx) seen-bonds))
                 (cl-return-from chem--parse-tree nil)
-              (let* ((bond (gethash (cons start-idx end-idx)
-                                    (chem-drawing-bonds mol)))
+              (let* ((edge (chem-get-edge mol start-idx end-idx))
                      (closure-p (gethash end-idx seen-atoms))
                      (node (chem-node-create
-                            :bond bond :from start-idx :to end-idx
+                            :edge-id (chem-edge-id edge)
+                            :from start-idx :to end-idx
                             :closure-p closure-p
                             :phantom-p closure-p)))
                 (puthash (cons start-idx end-idx) t seen-bonds)
@@ -310,63 +296,65 @@ Returns the node, or nil when the bond was already seen."
 
 ;;; Cross bonds, scaling, rings
 
+(defun chem--tree-node-for-pair (mol from to)
+  "Return the traversal node directed FROM -> TO, or nil."
+  (cl-find-if (lambda (node)
+                (and (= (chem-node-from node) from)
+                     (= (chem-node-to node) to)))
+              (chem-tree-nodes mol)))
+
 (defun chem--process-cross-bonds (mol options seen-bonds)
   "Turn declared cross bonds into branches off the exit node.
-OPTIONS is the common option plist; SEEN-BONDS is the traversal state."
+OPTIONS supplies the cross-bond list; SEEN-BONDS records traversal direction."
   (let ((cross-bonds (plist-get options :cross-bond))
-        (seen seen-bonds)
-        (bonds (chem-drawing-bonds mol))
-        (exit-node (chem-drawing-exit-node mol)))
+        (exit-node (chem-drawing-exit-node mol))
+        (exit-idx (chem-atom-idx (chem-drawing-exit-atom mol))))
     (dolist (pair cross-bonds)
       (let* ((start (1- (car pair)))
              (end (1- (cadr pair)))
-             (bond (cond ((gethash (cons start end) seen) (gethash (cons start end) bonds))
-                         ((gethash (cons end start) seen) (gethash (cons end start) bonds))
-                         (t (error "bond %d-%d doesn't exist" (car pair) (cadr pair)))))
-             (node (chem-tree-node-for-bond mol bond)))
+             (node (cond ((gethash (cons start end) seen-bonds)
+                          (chem--tree-node-for-pair mol start end))
+                         ((gethash (cons end start) seen-bonds)
+                          (chem--tree-node-for-pair mol end start))
+                         (t (error "bond %d-%d doesn't exist"
+                                   (car pair) (cadr pair))))))
         (unless node
           (error "bond %d-%d is not in the traversal tree"
                  (car pair) (cadr pair)))
-        (if (and (chem-node-children exit-node)
-                 (eq node (car (last (chem-node-children exit-node)))))
-            (progn
-              (setf (chem-node-cross-p node) t)
-              (setf (chem-node-cross-last-p node) t))
-          (let ((bond-copy (copy-chem-bond bond)))
-            (chem-bond-set-link bond)
-            (setf (chem-node-cross-p node) nil)
+        (let ((edge-id (chem-node-edge-id node)))
+          (if (and (chem-node-children exit-node)
+                   (eq node (car (last (chem-node-children exit-node)))))
+              (progn
+                (setf (chem-node-cross-p node) t)
+                (setf (chem-node-cross-last-p node) t))
+            (setf (chem-node-link-p node) t
+                  (chem-node-cross-p node) nil)
             (let ((overlay (chem-node-create
-                            :bond bond-copy
-                            :from (chem-atom-idx (chem-bond-start-atom bond-copy))
-                            :to (chem-atom-idx (chem-bond-end-atom bond-copy))
+                            :edge-id edge-id
+                            :from (chem-node-from node)
+                            :to (chem-node-to node)
                             :parent exit-node
                             :cross-p t
                             :phantom-p t)))
-              (if (not (eq (chem-bond-start-atom bond-copy)
-                           (chem-drawing-exit-atom mol)))
-                  (let* ((pseudo-bond (chem-bond-create-from
-                                       options
-                                       (chem-drawing-exit-atom mol)
-                                       (chem-bond-start-atom bond-copy)
-                                       :single :none))
-                         (pseudo-node (chem-node-create
-                                       :bond pseudo-bond
-                                       :from (chem-atom-idx (chem-drawing-exit-atom mol))
-                                       :to (chem-atom-idx (chem-bond-start-atom bond-copy))
-                                       :parent exit-node
-                                       :phantom-p t)))
-                    (chem-bond-set-link pseudo-bond)
-                    (setf (chem-node-parent overlay) pseudo-node)
-                    (setf (chem-node-children pseudo-node) (list overlay))
+              (if (not (= (chem-node-from node) exit-idx))
+                  (let ((connector (chem-node-create
+                                    :edge-id nil
+                                    :from exit-idx
+                                    :to (chem-node-from node)
+                                    :parent exit-node
+                                    :link-p t
+                                    :phantom-p t)))
+                    (setf (chem-node-parent overlay) connector)
+                    (setf (chem-node-children connector) (list overlay))
                     (setf (chem-node-children exit-node)
                           (append (chem-node-children exit-node)
-                                  (list pseudo-node))))
+                                  (list connector))))
                 (setf (chem-node-children exit-node)
                       (append (chem-node-children exit-node)
-                              (list overlay)))))))
-        (let ((edge (chem-edge-at mol (chem-bond-edge-id bond))))
-          (when edge
-            (setf (chem-edge-cross-p edge) t)))))))
+                              (list overlay))))))
+          (let ((edge (chem-edge-at mol edge-id)))
+            (when edge
+              (setf (chem-edge-cross-p edge) t))))))))
 
 (defun chem--scale-bonds (mol options)
   "Scale bond lengths according to OPTIONS."
@@ -376,10 +364,10 @@ OPTIONS is the common option plist; SEEN-BONDS is the traversal state."
     (cond
      ((eq mode 'keep) nil)
      ((eq mode 'normalize)
-      (let* ((lengths (mapcar (lambda (b)
-                                (chem--num-round (chem-bond-length b)
-                                                      (or (plist-get options :bond-round) 3)))
-                              (chem--treebonds mol)))
+      (let* ((lengths (mapcar (lambda (length)
+                                (chem--num-round length
+                                                 (or (plist-get options :bond-round) 3)))
+                              (chem-tree-edge-lengths mol)))
              (counter (make-hash-table :test 'equal))
              (most-common nil))
         (dolist (l lengths) (puthash l (1+ (or (gethash l counter) 0)) counter))
@@ -393,8 +381,7 @@ OPTIONS is the common option plist; SEEN-BONDS is the traversal state."
                       1.0))))
      ((eq mode 'scale) (setq scale stretch)))
     (unless (= scale 1.0)
-      (chem-scale mol scale)
-      (chem-bond-refresh-geometry mol))))
+      (chem-scale mol scale))))
 
 (defun chem--ring-record (mol ring aromatic-p sequence)
   "Build an ordered `chem-ring' from Indigo RING.
@@ -494,34 +481,42 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
          (seen-bonds (make-hash-table :test 'equal))
          (state (chem-drawing-create
                  :atoms atoms
-                 :bonds (make-hash-table :test 'equal)
                  :edges (make-hash-table :test 'eql)
                  :edge-lookup (make-hash-table :test 'equal)
-                 :adjacency (make-hash-table :test 'eql))))
+                 :adjacency (make-hash-table :test 'eql)
+                 :parity (if (eq (and (plist-get options :flip) t)
+                                 (and (plist-get options :flop) t))
+                             0 1))))
     ;; Apply coordinate transforms before bonds are parsed.
     (when (plist-get options :flip)
       (chem-flip-horizontal state))
     (when (plist-get options :flop)
       (chem-flip-vertical state))
-    (let ((rotation (or (plist-get options :angle) 0.0)))
-      (unless (zerop rotation)
-        (chem-rotate state rotation)))
-    (let* ((parsed (chem--parse-bonds options mol atoms
-                                      (chem-drawing-edges state)
-                                      (chem-drawing-edge-lookup state)))
-           (pairs (cdr parsed)))
-      (setf (chem-drawing-bonds state) (car parsed))
-      ;; Record the angle of every incident bond on each atom.
+    (let* ((rotation (or (plist-get options :angle) 0.0))
+           (pairs (chem--parse-bonds options mol
+                                     (chem-drawing-edges state)
+                                     (chem-drawing-edge-lookup state))))
+      ;; Record label-placement angles using the legacy rotation offset.
       (dolist (pair pairs)
-        (let* ((start (car pair)) (end (cdr pair))
-               (bonds (chem-drawing-bonds state)))
-          (setf (chem-atom-bond-angles (gethash start atoms))
-                (append (chem-atom-bond-angles (gethash start atoms))
-                        (list (chem-bond-angle (gethash (cons start end) bonds)))))
-          (setf (chem-atom-bond-angles (gethash end atoms))
-                (append (chem-atom-bond-angles (gethash end atoms))
-                        (list (chem-bond-angle (gethash (cons end start) bonds)))))))
-      (chem--connect-fragments state options pairs)
+        (let* ((start (car pair))
+               (end (cdr pair))
+               (a (gethash start atoms))
+               (b (gethash end atoms))
+               (ab (chem--compare-positions
+                    (chem-atom-x a) (chem-atom-y a)
+                    (chem-atom-x b) (chem-atom-y b)))
+               (ba (chem--compare-positions
+                    (chem-atom-x b) (chem-atom-y b)
+                    (chem-atom-x a) (chem-atom-y a))))
+          (setf (chem-atom-bond-angles a)
+                (append (chem-atom-bond-angles a)
+                        (list (+ (nth 1 ab) rotation))))
+          (setf (chem-atom-bond-angles b)
+                (append (chem-atom-bond-angles b)
+                        (list (+ (nth 1 ba) rotation))))))
+      (unless (zerop rotation)
+        (chem-rotate state rotation))
+      (chem--connect-fragments state pairs)
       (chem--build-adjacency state)
       (chem--pick-first-last-atoms state options)
       (setf (chem-drawing-root state)

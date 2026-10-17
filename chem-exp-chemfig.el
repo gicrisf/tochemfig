@@ -27,15 +27,18 @@
   first-quadrant second-quadrant charge-angle
   explicit)
 
-(cl-defstruct (chem-exp-chemfig-bond-state (:constructor chem-exp-chemfig-bond-state-create))
+(cl-defstruct (chem-exp-chemfig-node-state (:constructor chem-exp-chemfig-node-state-create))
   tikz-styles tikz-values
   is-last display-type)
 
 (defconst chem-exp-chemfig--aromatic-ring-scale 1.5
   "Scale factor for the aromatic-circle radius.")
 
+(cl-defstruct (chem-exp-chemfig-circle (:constructor chem-exp-chemfig-circle-create))
+  angle parent-angle length radius)
+
 (cl-defstruct (chem-exp-chemfig-state (:constructor chem-exp-chemfig-state-create))
-  atoms bonds options
+  atoms nodes options
   clockwise                      ; hash: bond -> -1/1/0
   display-type                   ; hash: bond -> display type override
   extra-angles                   ; hash: atom idx -> extra label angles
@@ -45,7 +48,7 @@
   "Create an empty renderer state with exporter OPTIONS."
   (chem-exp-chemfig-state-create
    :atoms (make-hash-table :test 'eql)
-   :bonds (make-hash-table :test 'eq)
+   :nodes (make-hash-table :test 'eq)
    :options options
    :clockwise (make-hash-table :test 'eq)
    :display-type (make-hash-table :test 'eq)
@@ -58,17 +61,93 @@
           (gethash (chem-atom-idx atom)
                    (chem-exp-chemfig-state-extra-angles state))))
 
-(defun chem-exp-chemfig--bond-display-type (state bond)
-  "Return BOND's display type, honoring exporter ring overrides."
-  (or (gethash bond (chem-exp-chemfig-state-display-type state))
-      (chem-bond-bond-type bond)))
+(defun chem-exp-chemfig--node-edge (drawing node)
+  "Return NODE's canonical edge, or nil for synthetic connectors."
+  (let ((edge-id (chem-node-edge-id node)))
+    (and edge-id (chem-edge-at drawing edge-id))))
 
-(defun chem-exp-chemfig--bond-clockwise (state bond)
-  "Return BOND's derived ring orientation, or 0."
-  (or (gethash bond (chem-exp-chemfig-state-clockwise state)) 0))
+(defun chem-exp-chemfig--node-geometry (drawing node)
+  "Return (length angle) for NODE's directed atom segment."
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (a (gethash (chem-node-from node) atoms))
+         (b (gethash (chem-node-to node) atoms)))
+    (chem--compare-positions (chem-atom-x a) (chem-atom-y a)
+                             (chem-atom-x b) (chem-atom-y b))))
+
+(defun chem-exp-chemfig--node-angle (drawing node)
+  "Return NODE's directed angle."
+  (nth 1 (chem-exp-chemfig--node-geometry drawing node)))
+
+(defun chem-exp-chemfig--node-length (drawing node)
+  "Return NODE's directed length."
+  (nth 0 (chem-exp-chemfig--node-geometry drawing node)))
+
+(defun chem-exp-chemfig--parent-angle (drawing node)
+  "Return NODE's incoming parent angle, or nil."
+  (let ((parent (chem-node-parent node)))
+    (when (and parent (chem-node-from parent))
+      (chem-exp-chemfig--node-angle drawing parent))))
+
+(defun chem-exp-chemfig--flip-stereo (stereo)
+  "Return STEREO with up/down swapped."
+  (pcase stereo
+    (:up :down)
+    (:down :up)
+    (_ stereo)))
+
+(defun chem-exp-chemfig--node-display-type (state drawing node)
+  "Return NODE's chemfig display type."
+  (let ((edge-id (chem-node-edge-id node)))
+    (cond
+     ((chem-node-link-p node) 'link)
+     ((null edge-id) 'link)
+     (t
+      (let ((edge (chem-edge-at drawing edge-id)))
+        (cond
+         ((chem-edge-link-p edge) 'link)
+         ((gethash node (chem-exp-chemfig-state-display-type state)))
+         (t
+          (let* ((stereo (chem-edge-stereo edge))
+                 (source-a-p (chem-edge-source-a-p edge))
+                 (node-forward-p (= (chem-node-from node) (chem-edge-a edge)))
+                 (raw (if source-a-p stereo
+                        (chem-exp-chemfig--flip-stereo stereo)))
+                 (raw (if (= 1 (or (chem-drawing-parity drawing) 0))
+                          (chem-exp-chemfig--flip-stereo raw)
+                        raw))
+                 (forward-p (eq source-a-p node-forward-p)))
+            (if (memq raw '(:up :down :either))
+                (pcase raw
+                  (:up (if forward-p 'upto 'upfrom))
+                  (:down (if forward-p 'downto 'downfrom))
+                  (:either 'either))
+              (pcase (chem-edge-order edge)
+                (:single 'single)
+                (:double 'double)
+                (:triple 'triple)
+                (:aromatic 'either)
+                (_ 'query)))))))))))
+
+(defun chem-exp-chemfig--node-clockwise (state node)
+  "Return NODE's derived ring orientation, or 0."
+  (or (gethash node (chem-exp-chemfig-state-clockwise state)) 0))
+
+(defun chem-exp-chemfig--node-marker (drawing node)
+  "Return NODE's marker string."
+  (let ((edge (chem-exp-chemfig--node-edge drawing node)))
+    (if (and edge (not (chem-node-link-p node)))
+        (chem-edge-marker edge)
+      "")))
+
+(defun chem-exp-chemfig--node-decoration (drawing node)
+  "Return NODE's decoration."
+  (let ((edge (chem-exp-chemfig--node-edge drawing node)))
+    (if (and edge (not (chem-node-link-p node)))
+        (chem-edge-decoration edge)
+      'plain)))
 
 (defun chem-exp-chemfig--display-children (state node)
-  "Return NODE's traversal children plus exporter circle nodes."
+  "Return NODE's traversal children plus exporter circle items."
   (append (chem-node-children node)
           (gethash node (chem-exp-chemfig-state-circle-children state))))
 
@@ -79,11 +158,11 @@
         (puthash key (chem-exp-chemfig-atom-state-create)
                  (chem-exp-chemfig-state-atoms state)))))
 
-(defun chem-exp-chemfig--bond-state (state bond)
-  "Return the renderer state for BOND in STATE."
-  (or (gethash bond (chem-exp-chemfig-state-bonds state))
-      (puthash bond (chem-exp-chemfig-bond-state-create)
-               (chem-exp-chemfig-state-bonds state))))
+(defun chem-exp-chemfig--node-state (state node)
+  "Return the renderer state for NODE in STATE."
+  (or (gethash node (chem-exp-chemfig-state-nodes state))
+      (puthash node (chem-exp-chemfig-node-state-create)
+               (chem-exp-chemfig-state-nodes state))))
 
 (defun chem-exp-chemfig--atom-explicit-p (state atom)
   "Return non-nil when ATOM is explicitly labeled in STATE."
@@ -194,11 +273,11 @@ Return (phantom-code . comment-code)."
   "Return 100 times the cotangent of ANGLE degrees, rounded."
   (round (/ 100.0 (tan (* angle (/ float-pi 180.0))))))
 
-(defun chem--adjoining-angles (bond atom inversion-angle)
+(defun chem-exp-chemfig--adjoining-angles (angle atom inversion-angle)
   "Return the narrowest adjoining angles on ATOM's left and right."
   (let* ((raw (mapcar (lambda (a) (mod (round a) 360))
                       (chem-atom-bond-angles atom)))
-         (reference (mod (round (- (chem-bond-angle bond) inversion-angle)) 360)))
+         (reference (mod (round (- angle inversion-angle)) 360)))
     (let ((pos (cl-position reference raw :test #'equal)))
       (when pos
         (setq raw (append (cl-subseq raw 0 pos) (cl-subseq raw (1+ pos))))))
@@ -207,23 +286,25 @@ Return (phantom-code . comment-code)."
       (let* ((angles (sort (mapcar (lambda (a) (mod (- a reference) 360)) raw) #'<)))
         (list (round (car angles)) (round (car (last angles))))))))
 
-(defun chem-bond-upstream-angles (bond)
-  "Return the narrowest upstream left and right angles of BOND."
-  (let* ((pair (chem--adjoining-angles bond (chem-bond-start-atom bond) 0))
+(defun chem-exp-chemfig--upstream-angles (drawing node angle)
+  "Return the narrowest upstream left and right angles of NODE."
+  (let* ((atom (gethash (chem-node-from node) (chem-drawing-atoms drawing)))
+         (pair (chem-exp-chemfig--adjoining-angles angle atom 0))
          (first (nth 0 pair))
          (last (nth 1 pair)))
     (when (not (null last)) (setq last (- 360 last)))
     (list (cons 'left first) (cons 'right last))))
 
-(defun chem-bond-downstream-angles (bond)
-  "Return the narrowest downstream left and right angles of BOND."
-  (let* ((pair (chem--adjoining-angles bond (chem-bond-end-atom bond) 180))
+(defun chem-exp-chemfig--downstream-angles (drawing node angle)
+  "Return the narrowest downstream left and right angles of NODE."
+  (let* ((atom (gethash (chem-node-to node) (chem-drawing-atoms drawing)))
+         (pair (chem-exp-chemfig--adjoining-angles angle atom 180))
          (first (nth 0 pair))
          (last (nth 1 pair)))
     (when (not (null last)) (setq last (- 360 last)))
     (list (cons 'left last) (cons 'right first))))
 
-(defun chem-bond-shorten-stroke (_bond same-angle other-angle)
+(defun chem-exp-chemfig--shorten-stroke (same-angle other-angle)
   "Determine how much to shorten the second stroke of a double bond."
   (if (null same-angle)
       0
@@ -234,18 +315,17 @@ Return (phantom-code . comment-code)."
                   (t 90))))
       (chem--cotan100 angle))))
 
-(defun chem-bond-fancy-double (bond state)
-  "Return (side start end) for a fancy double BOND, or nil.
-STATE supplies renderer-only atom flags."
-  (let* ((start-atom (chem-bond-start-atom bond))
-         (end-atom (chem-bond-end-atom bond))
-         (start-angles (chem-bond-upstream-angles bond))
-         (end-angles (chem-bond-downstream-angles bond))
+(defun chem-exp-chemfig--fancy-double (drawing node state angle clockwise)
+  "Return (side start end) for a fancy double NODE, or nil."
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (start-atom (gethash (chem-node-from node) atoms))
+         (end-atom (gethash (chem-node-to node) atoms))
+         (start-angles (chem-exp-chemfig--upstream-angles drawing node angle))
+         (end-angles (chem-exp-chemfig--downstream-angles drawing node angle))
          (s-left (cdr (assq 'left start-angles)))
          (s-right (cdr (assq 'right start-angles)))
          (e-left (cdr (assq 'left end-angles)))
          (e-right (cdr (assq 'right end-angles)))
-         (clockwise (chem-exp-chemfig--bond-clockwise state bond))
          (s-exp (chem-exp-chemfig--atom-explicit-p state start-atom))
          (e-exp (chem-exp-chemfig--atom-explicit-p state end-atom)))
     (if (and (zerop clockwise)
@@ -266,63 +346,72 @@ STATE supplies renderer-only atom flags."
                                          (chem--angle-penalty e-right))))
                               (cond ((< lp rp) "left")
                                     ((> lp rp) "right")
-                                    ((< (abs (- (chem-bond-angle bond) 44.5)) 90) "left")
+                                    ((< (abs (- angle 44.5)) 90) "left")
                                     (t "right"))))))
              (start (if s-exp
                         0
                       (if (equal side "left")
-                          (chem-bond-shorten-stroke bond s-left s-right)
-                        (chem-bond-shorten-stroke bond s-right s-left))))
+                          (chem-exp-chemfig--shorten-stroke s-left s-right)
+                        (chem-exp-chemfig--shorten-stroke s-right s-left))))
              (end (if e-exp
                       0
                     (if (equal side "left")
-                        (chem-bond-shorten-stroke bond e-left e-right)
-                      (chem-bond-shorten-stroke bond e-right e-left)))))
+                        (chem-exp-chemfig--shorten-stroke e-left e-right)
+                      (chem-exp-chemfig--shorten-stroke e-right e-left)))))
         (list side start end)))))
 
-(defun chem-bond-fancy-triple (bond state)
-  "Return (start end) for a fancy triple BOND using STATE."
-  (let* ((start-atom (chem-bond-start-atom bond))
-         (end-atom (chem-bond-end-atom bond))
+(defun chem-exp-chemfig--fancy-triple (drawing node state angle)
+  "Return (start end) for a fancy triple NODE using STATE."
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (start-atom (gethash (chem-node-from node) atoms))
+         (end-atom (gethash (chem-node-to node) atoms))
          (start (if (chem-exp-chemfig--atom-explicit-p state start-atom)
                     0
-                  (let* ((vals (mapcar #'cdr (chem-bond-upstream-angles bond)))
+                  (let* ((vals (mapcar #'cdr
+                                       (chem-exp-chemfig--upstream-angles
+                                        drawing node angle)))
                          (non-nil (delq nil vals)))
                     (if (car vals) (chem--cotan100 (* 0.5 (apply #'min non-nil))) 0))))
          (end (if (chem-exp-chemfig--atom-explicit-p state end-atom)
                   0
-                (let* ((vals (mapcar #'cdr (chem-bond-downstream-angles bond)))
+                (let* ((vals (mapcar #'cdr
+                                     (chem-exp-chemfig--downstream-angles
+                                      drawing node angle)))
                        (non-nil (delq nil vals)))
                   (if (car vals) (chem--cotan100 (* 0.5 (apply #'min non-nil))) 0)))))
     (list start end)))
 
 ;;; Bond rendering
 
-(defun chem-bond-to-chemfig (node state)
-  "Render NODE's bond (without its atom) to chemfig using STATE."
-  (let* ((bond (chem-node-bond node))
-         (options (chem-exp-chemfig-state-options state))
+(defun chem-exp-chemfig--node-to-chemfig (drawing node state)
+  "Render NODE (without its atom) to chemfig using STATE."
+  (let* ((options (chem-exp-chemfig-state-options state))
          (to-phantom (chem-node-phantom-p node))
-         (parent-angle (let ((parent (chem-node-parent node)))
-                         (when (and parent (chem-node-bond parent))
-                           (chem-bond-angle (chem-node-bond parent)))))
-         (start-atom (chem-bond-start-atom bond))
-         (end-atom (chem-bond-end-atom bond))
+         (geometry (chem-exp-chemfig--node-geometry drawing node))
+         (angle (nth 1 geometry))
+         (length (nth 0 geometry))
+         (parent-angle (chem-exp-chemfig--parent-angle drawing node))
+         (start-atom (gethash (chem-node-from node) (chem-drawing-atoms drawing)))
+         (end-atom (gethash (chem-node-to node) (chem-drawing-atoms drawing)))
          (start-state (chem-exp-chemfig--atom-state state start-atom))
          (end-state (chem-exp-chemfig--atom-state state end-atom))
          (end-string-pos (if to-phantom
                              (chem-exp-chemfig-atom-state-phantom-pos end-state)
                            (chem-exp-chemfig-atom-state-string-pos end-state)))
-         (bond-type (chem-exp-chemfig--bond-display-type state bond))
-         (bond-state (chem-exp-chemfig--bond-state state bond))
-         (display-type (or (chem-exp-chemfig-bond-state-display-type bond-state)
+         (bond-type (chem-exp-chemfig--node-display-type state drawing node))
+         (clockwise (chem-exp-chemfig--node-clockwise state node))
+         (decoration (chem-exp-chemfig--node-decoration drawing node))
+         (marker (chem-exp-chemfig--node-marker drawing node))
+         (bond-state (chem-exp-chemfig--node-state state node))
+         (display-type (or (chem-exp-chemfig-node-state-display-type bond-state)
                            bond-type))
-         (tikz-styles (chem-exp-chemfig-bond-state-tikz-styles bond-state))
-         (tikz-values (chem-exp-chemfig-bond-state-tikz-values bond-state)))
-    (when (and (eq (chem-bond-decoration bond) 'fancy)
+         (tikz-styles (chem-exp-chemfig-node-state-tikz-styles bond-state))
+         (tikz-values (chem-exp-chemfig-node-state-tikz-values bond-state)))
+    (when (and (eq decoration 'fancy)
                (memq bond-type '(double triple)))
       (if (eq bond-type 'double)
-          (let ((fd (chem-bond-fancy-double bond state)))
+          (let ((fd (chem-exp-chemfig--fancy-double
+                     drawing node state angle clockwise)))
             (when fd
               (cl-pushnew "double" tikz-styles :test #'equal)
               (cl-pushnew (nth 0 fd) tikz-styles :test #'equal)
@@ -331,27 +420,24 @@ STATE supplies renderer-only atom flags."
                             tikz-values))
               (setq display-type 'decorated)))
         (cl-pushnew "triple" tikz-styles :test #'equal)
-        (let ((ft (chem-bond-fancy-triple bond state)))
+        (let ((ft (chem-exp-chemfig--fancy-triple drawing node state angle)))
           (setq tikz-values
                 (append (list (cons 'start (nth 0 ft)) (cons 'end (nth 1 ft)))
                         tikz-values))
           (setq display-type 'decorated))))
-    (setf (chem-exp-chemfig-bond-state-tikz-styles bond-state) tikz-styles)
-    (setf (chem-exp-chemfig-bond-state-tikz-values bond-state) tikz-values)
-    (setf (chem-exp-chemfig-bond-state-display-type bond-state) display-type)
-    (chem--format-bond options (chem-bond-angle bond)
-                            parent-angle
-                            display-type
-                            (chem-exp-chemfig--bond-clockwise state bond)
-                            (chem-exp-chemfig-bond-state-is-last bond-state)
-                            (chem-bond-length bond)
-                            (chem-exp-chemfig-atom-state-string-pos start-state)
-                            end-string-pos
-                            tikz-styles
-                            tikz-values
-                            (chem-bond-marker bond))))
+    (setf (chem-exp-chemfig-node-state-tikz-styles bond-state) tikz-styles)
+    (setf (chem-exp-chemfig-node-state-tikz-values bond-state) tikz-values)
+    (setf (chem-exp-chemfig-node-state-display-type bond-state) display-type)
+    (chem--format-bond options angle parent-angle display-type clockwise
+                       (chem-exp-chemfig-node-state-is-last bond-state)
+                       length
+                       (chem-exp-chemfig-atom-state-string-pos start-state)
+                       end-string-pos
+                       tikz-styles
+                       tikz-values
+                       marker)))
 
-(defun chem-bond-indent (options level bond-code atom-code comment-code)
+(defun chem-exp-chemfig--indent (options level bond-code atom-code comment-code)
   "Indent BOND-CODE and ATOM-CODE for LEVEL, padding the bond code.
 OPTIONS supplies the indentation width."
   (let* ((code-str (chem--str bond-code))
@@ -363,72 +449,76 @@ OPTIONS supplies the indentation width."
       (setq stuff (concat stuff "% " comment-code)))
     (replace-regexp-in-string "[ \t\n]+\\'" "" stuff)))
 
-(defun chem-bond-render (mol node state level)
-  "Render NODE and its trailing atom at LEVEL using STATE.
-MOL supplies the atom table for the traversal root."
-  (let ((bond (chem-node-bond node)))
-    (cond
-     ((null bond)
+(defun chem-node-render (drawing node state level)
+  "Render NODE and its trailing atom at LEVEL using STATE."
+  (if (null (chem-node-from node))
       (let ((atom-render
              (chem-atom-render
-              (gethash (chem-node-to node) (chem-drawing-atoms mol))
+              (gethash (chem-node-to node) (chem-drawing-atoms drawing))
               state)))
-        (chem-bond-indent (chem-exp-chemfig-state-options state) level
-                          "" (car atom-render) (cdr atom-render))))
-     ((eq (chem-bond-kind bond) 'aromatic-ring)
-      (let* ((options (chem-exp-chemfig-state-options state))
-             (rendered (chem--format-aromatic-ring
-                        options (chem-bond-angle bond)
-                        (chem-bond-parent-angle bond)
-                        (chem-bond-length bond)
-                        (chem-bond-radius bond))))
-        (chem-bond-indent options level
-                          (nth 0 rendered) (nth 1 rendered) (nth 2 rendered))))
-     (t
-      (let* ((to-phantom (chem-node-phantom-p node))
-             (atom (chem-bond-end-atom bond))
-             (atom-render (if to-phantom
-                              (chem-atom-render-phantom atom state)
-                            (chem-atom-render atom state)))
-             (bond-code (chem-bond-to-chemfig node state)))
-        (chem-bond-indent (chem-exp-chemfig-state-options state) level
-                          bond-code (car atom-render) (cdr atom-render)))))))
+        (chem-exp-chemfig--indent (chem-exp-chemfig-state-options state) level
+                          "" (car atom-render) (cdr atom-render)))
+    (let* ((to-phantom (chem-node-phantom-p node))
+           (atom (gethash (chem-node-to node) (chem-drawing-atoms drawing)))
+           (atom-render (if to-phantom
+                            (chem-atom-render-phantom atom state)
+                          (chem-atom-render atom state)))
+           (bond-code (chem-exp-chemfig--node-to-chemfig drawing node state)))
+      (chem-exp-chemfig--indent (chem-exp-chemfig-state-options state) level
+                        bond-code (car atom-render) (cdr atom-render)))))
+
+(defun chem-exp-chemfig--circle-render (circle state level)
+  "Render CIRCLE at LEVEL using STATE."
+  (let* ((options (chem-exp-chemfig-state-options state))
+         (rendered (chem--format-aromatic-ring
+                    options
+                    (chem-exp-chemfig-circle-angle circle)
+                    (chem-exp-chemfig-circle-parent-angle circle)
+                    (chem-exp-chemfig-circle-length circle)
+                    (chem-exp-chemfig-circle-radius circle))))
+    (chem-exp-chemfig--indent options level
+                      (nth 0 rendered) (nth 1 rendered) (nth 2 rendered))))
 
 ;;; Drawing walk
 
-(defun chem--render-branches (mol state output level nodes)
-  "Append NODES rendered as indented branches to OUTPUT.
+(defun chem--render-branches (drawing state output level items)
+  "Append ITEMS rendered as indented branches to OUTPUT.
 OUTPUT is the reversed line accumulator; returns the updated accumulator."
   (let ((indent (or (plist-get (chem-exp-chemfig-state-options state) :indent) 4)))
-    (dolist (node nodes output)
+    (dolist (item items output)
       (let ((width (+ (* level indent) chem--bond-code-width)))
         (setq output (cons (concat (make-string (1- width) ?\s) "(") output))
-        (setq output (chem--render mol state output node level))
+        (setq output (chem--render drawing state output item level))
         (setq output (cons (concat (make-string (1- width) ?\s) ")") output))))))
 
-(defun chem--render (mol state output node level)
-  "Recursively render NODE into OUTPUT at LEVEL using STATE."
-  (setq output (cons (chem-bond-render mol node state level) output))
-  (let ((branches (copy-sequence (chem-exp-chemfig--display-children state node))))
-    (cond
-     ((eq node (chem-drawing-exit-node mol))
-      (chem--render-branches mol state output (1+ level) branches))
-     ((null branches) output)
-     (t
-      (let ((trunk-idx (cl-position-if #'chem-node-trunk-p branches))
-            (first nil))
-        (if trunk-idx
-            (setq first (nth trunk-idx branches)
-                  branches (append (cl-subseq branches 0 trunk-idx)
-                                   (cl-subseq branches (1+ trunk-idx))))
-          (setq first (car branches)
-                branches (cdr branches)))
-        (setq output (chem--render-branches mol state output (1+ level) branches))
-        (chem--render mol state output first level))))))
+(defun chem--render (drawing state output item level)
+  "Recursively render ITEM into OUTPUT at LEVEL using STATE."
+  (if (chem-exp-chemfig-circle-p item)
+      (cons (chem-exp-chemfig--circle-render item state level) output)
+    (setq output (cons (chem-node-render drawing item state level) output))
+    (let ((branches (copy-sequence (chem-exp-chemfig--display-children state item))))
+      (cond
+       ((eq item (chem-drawing-exit-node drawing))
+        (chem--render-branches drawing state output (1+ level) branches))
+       ((null branches) output)
+       (t
+        (let ((trunk-idx (cl-position-if
+                          (lambda (branch)
+                            (and (chem-node-p branch) (chem-node-trunk-p branch)))
+                          branches))
+              (first nil))
+          (if trunk-idx
+              (setq first (nth trunk-idx branches)
+                    branches (append (cl-subseq branches 0 trunk-idx)
+                                     (cl-subseq branches (1+ trunk-idx))))
+            (setq first (car branches)
+                  branches (cdr branches)))
+          (setq output (chem--render-branches drawing state output (1+ level) branches))
+          (chem--render drawing state output first level)))))))
 
-(defun chem--render-molecule (mol state)
-  "Render MOL to a list of lines using STATE."
-  (nreverse (chem--render mol state nil (chem-drawing-root mol) 0)))
+(defun chem--render-molecule (drawing state)
+  "Render DRAWING to a list of lines using STATE."
+  (nreverse (chem--render drawing state nil (chem-drawing-root drawing) 0)))
 
 ;;; Exporter entry point
 
@@ -436,18 +526,24 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
   "Fill STATE with cross-bond styling for DRAWING."
   (dolist (node (chem-tree-nodes drawing))
     (when (chem-node-cross-p node)
-      (let* ((bond (chem-node-bond node))
-             (start-angles (mapcar #'cdr (chem-bond-upstream-angles bond)))
-             (end-angles (mapcar #'cdr (chem-bond-downstream-angles bond)))
+      (let* ((angle (chem-exp-chemfig--node-angle drawing node))
+             (start-angles (mapcar
+                            #'cdr
+                            (chem-exp-chemfig--upstream-angles
+                             drawing node angle)))
+             (end-angles (mapcar
+                          #'cdr
+                          (chem-exp-chemfig--downstream-angles
+                           drawing node angle)))
              (start-angle (apply #'min (delq nil start-angles)))
              (end-angle (apply #'min (delq nil end-angles)))
              (start (max 10 (chem--cotan100 start-angle)))
              (end (max 10 (chem--cotan100 end-angle)))
-             (bond-state (chem-exp-chemfig--bond-state state bond)))
-        (setf (chem-exp-chemfig-bond-state-tikz-styles bond-state) (list "cross"))
-        (setf (chem-exp-chemfig-bond-state-tikz-values bond-state)
+             (bond-state (chem-exp-chemfig--node-state state node)))
+        (setf (chem-exp-chemfig-node-state-tikz-styles bond-state) (list "cross"))
+        (setf (chem-exp-chemfig-node-state-tikz-values bond-state)
               (list (cons 'bgstart start) (cons 'bgend end)))
-        (setf (chem-exp-chemfig-bond-state-is-last bond-state)
+        (setf (chem-exp-chemfig-node-state-is-last bond-state)
               (chem-node-cross-last-p node))))))
 
 (defun chem-exp-chemfig--prepare-rings (state drawing options)
@@ -456,6 +552,7 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
         (display-type (chem-exp-chemfig-state-display-type state))
         (extra-angles (chem-exp-chemfig-state-extra-angles state))
         (circle-children (chem-exp-chemfig-state-circle-children state))
+        (atoms (chem-drawing-atoms drawing))
         (aromatic-circles-p (plist-get options :aromatic-circles)))
     (clrhash clockwise)
     (clrhash display-type)
@@ -476,14 +573,12 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
                aromatic-circles-p)
           (let ((edge-ids (chem-ring-bonds ring)))
             (dolist (edge-id edge-ids)
-              (let ((bond (chem-directed-bond-for-edge drawing edge-id)))
-                (when bond
-                  (puthash bond 'aromatic display-type))))
-            (let* ((anchor (chem-directed-bond-for-edge
-                            drawing (chem-ring-anchor ring)))
-                   (node (chem-tree-node-for-bond drawing anchor))
+              (when-let* ((node (chem-tree-node-for-edge drawing edge-id)))
+                (puthash node 'aromatic display-type)))
+            (let* ((anchor-node (chem-tree-node-for-edge
+                                 drawing (chem-ring-anchor ring)))
                    (center (chem-ring-center drawing ring))
-                   (atom (chem-bond-end-atom anchor))
+                   (atom (gethash (chem-node-to anchor-node) atoms))
                    (dims (chem--compare-positions
                           (chem-atom-x atom) (chem-atom-y atom)
                           (nth 0 center) (nth 1 center)))
@@ -492,24 +587,22 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
                    (n (length edge-ids))
                    (alpha (- (/ float-pi 2) (/ float-pi n)))
                    (inner-r (* (sin alpha) outer-r))
-                   (arb (chem-bond-create
-                         :kind 'aromatic-ring
-                         :angle (mod (chem--num-round angle 1) 360)
-                         :parent-angle (chem-bond-angle anchor)
-                         :length (chem--num-round outer-r 2)
-                         :radius (chem--num-round
-                                  (* chem-exp-chemfig--aromatic-ring-scale inner-r)
-                                  2)
-                         :bond-type 'aromatic
-                         :marker "")))
-              (when node
-                (let ((arb-node (chem-node-create :bond arb :parent node)))
-                  (puthash node
-                           (append (gethash node circle-children)
-                                   (list arb-node))
-                           circle-children)))
+                   (circle (chem-exp-chemfig-circle-create
+                            :angle (mod (chem--num-round angle 1) 360)
+                            :parent-angle (chem-exp-chemfig--node-angle
+                                           drawing anchor-node)
+                            :length (chem--num-round outer-r 2)
+                            :radius (chem--num-round
+                                     (* chem-exp-chemfig--aromatic-ring-scale
+                                        inner-r)
+                                     2))))
+              (when anchor-node
+                (puthash anchor-node
+                         (append (gethash anchor-node circle-children)
+                                 (list circle))
+                         circle-children))
               (dolist (idx (chem-ring-atoms ring))
-                (let* ((ring-atom (gethash idx (chem-drawing-atoms drawing)))
+                (let* ((ring-atom (gethash idx atoms))
                        (dims (chem--compare-positions
                               (chem-atom-x ring-atom) (chem-atom-y ring-atom)
                               (nth 0 center) (nth 1 center))))
@@ -518,12 +611,12 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
                                    (list (nth 1 dims)))
                            extra-angles)))))
         (dolist (edge-id (chem-ring-bonds ring))
-          (let ((bond (chem-directed-bond-for-edge drawing edge-id)))
-            (when (and bond (zerop (or (gethash bond clockwise) 0)))
-              (let* ((from (chem-atom-idx (chem-bond-start-atom bond)))
-                     (to (chem-atom-idx (chem-bond-end-atom bond)))
+          (when-let* ((node (chem-tree-node-for-edge drawing edge-id)))
+            (when (zerop (or (gethash node clockwise) 0))
+              (let* ((from (chem-node-from node))
+                     (to (chem-node-to node))
                      (side (chem-ring-side drawing ring from to)))
-                (puthash bond
+                (puthash node
                          (pcase side
                            (:left -1)
                            (:right 1)

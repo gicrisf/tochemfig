@@ -12,14 +12,9 @@
 ;; drawing tree, and the geometry needed to render a structure.
 ;;
 ;; `chem-edge' is the canonical chemical graph: one record per real or link
-;; edge, with a stable id and a canonical `a' -> `b' orientation.  The
-;; `chem-bond' records in `chem-drawing-bonds' are a transitional directed view
-;; used by the current chemfig pipeline; they carry the old display vocabulary
-;; until the renderer consumes the canonical graph and traversal directly.
-;;
-;; This is a transitional extraction: the atom and bond structs still carry a
-;; few slots used by the chemfig renderer.  They will move into the chemfig
-;; exporter as the renderer is separated from the core.
+;; edge, with a stable id and a canonical `a' -> `b' orientation.  Drawing
+;; order and parent/child relations live on `chem-node' records; derived
+;; geometry comes from atom coordinates.  No directed bond cache is stored.
 ;;
 ;; This file must not depend on Indigo or on any exporter.
 
@@ -33,6 +28,7 @@
   order                          ; :single :double :triple :aromatic :query
   stereo                         ; :none :up :down :either :cis :trans
                                  ; relative to a -> b
+  source-a-p                     ; Indigo source was the canonical a end
   link-p                         ; Invisible fragment connector
   cross-p                        ; Draw over crossing bonds
   marker                         ; Marker string
@@ -51,22 +47,12 @@
   number                         ; 1-based number when numbering is requested
   marker)                        ; Marker string
 
-(cl-defstruct (chem-bond (:constructor chem-bond-create))
-  kind                           ; `bond' or `aromatic-ring'
-  edge-id                        ; Canonical `chem-edge' id, or nil for pseudo bonds
-  start-atom end-atom            ; Atom structs (nil for aromatic ring)
-  bond-type                      ; Transitional display type for chemfig
-  length angle                   ; Derived geometry cache
-  marker                         ; Marker string
-  decoration                     ; :plain or :fancy
-  parent-angle                   ; Exporter-only aromatic-circle parent angle
-  radius)                        ; Exporter-only aromatic-circle radius
-
 (cl-defstruct (chem-node (:constructor chem-node-create))
-  bond                           ; Directed chem-bond, or nil for the root
+  edge-id                        ; Canonical edge id, or nil for root/synthetic links
   from to                        ; Atom indices; FROM is nil for the root
   parent
   children
+  link-p                         ; Render this node as an invisible connector
   closure-p                      ; Target atom already visited
   phantom-p                      ; Render the target atom as a phantom
   trunk-p
@@ -83,14 +69,14 @@
 
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
   atoms                          ; hash: idx -> atom
-  bonds                          ; Transitional hash: (start . end) -> directed bond
   edges                          ; hash: edge id -> canonical edge
   edge-lookup                    ; hash: canonical (a . b) -> edge
   adjacency                      ; hash: atom idx -> ordered (edge-id . neighbor-idx)
   rings                          ; list of chem-ring, stable order
   entry-atom exit-atom
   exit-node                      ; Traversal exit node
-  root)                          ; Traversal root node
+  root                           ; Traversal root node
+  parity)                        ; 1 after a single mirror transform, else 0
 
 (defun chem-edge-at (drawing id)
   "Return DRAWING's canonical edge with ID, or nil."
@@ -138,8 +124,8 @@ Invisible fragment links are excluded."
 
 ;;; Coordinate transforms
 ;;
-;; These operate on atom coordinates only.  Derived bond geometry is refreshed
-;; separately by `chem-bond-refresh-geometry' after a transform.
+;; These operate on atom coordinates only.  Exporters derive angles and
+;; lengths from the updated coordinates.
 
 (defun chem-rotate (drawing degrees)
   "Rotate DRAWING's coordinates counterclockwise by DEGREES."
@@ -188,27 +174,23 @@ Invisible fragment links are excluded."
         (recurse (chem-drawing-root drawing))))
     (nreverse nodes)))
 
-(defun chem-tree-bonds (drawing)
-  "Return all directed bonds in DRAWING's traversal, excluding the root."
-  (let (bonds)
+(defun chem-tree-node-for-edge (drawing edge-id)
+  "Return the first traversal node using canonical EDGE-ID."
+  (cl-find edge-id (chem-tree-nodes drawing)
+           :key #'chem-node-edge-id :test #'=))
+
+(defun chem-tree-edge-lengths (drawing)
+  "Return the lengths of all traversal node segments."
+  (let ((atoms (chem-drawing-atoms drawing))
+        lengths)
     (dolist (node (chem-tree-nodes drawing))
-      (when-let* ((bond (chem-node-bond node)))
-        (push bond bonds)))
-    (nreverse bonds)))
-
-(defun chem-tree-node-for-bond (drawing bond)
-  "Return the traversal node whose bond is BOND, or nil."
-  (cl-find bond (chem-tree-nodes drawing)
-           :key #'chem-node-bond :test #'eq))
-
-(defun chem-directed-bond-for-edge (drawing edge-id)
-  "Return the traversal-directed bond for canonical EDGE-ID, or nil."
-  (let ((node (cl-find-if
-               (lambda (node)
-                 (let ((bond (chem-node-bond node)))
-                   (and bond (= (chem-bond-edge-id bond) edge-id))))
-               (chem-tree-nodes drawing))))
-    (when node (chem-node-bond node))))
+      (when-let* ((from (chem-node-from node)))
+        (let* ((a (gethash from atoms))
+               (b (gethash (chem-node-to node) atoms))
+               (dx (- (chem-atom-x b) (chem-atom-x a)))
+               (dy (- (chem-atom-y b) (chem-atom-y a))))
+          (push (sqrt (+ (* dx dx) (* dy dy))) lengths))))
+    (nreverse lengths)))
 
 ;;; Rings
 
@@ -308,15 +290,11 @@ TOLERANCE defaults to 0.05, matching the current chemfig symmetry check."
   (cl-remove-if-not (lambda (ring) (memq edge-id (chem-ring-bonds ring)))
                     (chem-drawing-rings drawing)))
 
-(defun chem-rings-for-bond (drawing bond)
-  "Return the rings containing directed BOND."
-  (chem-rings-for-edge drawing (chem-bond-edge-id bond)))
-
 (defun chem-atom-in-ring-p (drawing idx)
   "Return non-nil when atom IDX belongs to a ring."
   (not (null (chem-rings-for-atom drawing idx))))
 
-(defun chem-bond-in-ring-p (drawing edge-id)
+(defun chem-edge-in-ring-p (drawing edge-id)
   "Return non-nil when canonical EDGE-ID belongs to a ring."
   (not (null (chem-rings-for-edge drawing edge-id))))
 
@@ -338,7 +316,7 @@ Return nil when the three points are collinear."
 
 (defun chem-apply-drawing-options (drawing options)
   "Apply common drawing OPTIONS to DRAWING.
-Set atom labels and numbers, and bond/edge decorations in the IR.
+Set atom labels and numbers, and edge decorations in the IR.
 Exporters render these attributes; they must not re-read the options."
   (let ((show-carbons (plist-get options :show-carbons))
         (show-methyls (plist-get options :show-methyls))
@@ -361,21 +339,12 @@ Exporters render these attributes; they must not re-read the options."
                (when atom-numbers (1+ (chem-atom-idx atom))))))
      (chem-drawing-atoms drawing))
     (maphash
-     (lambda (_ bond)
-       (setf (chem-bond-decoration bond)
+     (lambda (_ edge)
+       (setf (chem-edge-decoration edge)
              (if (and fancy-bonds
-                      (memq (chem-bond-bond-type bond) '(double triple)))
+                      (memq (chem-edge-order edge) '(:double :triple)))
                  'fancy
                'plain)))
-     (chem-drawing-bonds drawing))
-    ;; Mirror the resolved directed decoration onto the canonical edge.
-    ;; The canonical direction is always present in the transitional cache.
-    (maphash
-     (lambda (_ edge)
-       (let ((bond (gethash (cons (chem-edge-a edge) (chem-edge-b edge))
-                            (chem-drawing-bonds drawing))))
-         (setf (chem-edge-decoration edge)
-               (if bond (chem-bond-decoration bond) 'plain))))
      (chem-drawing-edges drawing)))
   drawing)
 
