@@ -157,15 +157,16 @@ There are *4 ways* to use tochemfig:
 
    Which major modes count as wrapping contexts is controlled by =tochemfig-mode-wrap-modes= (default: =tex-mode=, =latex-mode=, =LaTeX-mode=, =org-mode=, =markdown-mode=).  Wrapping is decided per command, so a single Org buffer can mix wrapped and unwrapped output.  Set =tochemfig-mode-auto-wrap= to nil to disable automatic wrapping.
 
-   | Key       | Command                    | Description                       |
-   |-----------+----------------------------+-----------------------------------|
-   | =C-c m d= | =tochemfig=                | Generate for region / point / prompt |
-   | =C-c m c= | =tochemfig-dispatch=       | Transient options menu            |
-   | =C-c m f= | =tochemfig-input-file=     | Generate from a MOL file          |
-   | =C-c m w= | =tochemfig-wrap-chemfig=   | Wrap output in =\chemfig{}=       |
-   | =C-c m t= | =tochemfig-terse=          | Compact output                    |
-   | =C-c m r= | =tochemfig-rotate=         | Rotate / flip / flop              |
-   | =C-c m p= | =tochemfig-copy=           | Copy to the kill ring             |
+   | Key       | Command                              | Description                          |
+   |-----------+--------------------------------------+--------------------------------------|
+   | =C-c m g= | =tochemfig=                          | Generate for region / point / prompt |
+   | =C-c m o= | =tochemfig-dispatch=                 | Transient options menu               |
+   | =C-c m c= | =tochemfig-copy=                     | Copy to the kill ring                |
+   | =C-c m f= | =tochemfig-input-file=               | Generate from a MOL file             |
+   | =C-c m d= | =tochemfig-describe-options=         | Describe effective options           |
+   | =C-c m t= | =tochemfig-mode-toggle-terse=        | Toggle terse output (buffer-local)   |
+   | =C-c m w= | =tochemfig-mode-toggle-wrap-chemfig= | Toggle =\chemfig{}= wrapping          |
+   | =C-c m r= | =tochemfig-mode-rotate=              | Rotate this generation by an angle   |
 
    #+begin_src emacs-lisp
    (add-hook 'latex-mode-hook #'tochemfig-mode)
@@ -221,16 +222,20 @@ normally map the commands under their leader themselves, e.g.:
 
 #+begin_src emacs-lisp
 (map! :leader
-      (:prefix ("t" . "tochemfig")
-       "d" #'tochemfig
-       "c" #'tochemfig-dispatch
-       "p" #'tochemfig-copy
-       "o" #'tochemfig-describe-options))
+      (:prefix ("C" . "tochemfig")
+       "g" #'tochemfig
+       "o" #'tochemfig-dispatch
+       "c" #'tochemfig-copy
+       "f" #'tochemfig-input-file
+       "d" #'tochemfig-describe-options
+       "t" #'tochemfig-mode-toggle-terse
+       "w" #'tochemfig-mode-toggle-wrap-chemfig
+       "r" #'tochemfig-mode-rotate))
 #+end_src
 
 Generating from a visual selection replaces the selection and leaves visual
 state.  The =*tochemfig options*= buffer is read-only and uses Emacs state under
-Evil, so =q= quits it.  Doom disables the menu bar, so use =C-c m c= /
+Evil, so =q= quits it.  Doom disables the menu bar, so use =C-c m o= /
 which-key / the leader mapping rather than the menu.
 
 * Features

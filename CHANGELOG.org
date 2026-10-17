@@ -61,7 +61,14 @@ Fully native, dependency-free chemfig generation.
 - Region-replacing commands deactivate the mark, so Evil leaves visual state
   after generating; the =*tochemfig options*= buffer uses Emacs state under
   Evil (so =q= quits it).  Documented Evil/Doom usage, including a leader
-  =map!= snippet, without adding an Evil dependency.
+  =map!= snippet (=SPC C= prefix), without adding an Evil dependency.
+- Reworked the =tochemfig-mode= keymap (clean break): =C-c m g= generate,
+  =o= options menu, =c= copy, =f= from file, =d= describe options, =t=/=w=
+  mode-aware terse/wrap toggles, =r= one-off rotation.  The old one-shot
+  =C-c m t/w/r= bindings (which prompted for SMILES instead of using the
+  region or the molecule at point) are gone.  New commands:
+  =tochemfig-mode-toggle-terse=, =tochemfig-mode-toggle-wrap-chemfig= and
+  =tochemfig-mode-rotate=.
 - =tochemfig= now depends on =emacs-indigo= instead of a Python
   =mol2chemfig= installation.
 - Ported the full rendering algorithm: trunk marking, fragment connection,

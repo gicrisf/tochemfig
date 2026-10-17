@@ -78,15 +78,16 @@ It only enables the mode in wrapping contexts; set
 
 The commands are bound under the `C-c m` prefix:
 
-| Key       | Command                  | Description                           |
-|-----------|--------------------------|---------------------------------------|
-| `C-c m d` | `tochemfig`              | Generate for region / point / prompt  |
-| `C-c m c` | `tochemfig-dispatch`     | Transient options menu                |
-| `C-c m f` | `tochemfig-input-file`   | Generate from a MOL file              |
-| `C-c m w` | `tochemfig-wrap-chemfig` | Wrap output in `\chemfig{}`           |
-| `C-c m t` | `tochemfig-terse`        | Compact output                        |
-| `C-c m r` | `tochemfig-rotate`       | Rotate / flip / flop                  |
-| `C-c m p` | `tochemfig-copy`         | Copy to the kill ring                 |
+| Key       | Command                              | Description                           |
+|-----------|--------------------------------------|---------------------------------------|
+| `C-c m g` | `tochemfig`                          | Generate for region / point / prompt  |
+| `C-c m o` | `tochemfig-dispatch`                 | Transient options menu                |
+| `C-c m c` | `tochemfig-copy`                     | Copy to the kill ring                 |
+| `C-c m f` | `tochemfig-input-file`               | Generate from a MOL file              |
+| `C-c m d` | `tochemfig-describe-options`         | Describe effective options            |
+| `C-c m t` | `tochemfig-mode-toggle-terse`        | Toggle terse output (buffer-local)    |
+| `C-c m w` | `tochemfig-mode-toggle-wrap-chemfig` | Toggle `\chemfig{}` wrapping          |
+| `C-c m r` | `tochemfig-mode-rotate`              | Rotate this generation by an angle    |
 
 Other useful mode commands:
 
@@ -101,7 +102,7 @@ Other useful mode commands:
 
 ## Options menu
 
-`tochemfig-custom` (or `C-c m c`) opens a transient menu that edits every
+`tochemfig-custom` (or `C-c m o`) opens a transient menu that edits every
 option live. While `tochemfig-mode` is active the options are buffer-local.
 
 ## Evil / Doom
@@ -112,16 +113,20 @@ commands under their leader:
 
 ```elisp
 (map! :leader
-      (:prefix ("t" . "tochemfig")
-       "d" #'tochemfig
-       "c" #'tochemfig-dispatch
-       "p" #'tochemfig-copy
-       "o" #'tochemfig-describe-options))
+      (:prefix ("C" . "tochemfig")
+       "g" #'tochemfig
+       "o" #'tochemfig-dispatch
+       "c" #'tochemfig-copy
+       "f" #'tochemfig-input-file
+       "d" #'tochemfig-describe-options
+       "t" #'tochemfig-mode-toggle-terse
+       "w" #'tochemfig-mode-toggle-wrap-chemfig
+       "r" #'tochemfig-mode-rotate))
 ```
 
 Generating from a visual selection replaces it and exits visual state. The
 `*tochemfig options*` buffer is read-only and uses Emacs state, so `q` quits it.
-Doom's menu bar is off, so use `C-c m c` / which-key / your leader mapping.
+Doom's menu bar is off, so use `C-c m o` / which-key / your leader mapping.
 
 ## Examples
 
@@ -207,8 +212,9 @@ aromatic circles (`\mcfcringle`), wavy bonds (`\mcfwavy`) and fancy bonds
 If you prefer global bindings over the minor mode:
 
 ```elisp
-(global-set-key (kbd "C-c m d") 'tochemfig)          ; region / point / prompt
-(global-set-key (kbd "C-c m c") 'tochemfig-custom)   ; options menu
+(global-set-key (kbd "C-c m g") 'tochemfig)          ; region / point / prompt
+(global-set-key (kbd "C-c m o") 'tochemfig-custom)   ; options menu
+(global-set-key (kbd "C-c m c") 'tochemfig-copy)
 (global-set-key (kbd "C-c m f") 'tochemfig-input-file)
-(global-set-key (kbd "C-c m w") 'tochemfig-wrap-chemfig)
+(global-set-key (kbd "C-c m d") 'tochemfig-describe-options)
 ```
