@@ -13,6 +13,7 @@
 
 (setf eldev-main-fileset
       '("tochemfig.el"
+        "chem-ir.el"
         "tochemfig-transient.el"
         "tochemfig-mode.el"
         "tochemfig-atom.el"

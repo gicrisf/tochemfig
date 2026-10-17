@@ -21,6 +21,7 @@
 ;; which indigo only loads once its module has loaded.  Require it explicitly so
 ;; compilation does not depend on the module.
 (eval-when-compile (require 'indigo-iter))
+(require 'chem-ir)
 (require 'tochemfig-atom)
 (require 'tochemfig-bond)
 (require 'tochemfig-mappings)
@@ -31,16 +32,16 @@
 emacs-indigo (e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') \
 and rebuild tochemfig"))
 
-(cl-defstruct (tochemfig-molecule (:constructor tochemfig-molecule-create))
-  options
-  toolkit          ; The Indigo molecule handle
-  atoms            ; hash: idx -> atom
-  bonds            ; hash: (start . end) -> bond
-  atom-pairs       ; list of (start . end)
-  seen-atoms       ; hash: idx -> t
-  seen-bonds       ; hash: (start . end) -> t
-  entry-atom exit-atom exit-bond root
-  bond-scale)
+;; Transitional aliases while the drawing struct lives in `chem-ir'.
+(eval-and-compile
+  (chem-ir-alias-accessor 'tochemfig-molecule-create 'chem-drawing-create)
+  (chem-ir-alias-accessor 'tochemfig-molecule-p 'chem-drawing-p)
+  (chem-ir-alias-accessor 'copy-tochemfig-molecule 'copy-chem-drawing)
+  (dolist (slot '(options toolkit atoms bonds atom-pairs seen-atoms seen-bonds
+                         entry-atom exit-atom exit-bond root bond-scale))
+    (chem-ir-alias-accessor
+     (intern (concat "tochemfig-molecule-" (symbol-name slot)))
+     (intern (concat "chem-drawing-" (symbol-name slot))))))
 
 ;;; Parsing
 

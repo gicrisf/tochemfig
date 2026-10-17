@@ -16,6 +16,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'chem-ir)
 (require 'tochemfig-mappings)
 
 (defconst tochemfig--hydrogen-lefties
@@ -40,24 +41,18 @@
 (defconst tochemfig--explicit-characters "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   "Characters that mark an atom as explicitly printed.")
 
-(cl-defstruct (tochemfig-atom (:constructor tochemfig-atom-create))
-  options                        ; Option plist (shared with the molecule)
-  idx                            ; Integer index (0-based)
-  x y                            ; 2D coordinates
-  element                        ; Element symbol string ("C", "N", ...)
-  hydrogens                      ; Implicit hydrogen count
-  charge                         ; Integer formal charge
-  radical                        ; Number of radical electrons
-  neighbors                      ; List of neighbor atom indices
-  first-quadrant                 ; Preferred quadrant for H / ligand
-  second-quadrant                ; Second choice (radical electrons)
-  charge-angle                   ; Preferred angle for a bare charge
-  string-pos                     ; Bond attachment position in atom code
-  phantom                        ; Phantom code used for ring closures
-  phantom-pos                    ; Position of the phantom
-  bond-angles                    ; Angles of all attached bonds
-  explicit                       ; Non-nil when the atom is printed
-  marker)                        ; Marker string (without @{})
+;; Transitional aliases while the atom struct lives in `chem-ir'.
+(eval-and-compile
+  (chem-ir-alias-accessor 'tochemfig-atom-create 'chem-atom-create)
+  (chem-ir-alias-accessor 'tochemfig-atom-p 'chem-atom-p)
+  (chem-ir-alias-accessor 'copy-tochemfig-atom 'copy-chem-atom)
+  (dolist (slot '(options idx x y element hydrogens charge radical neighbors
+                         first-quadrant second-quadrant charge-angle
+                         string-pos phantom phantom-pos bond-angles explicit
+                         marker))
+    (chem-ir-alias-accessor
+     (intern (concat "tochemfig-atom-" (symbol-name slot)))
+     (intern (concat "chem-atom-" (symbol-name slot))))))
 
 (defun tochemfig--score-angle (a b turf)
   "Score how much angle B impinges on candidate angle A within TURF."

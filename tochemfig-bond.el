@@ -15,6 +15,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'chem-ir)
 (require 'tochemfig-mappings)
 (require 'tochemfig-atom)
 
@@ -32,21 +33,18 @@ implementation where the dict literal overrides the aromatic entry.")
 
 (defconst tochemfig--aromatic-ring-scale 1.5)
 
-(cl-defstruct (tochemfig-bond (:constructor tochemfig-bond-create))
-  options                        ; Option plist
-  kind                           ; `bond', `dummy-first' or `aromatic-ring'
-  start-atom end-atom            ; Atom structs (nil for aromatic ring)
-  tikz-styles                    ; List of style names
-  tikz-values                    ; Alist of symbol -> number
-  bond-type                      ; Bond type symbol
-  descendants                    ; List of child bonds
-  length angle                   ; Computed geometry
-  marker                         ; Marker string
-  is-last to-phantom is-trunk    ; Flags
-  parent                         ; Parent bond (nil for root)
-  clockwise                      ; Ring double bond orientation
-  parent-angle                   ; Parent angle (aromatic ring bond)
-  radius)                        ; Circle radius (aromatic ring bond)
+;; Transitional aliases while the bond struct lives in `chem-ir'.
+(eval-and-compile
+  (chem-ir-alias-accessor 'tochemfig-bond-create 'chem-bond-create)
+  (chem-ir-alias-accessor 'tochemfig-bond-p 'chem-bond-p)
+  (chem-ir-alias-accessor 'copy-tochemfig-bond 'copy-chem-bond)
+  (dolist (slot '(options kind start-atom end-atom tikz-styles tikz-values
+                         bond-type descendants length angle marker is-last
+                         to-phantom is-trunk parent clockwise parent-angle
+                         radius))
+    (chem-ir-alias-accessor
+     (intern (concat "tochemfig-bond-" (symbol-name slot)))
+     (intern (concat "chem-bond-" (symbol-name slot))))))
 
 (defun tochemfig--rad-to-deg (radians)
   "Convert RADIANS to degrees."

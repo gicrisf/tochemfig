@@ -29,7 +29,7 @@ mkdir -p "$tmp/shim" "$tmp/src"
 # Stub the `indigo' feature: provides it without loading the dynamic module.
 printf "(provide 'indigo)\n" > "$tmp/shim/indigo.el"
 
-cp "$ROOT"/tochemfig-atom.el "$ROOT"/tochemfig-bond.el \
+cp "$ROOT"/chem-ir.el "$ROOT"/tochemfig-atom.el "$ROOT"/tochemfig-bond.el \
    "$ROOT"/tochemfig-mappings.el "$ROOT"/tochemfig-molecule.el \
    "$ROOT"/tochemfig.el "$tmp/src/"
 
@@ -37,7 +37,7 @@ cd "$tmp/src"
 "$EMACS" -Q --batch \
   --eval "(setq load-path (append (list \"$tmp/shim\" \"$INDIGO_EL\" \"$tmp/src\") load-path))" \
   -f batch-byte-compile \
-  tochemfig-atom.el tochemfig-bond.el tochemfig-mappings.el \
+  chem-ir.el tochemfig-atom.el tochemfig-bond.el tochemfig-mappings.el \
   tochemfig-molecule.el tochemfig.el 2>"$tmp/stderr" || true
 
 status=0
@@ -52,7 +52,7 @@ check_present() {
   fi
 }
 
-if [ ! -f tochemfig.elc ] || [ ! -f tochemfig-molecule.elc ]; then
+if [ ! -f tochemfig.elc ] || [ ! -f tochemfig-molecule.elc ] || [ ! -f chem-ir.elc ]; then
   echo "FAIL: byte-compilation did not produce .elc files" >&2
   status=1
 else
