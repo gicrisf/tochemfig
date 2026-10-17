@@ -58,6 +58,10 @@ Fully native, dependency-free chemfig generation.
   enabled-but-unedited buffers; wrapping is decided per command rather than at
   enable time.  The transient Generate/Copy actions are now safe when the
   invoking buffer has been killed.
+- Region-replacing commands deactivate the mark, so Evil leaves visual state
+  after generating; the =*tochemfig options*= buffer uses Emacs state under
+  Evil (so =q= quits it).  Documented Evil/Doom usage, including a leader
+  =map!= snippet, without adding an Evil dependency.
 - =tochemfig= now depends on =emacs-indigo= instead of a Python
   =mol2chemfig= installation.
 - Ported the full rendering algorithm: trunk marking, fragment connection,

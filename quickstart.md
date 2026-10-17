@@ -104,6 +104,25 @@ Other useful mode commands:
 `tochemfig-custom` (or `C-c m c`) opens a transient menu that edits every
 option live. While `tochemfig-mode` is active the options are buffer-local.
 
+## Evil / Doom
+
+`tochemfig-mode` is plain Emacs; its `C-c m` bindings work in Evil's normal and
+visual states and there is no Evil dependency. Doom users usually map the
+commands under their leader:
+
+```elisp
+(map! :leader
+      (:prefix ("t" . "tochemfig")
+       "d" #'tochemfig
+       "c" #'tochemfig-dispatch
+       "p" #'tochemfig-copy
+       "o" #'tochemfig-describe-options))
+```
+
+Generating from a visual selection replaces it and exits visual state. The
+`*tochemfig options*` buffer is read-only and uses Emacs state, so `q` quits it.
+Doom's menu bar is off, so use `C-c m c` / which-key / your leader mapping.
+
 ## Examples
 
 Ethanol:

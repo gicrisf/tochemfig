@@ -213,6 +213,26 @@ Set your preferred defaults in your config file:
 
 To see all available commands, run =M-x tochemfig-= and explore the completion list.
 
+** Evil / Doom
+
+=tochemfig-mode= is plain Emacs: its =C-c m= bindings already work in Evil's
+normal and visual states, and there is no dependency on Evil.  Doom users
+normally map the commands under their leader themselves, e.g.:
+
+#+begin_src emacs-lisp
+(map! :leader
+      (:prefix ("t" . "tochemfig")
+       "d" #'tochemfig
+       "c" #'tochemfig-dispatch
+       "p" #'tochemfig-copy
+       "o" #'tochemfig-describe-options))
+#+end_src
+
+Generating from a visual selection replaces the selection and leaves visual
+state.  The =*tochemfig options*= buffer is read-only and uses Emacs state under
+Evil, so =q= quits it.  Doom disables the menu bar, so use =C-c m c= /
+which-key / the leader mapping rather than the menu.
+
 * Features
 
 - [X] *Generate chemfig code from SMILES strings*
