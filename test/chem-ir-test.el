@@ -467,6 +467,9 @@
       (should (= 6 (length (chem-ring-atoms ring))))
       (should (= 6 (length (chem-ring-bonds ring))))
       (should (chem-ir-test--ring-cycle-consistent-p drawing ring))
+      (should (chem-ring-aromatic-p ring))
+      (should (chem-ring-anchor ring))
+      (should (memq (chem-ring-anchor ring) (chem-ring-bonds ring)))
       (should (chem-ring-regular-p drawing ring))
       (should (chem-ring-symmetric-p drawing ring))
       (should (> (chem-ring-circumradius drawing ring) 0))
@@ -490,7 +493,11 @@
   (let ((drawing (chem-ir-test--drawing-from-file "corpus/caffeine.mol" nil)))
     (should (= 2 (length (chem-drawing-rings drawing))))
     (dolist (ring (chem-drawing-rings drawing))
-      (should (chem-ir-test--ring-cycle-consistent-p drawing ring)))))
+      (should (chem-ir-test--ring-cycle-consistent-p drawing ring))))
+  (let ((drawing (chem-ir-test--drawing-from-file "corpus/cyclohexane.mol" nil)))
+    (should-not (chem-ring-aromatic-p (car (chem-drawing-rings drawing)))))
+  (let ((drawing (chem-ir-test--drawing "c1ccccc1" nil)))
+    (should (chem-ring-aromatic-p (car (chem-drawing-rings drawing))))))
 
 (ert-deftest chem-ir-ring-side ()
   "Ring sides are consistent per cycle and match the legacy clockwise sign."
@@ -551,6 +558,8 @@
          (alpha (- (/ float-pi 2) (/ float-pi n)))
          (inner-r (* (sin alpha) outer-r)))
     (should (= 1 (length rings)))
+    (should (chem-ring-aromatic-p ring))
+    (should (= (chem-ring-anchor ring) edge-id))
     (should (chem-ir-test--close-p outer-r
                                    (chem-bond-length aromatic-bond) 0.01))
     (should (chem-ir-test--close-p inner-r

@@ -230,15 +230,6 @@ the chemfig exporter remain byte-identical."
   "Return all directed bonds in MOL's traversal, excluding the root."
   (chem-tree-bonds mol))
 
-(defun chem--get-bond (mol tk-bond seen-bonds)
-  "Return the traversal bond of MOL corresponding to TK-BOND.
-SEEN-BONDS records the directed pairs visited by the traversal."
-  (let* ((start (indigo-index (indigo-source tk-bond)))
-         (end (indigo-index (indigo-destination tk-bond))))
-    (if (gethash (cons start end) seen-bonds)
-        (gethash (cons start end) (chem-drawing-bonds mol))
-      (gethash (cons end start) (chem-drawing-bonds mol)))))
-
 (defun chem--default-exit-node (mol)
   "Pick the traversal node farthest from the entry atom along the tree."
   (let ((scored nil)
@@ -405,77 +396,69 @@ OPTIONS is the common option plist; SEEN-BONDS is the traversal state."
       (chem-scale mol scale)
       (chem-bond-refresh-geometry mol))))
 
-(defun chem--aromatize-ring (mol ring center-x center-y seen-bonds)
-  "Render RING as an aromatic circle.
-SEEN-BONDS is the traversal state used to resolve directed bonds."
-  (let ((bond nil) (n 0))
-    (indigo-with-bonds-iterator (bit ring)
-      (let ((tk-bond (indigo-next bit)))
-        (while tk-bond
-          (setq n (1+ n))
-          (setq bond (chem--get-bond mol tk-bond seen-bonds))
-          (setf (chem-bond-bond-type bond) 'aromatic)
-          (setq tk-bond (indigo-next bit)))))
-    (let* ((atom (chem-bond-end-atom bond))
-           (dims (chem--compare-positions
-                  (chem-atom-x atom) (chem-atom-y atom) center-x center-y))
-           (outer-r (nth 0 dims))
-           (angle (nth 1 dims))
-           (alpha (- (/ float-pi 2) (/ float-pi n)))
-           (inner-r (* (sin alpha) outer-r))
-           (arb (chem-bond-create
-                 :kind 'aromatic-ring
-                 :angle (mod (chem--num-round angle 1) 360)
-                 :parent-angle (chem-bond-angle bond)
-                 :length (chem--num-round outer-r 2)
-                 :radius (chem--num-round (* chem--aromatic-ring-scale inner-r) 2)
-                 :bond-type 'aromatic
-                 :marker "" :clockwise 0)))
-      (when-let* ((node (chem-tree-node-for-bond mol bond)))
-        (let ((arb-node (chem-node-create :bond arb :parent node)))
-          (setf (chem-node-children node)
-                (append (chem-node-children node) (list arb-node))))))))
-
-(defun chem--annotate-ring (mol ring is-aromatic seen-bonds aromatic-circles-p)
-  "Annotate RING with an aromatic circle or orient its double bonds.
-SEEN-BONDS is the traversal state; AROMATIC-CIRCLES-P is the display policy."
-  (let ((atoms nil) (bond-lengths nil) (bonds nil))
-    (indigo-with-bonds-iterator (bit ring)
-      (let ((tk-bond (indigo-next bit)))
-        (while tk-bond
-          (let ((bond (chem--get-bond mol tk-bond seen-bonds)))
-            (push bond bonds)
-            (cl-pushnew (chem-bond-start-atom bond) atoms)
-            (cl-pushnew (chem-bond-end-atom bond) atoms)
-            (push (chem-bond-length bond) bond-lengths))
-          (setq tk-bond (indigo-next bit)))))
+(defun chem--annotate-ring (mol ring aromatic-circles-p)
+  "Annotate RING from its neutral record.
+AROMATIC-CIRCLES-P is the chemfig circle policy."
+  (let* ((edge-ids (chem-ring-bonds ring))
+         (bonds (delq nil (mapcar (lambda (edge-id)
+                                    (chem-directed-bond-for-edge mol edge-id))
+                                  edge-ids)))
+         (atoms (mapcar (lambda (idx)
+                          (gethash idx (chem-drawing-atoms mol)))
+                        (chem-ring-atoms ring)))
+         (center (chem-ring-center mol ring)))
     (when (<= (length bonds) 8)
-      (let* ((bl-max (apply #'max bond-lengths))
-             (bl-spread (/ (- bl-max (apply #'min bond-lengths)) bl-max))
-             (center-x (/ (apply #'+ (mapcar #'chem-atom-x atoms)) (float (length atoms))))
-             (center-y (/ (apply #'+ (mapcar #'chem-atom-y atoms)) (float (length atoms))))
-             (atom-angles nil) (center-distances nil))
-        (dolist (atom atoms)
-          (let ((dims (chem--compare-positions
-                       (chem-atom-x atom) (chem-atom-y atom) center-x center-y)))
-            (push (nth 0 dims) center-distances)
-            (push (cons atom (nth 1 dims)) atom-angles)))
-        (let* ((cd-max (apply #'max center-distances))
-               (cd-spread (/ (- cd-max (apply #'min center-distances)) cd-max))
-               (is-symmetric (and (<= cd-spread 0.05) (<= bl-spread 0.05))))
-          (if (and is-aromatic is-symmetric aromatic-circles-p)
-              (progn
-                (chem--aromatize-ring mol ring center-x center-y seen-bonds)
-                (dolist (pair atom-angles)
-                  (setf (chem-atom-bond-angles (car pair))
-                        (append (chem-atom-bond-angles (car pair))
-                                (list (cdr pair))))))
+      (if (and (chem-ring-aromatic-p ring)
+               (chem-ring-symmetric-p mol ring)
+               aromatic-circles-p)
+          (progn
             (dolist (bond bonds)
-              (chem-bond-is-clockwise bond center-x center-y))))))))
+              (setf (chem-bond-bond-type bond) 'aromatic))
+            (let* ((anchor (chem-directed-bond-for-edge mol (chem-ring-anchor ring)))
+                   (atom (chem-bond-end-atom anchor))
+                   (dims (chem--compare-positions
+                          (chem-atom-x atom) (chem-atom-y atom)
+                          (nth 0 center) (nth 1 center)))
+                   (outer-r (nth 0 dims))
+                   (angle (nth 1 dims))
+                   (n (length edge-ids))
+                   (alpha (- (/ float-pi 2) (/ float-pi n)))
+                   (inner-r (* (sin alpha) outer-r))
+                   (arb (chem-bond-create
+                         :kind 'aromatic-ring
+                         :angle (mod (chem--num-round angle 1) 360)
+                         :parent-angle (chem-bond-angle anchor)
+                         :length (chem--num-round outer-r 2)
+                         :radius (chem--num-round (* chem--aromatic-ring-scale inner-r) 2)
+                         :bond-type 'aromatic
+                         :marker "" :clockwise 0)))
+              (when-let* ((node (chem-tree-node-for-bond mol anchor)))
+                (let ((arb-node (chem-node-create :bond arb :parent node)))
+                  (setf (chem-node-children node)
+                        (append (chem-node-children node) (list arb-node))))))
+            (dolist (atom atoms)
+              (let ((dims (chem--compare-positions
+                           (chem-atom-x atom) (chem-atom-y atom)
+                           (nth 0 center) (nth 1 center))))
+                (setf (chem-atom-bond-angles atom)
+                      (append (chem-atom-bond-angles atom)
+                              (list (nth 1 dims)))))))
+        (dolist (bond bonds)
+          (when (zerop (chem-bond-clockwise bond))
+            (let* ((from (chem-atom-idx (chem-bond-start-atom bond)))
+                   (to (chem-atom-idx (chem-bond-end-atom bond)))
+                   (side (chem-ring-side mol ring from to)))
+              (setf (chem-bond-clockwise bond)
+                    (pcase side
+                      (:left -1)
+                      (:right 1)
+                      (_ 0))))))))))
 
-(defun chem--ring-record (mol ring)
-  "Build an ordered `chem-ring' from Indigo RING."
+(defun chem--ring-record (mol ring aromatic-p)
+  "Build an ordered `chem-ring' from Indigo RING.
+AROMATIC-P is the Indigo aromatization result for the ring."
   (let ((atoms nil)
+        (anchor nil)
         (adjacency (make-hash-table :test 'eql)))
     (indigo-with-bonds-iterator (bit ring)
       (let ((tk-bond (indigo-next bit)))
@@ -485,6 +468,7 @@ SEEN-BONDS is the traversal state; AROMATIC-CIRCLES-P is the display policy."
                  (edge (chem-get-edge mol start end)))
             (when edge
               (let ((id (chem-edge-id edge)))
+                (setq anchor id)
                 (cl-pushnew start atoms)
                 (cl-pushnew end atoms)
                 (push (cons end id) (gethash start adjacency))
@@ -515,7 +499,9 @@ SEEN-BONDS is the traversal state; AROMATIC-CIRCLES-P is the display policy."
                 (setq ordered-atoms (append ordered-atoms (list current)))))))
         (setq guard (1+ guard)))
       (chem-ring-create :atoms ordered-atoms
-                        :bonds (nreverse ordered-bonds)))))
+                        :bonds (nreverse ordered-bonds)
+                        :anchor anchor
+                        :aromatic-p aromatic-p))))
 
 (defun chem--ring-record-less-p (a b)
   "Return non-nil when ring record A sorts before B."
@@ -529,13 +515,11 @@ SEEN-BONDS is the traversal state; AROMATIC-CIRCLES-P is the display policy."
                       return (< x y)
                       finally return nil)))))
 
-(defun chem--annotate-rings (mol toolkit options seen-bonds)
+(defun chem--annotate-rings (mol toolkit options)
   "Annotate all SSSR rings of MOL.
-TOOLKIT is the Indigo molecule handle; OPTIONS supplies the circle policy;
-SEEN-BONDS is the traversal state."
+TOOLKIT is the Indigo molecule handle; OPTIONS supplies the circle policy."
   (indigo-aromatize toolkit)
-  (let ((rings nil)
-        (records nil))
+  (let (records)
     (indigo-with-sssr-iterator (it toolkit)
       (let ((ring (indigo-next it)))
         (while ring
@@ -546,23 +530,24 @@ SEEN-BONDS is the traversal state."
                   (unless (eq (indigo-bond-order tk-bond) :aromatic)
                     (setq is-aromatic nil))
                   (setq tk-bond (indigo-next bit)))))
-            (push (cons is-aromatic ring) rings)
-            (push (chem--ring-record mol ring) records))
+            (push (chem--ring-record mol ring is-aromatic) records))
           (setq ring (indigo-next it)))))
-    ;; Stable ring records, independent of the chemfig processing order.
-    (setq records (sort records #'chem--ring-record-less-p))
-    (let ((id 0))
-      (dolist (record records)
-        (setf (chem-ring-id record) id)
-        (setq id (1+ id))))
-    (setf (chem-drawing-rings mol) records)
-    ;; Stable sort by aromaticity (nil/false first), then process reversed.
-    (setq rings (sort (nreverse rings)
-                      (lambda (a b) (and (not (car a)) (car b)))))
-    (let ((aromatic-circles-p (plist-get options :aromatic-circles)))
-      (dolist (entry (reverse rings))
-        (chem--annotate-ring mol (cdr entry) (car entry)
-                             seen-bonds aromatic-circles-p)))))
+    (setq records (nreverse records))
+    ;; Stable ring list, independent of the chemfig processing order.
+    (let ((ordered (sort (copy-sequence records) #'chem--ring-record-less-p)))
+      (let ((id 0))
+        (dolist (record ordered)
+          (setf (chem-ring-id record) id)
+          (setq id (1+ id))))
+      (setf (chem-drawing-rings mol) ordered))
+    ;; Preserve the legacy processing order: non-aromatic first, reversed.
+    (let ((processing (sort (copy-sequence records)
+                            (lambda (a b)
+                              (and (not (chem-ring-aromatic-p a))
+                                   (chem-ring-aromatic-p b))))))
+      (let ((aromatic-circles-p (plist-get options :aromatic-circles)))
+        (dolist (ring (reverse processing))
+          (chem--annotate-ring mol ring aromatic-circles-p))))))
 
 ;;; Pipeline
 
@@ -626,7 +611,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
         (when (plist-get options :cross-bond)
           (chem--process-cross-bonds state options seen-bonds))
         (chem--scale-bonds state options)
-        (chem--annotate-rings state mol options seen-bonds))
+        (chem--annotate-rings state mol options))
       (chem-apply-drawing-options state options)
       state)))
 

@@ -77,7 +77,9 @@
 (cl-defstruct (chem-ring (:constructor chem-ring-create))
   id                             ; Stable integer within the drawing
   atoms                          ; Ordered atom indices around the cycle
-  bonds)                         ; Ordered canonical edge ids following the cycle
+  bonds                          ; Ordered canonical edge ids following the cycle
+  anchor                         ; Canonical edge id used to anchor the circle
+  aromatic-p)                    ; Ring is aromatic after Indigo aromatization
 
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
   atoms                          ; hash: idx -> atom
@@ -198,6 +200,15 @@ Invisible fragment links are excluded."
   "Return the traversal node whose bond is BOND, or nil."
   (cl-find bond (chem-tree-nodes drawing)
            :key #'chem-node-bond :test #'eq))
+
+(defun chem-directed-bond-for-edge (drawing edge-id)
+  "Return the traversal-directed bond for canonical EDGE-ID, or nil."
+  (let ((node (cl-find-if
+               (lambda (node)
+                 (let ((bond (chem-node-bond node)))
+                   (and bond (= (chem-bond-edge-id bond) edge-id))))
+               (chem-tree-nodes drawing))))
+    (when node (chem-node-bond node))))
 
 ;;; Rings
 

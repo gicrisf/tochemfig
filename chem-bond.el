@@ -134,16 +134,5 @@ Include traversal-only bonds such as cross-bond overlays."
   (setf (chem-bond-bond-type bond) 'link)
   (setf (chem-bond-marker bond) ""))
 
-(defun chem-bond-is-clockwise (bond center-x center-y)
-  "Determine the orientation of BOND relative to (CENTER-X, CENTER-Y)."
-  (when (= (chem-bond-clockwise bond) 0)
-    (let* ((dims (chem--compare-positions
-                  (chem-atom-x (chem-bond-end-atom bond))
-                  (chem-atom-y (chem-bond-end-atom bond))
-                  center-x center-y))
-           (center-angle (nth 1 dims))
-           (center-kink (mod (- center-angle (chem-bond-angle bond)) 360)))
-      (setf (chem-bond-clockwise bond) (if (> center-kink 180) 1 -1)))))
-
 (provide 'chem-bond)
 ;;; chem-bond.el ends here
