@@ -59,9 +59,8 @@
   length angle                   ; Derived geometry cache
   marker                         ; Marker string
   decoration                     ; :plain or :fancy
-  clockwise                      ; Transitional ring double-bond orientation
-  parent-angle                   ; Transitional aromatic ring parent angle
-  radius)                        ; Transitional aromatic ring radius
+  parent-angle                   ; Exporter-only aromatic-circle parent angle
+  radius)                        ; Exporter-only aromatic-circle radius
 
 (cl-defstruct (chem-node (:constructor chem-node-create))
   bond                           ; Directed chem-bond, or nil for the root
@@ -79,7 +78,8 @@
   atoms                          ; Ordered atom indices around the cycle
   bonds                          ; Ordered canonical edge ids following the cycle
   anchor                         ; Canonical edge id used to anchor the circle
-  aromatic-p)                    ; Ring is aromatic after Indigo aromatization
+  aromatic-p                     ; Ring is aromatic after Indigo aromatization
+  sequence)                      ; Source SSSR index, for legacy ring order
 
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
   atoms                          ; hash: idx -> atom

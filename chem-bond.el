@@ -29,8 +29,6 @@
 Note that order 4 (aromatic) maps to `either' (wavy), mirroring the reference
 implementation where the dict literal overrides the aromatic entry.")
 
-(defconst chem--aromatic-ring-scale 1.5)
-
 (defun chem--rad-to-deg (radians)
   "Convert RADIANS to degrees."
   (* radians (/ 180.0 float-pi)))
@@ -93,8 +91,7 @@ EDGE-ID links the directed bond to its canonical `chem-edge'."
        :bond-type bond-type
        :length (nth 0 dims)
        :angle (nth 1 dims)
-       :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")
-       :clockwise 0))))
+       :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")))))
 
 (defun chem-bond-refresh-geometry (drawing)
   "Recompute directed bond lengths and angles from atom coordinates.

@@ -99,13 +99,13 @@
     (should (equal plain-with-option (chem-ir-test--render plain nil)))))
 
 (ert-deftest chem-ir-aromatic-circles ()
-  "Aromatic ring display comes from the IR, not from exporter options."
+  "Aromatic ring display is exporter policy, not stored in the IR."
   (let* ((circles (chem-ir-test--drawing-from-file "corpus/benzene.mol" '(("aromatic-circles" . t))))
          (plain (chem-ir-test--drawing-from-file "corpus/benzene.mol" '(("aromatic-circles" . nil))))
          (circles-without-option (chem-ir-test--render circles '(("aromatic-circles" . nil))))
          (plain-with-option (chem-ir-test--render plain '(("aromatic-circles" . t)))))
-    (should (string-match-p "mcfcringle" circles-without-option))
-    (should-not (string-match-p "mcfcringle" plain-with-option))))
+    (should-not (string-match-p "mcfcringle" circles-without-option))
+    (should (string-match-p "mcfcringle" plain-with-option))))
 
 ;;; Canonical edge graph
 
@@ -382,26 +382,21 @@
                 (chem-drawing-exit-node drawing)))
     (should-not (cl-find-if #'chem-node-trunk-p (chem-tree-nodes drawing)))))
 
-(ert-deftest chem-ir-traversal-aromatic-node ()
-  "Aromatic circles are traversal nodes attached to a ring bond."
+(ert-deftest chem-ir-ring-display-policy ()
+  "Circle display is exporter policy; the traversal is unchanged."
   (let* ((plain (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
          (circles (chem-ir-test--drawing-from-file
-                   "corpus/benzene.mol" '(("aromatic-circles" . t))))
-         (plain-nodes (chem-tree-nodes plain))
-         (circle-nodes (chem-tree-nodes circles))
-         (aromatic (cl-remove-if-not
-                    (lambda (node)
-                      (let ((bond (chem-node-bond node)))
-                        (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
-                    circle-nodes)))
-    (should (= 1 (length aromatic)))
-    (should (= (1+ (length plain-nodes)) (length circle-nodes)))
-    (let* ((node (car aromatic))
-           (bond (chem-node-bond node)))
-      (should (chem-node-parent node))
-      (should (memq node (chem-node-children (chem-node-parent node))))
-      (should (chem-bond-radius bond))
-      (should (chem-bond-length bond)))))
+                   "corpus/benzene.mol" '(("aromatic-circles" . t)))))
+    (should (= (length (chem-tree-nodes plain))
+               (length (chem-tree-nodes circles))))
+    (should-not (cl-find-if
+                 (lambda (node)
+                   (let ((bond (chem-node-bond node)))
+                     (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
+                 (chem-tree-nodes circles)))
+    (should (string-match-p "mcfcringle"
+                            (chem-ir-test--render
+                             circles '(("aromatic-circles" . t)))))))
 
 (ert-deftest chem-ir-traversal-cross ()
   "Cross bonds are represented on traversal nodes, not chemical edges."
@@ -436,7 +431,7 @@
       (should-not (memq slot drawing-slots)))
     (should-not (memq 'options atom-slots))
     (dolist (slot '(options parent descendants to-phantom is-trunk
-                    cross-p cross-last-p))
+                    cross-p cross-last-p clockwise))
       (should-not (memq slot bond-slots)))))
 
 ;;; Rings
@@ -500,10 +495,13 @@
     (should (chem-ring-aromatic-p (car (chem-drawing-rings drawing))))))
 
 (ert-deftest chem-ir-ring-side ()
-  "Ring sides are consistent per cycle and match the legacy clockwise sign."
+  "Ring sides are consistent per cycle and drive the exporter clockwise cache."
   (dolist (file '("corpus/benzene.mol" "corpus/naphthalene.mol"
                   "corpus/indole.mol" "corpus/caffeine.mol"))
-    (let ((drawing (chem-ir-test--drawing-from-file file nil)))
+    (let* ((options (chem--build-options nil))
+           (drawing (chem-ir-test--drawing-from-file file nil))
+           (state (chem-exp-chemfig--make-state options)))
+      (chem-exp-chemfig--prepare-rings state drawing options)
       (dolist (ring (chem-drawing-rings drawing))
         (let* ((atoms (chem-ring-atoms ring))
                (n (length atoms))
@@ -528,7 +526,7 @@
               (let* ((bond (chem-node-bond node))
                      (from (chem-atom-idx (chem-bond-start-atom bond)))
                      (to (chem-atom-idx (chem-bond-end-atom bond)))
-                     (clockwise (chem-bond-clockwise bond)))
+                     (clockwise (chem-exp-chemfig--bond-clockwise state bond)))
                 (unless (zerop clockwise)
                   (let ((expected (if (= clockwise -1) :left :right)))
                     (should (cl-find expected
@@ -537,34 +535,37 @@
                                              (chem-rings-for-edge drawing edge-id))))))))))))))
 
 (ert-deftest chem-ir-ring-circle-geometry ()
-  "Derived ring geometry matches the current aromatic-circle placement."
-  (let* ((drawing (chem-ir-test--drawing-from-file
+  "Derived ring geometry matches the exporter's synthetic circle."
+  (let* ((options (chem--build-options '(("aromatic-circles" . t))))
+         (drawing (chem-ir-test--drawing-from-file
                    "corpus/benzene.mol" '(("aromatic-circles" . t))))
-         (aromatic (cl-find-if
-                    (lambda (node)
-                      (let ((bond (chem-node-bond node)))
-                        (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
-                    (chem-tree-nodes drawing)))
-         (aromatic-bond (chem-node-bond aromatic))
-         (parent-bond (chem-node-bond (chem-node-parent aromatic)))
-         (edge-id (chem-bond-edge-id parent-bond))
-         (rings (chem-rings-for-edge drawing edge-id))
-         (ring (car rings))
-         (center (chem-ring-center drawing ring))
-         (atom (chem-bond-end-atom parent-bond))
-         (outer-r (sqrt (+ (expt (- (chem-atom-x atom) (nth 0 center)) 2)
-                           (expt (- (chem-atom-y atom) (nth 1 center)) 2))))
-         (n (length (chem-ring-atoms ring)))
-         (alpha (- (/ float-pi 2) (/ float-pi n)))
-         (inner-r (* (sin alpha) outer-r)))
-    (should (= 1 (length rings)))
-    (should (chem-ring-aromatic-p ring))
-    (should (= (chem-ring-anchor ring) edge-id))
-    (should (chem-ir-test--close-p outer-r
-                                   (chem-bond-length aromatic-bond) 0.01))
-    (should (chem-ir-test--close-p inner-r
-                                   (/ (chem-bond-radius aromatic-bond) 1.5)
-                                   0.01))))
+         (state (chem-exp-chemfig--make-state options)))
+    (chem-exp-chemfig--prepare-rings state drawing options)
+    (let (circle-nodes)
+      (maphash (lambda (_ nodes) (setq circle-nodes (append circle-nodes nodes)))
+               (chem-exp-chemfig-state-circle-children state))
+      (should (= 1 (length circle-nodes)))
+      (let* ((circle (car circle-nodes))
+             (aromatic-bond (chem-node-bond circle))
+             (parent-bond (chem-node-bond (chem-node-parent circle)))
+             (edge-id (chem-bond-edge-id parent-bond))
+             (rings (chem-rings-for-edge drawing edge-id))
+             (ring (car rings))
+             (center (chem-ring-center drawing ring))
+             (atom (chem-bond-end-atom parent-bond))
+             (outer-r (sqrt (+ (expt (- (chem-atom-x atom) (nth 0 center)) 2)
+                               (expt (- (chem-atom-y atom) (nth 1 center)) 2))))
+             (n (length (chem-ring-atoms ring)))
+             (alpha (- (/ float-pi 2) (/ float-pi n)))
+             (inner-r (* (sin alpha) outer-r)))
+        (should (= 1 (length rings)))
+        (should (chem-ring-aromatic-p ring))
+        (should (= (chem-ring-anchor ring) edge-id))
+        (should (chem-ir-test--close-p outer-r
+                                       (chem-bond-length aromatic-bond) 0.01))
+        (should (chem-ir-test--close-p inner-r
+                                       (/ (chem-bond-radius aromatic-bond) 1.5)
+                                       0.01))))))
 
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here
