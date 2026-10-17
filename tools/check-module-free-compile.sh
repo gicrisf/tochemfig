@@ -29,16 +29,16 @@ mkdir -p "$tmp/shim" "$tmp/src"
 # Stub the `indigo' feature: provides it without loading the dynamic module.
 printf "(provide 'indigo)\n" > "$tmp/shim/indigo.el"
 
-cp "$ROOT"/chem-ir.el "$ROOT"/tochemfig-atom.el "$ROOT"/tochemfig-bond.el \
-   "$ROOT"/tochemfig-mappings.el "$ROOT"/tochemfig-molecule.el \
-   "$ROOT"/tochemfig.el "$tmp/src/"
+cp "$ROOT"/chem-ir.el "$ROOT"/chem-indigo.el "$ROOT"/tochemfig-atom.el \
+   "$ROOT"/tochemfig-bond.el "$ROOT"/tochemfig-mappings.el \
+   "$ROOT"/tochemfig-molecule.el "$ROOT"/tochemfig.el "$tmp/src/"
 
 cd "$tmp/src"
 "$EMACS" -Q --batch \
   --eval "(setq load-path (append (list \"$tmp/shim\" \"$INDIGO_EL\" \"$tmp/src\") load-path))" \
   -f batch-byte-compile \
-  chem-ir.el tochemfig-atom.el tochemfig-bond.el tochemfig-mappings.el \
-  tochemfig-molecule.el tochemfig.el 2>"$tmp/stderr" || true
+  chem-ir.el chem-indigo.el tochemfig-atom.el tochemfig-bond.el \
+  tochemfig-mappings.el tochemfig-molecule.el tochemfig.el 2>"$tmp/stderr" || true
 
 status=0
 
@@ -52,14 +52,15 @@ check_present() {
   fi
 }
 
-if [ ! -f tochemfig.elc ] || [ ! -f tochemfig-molecule.elc ] || [ ! -f chem-ir.elc ]; then
+if [ ! -f tochemfig.elc ] || [ ! -f tochemfig-molecule.elc ] \
+   || [ ! -f chem-ir.elc ] || [ ! -f chem-indigo.elc ]; then
   echo "FAIL: byte-compilation did not produce .elc files" >&2
   status=1
 else
   # `indigo-with-molecule' expands to a call to this function.
   check_present tochemfig.elc "indigo-load-molecule-from-string"
   # `indigo-with-atoms-iterator' expands to a call to this function.
-  check_present tochemfig-molecule.elc "indigo-iterate-atoms"
+  check_present chem-indigo.elc "indigo-iterate-atoms"
 fi
 
 if [ "$status" -eq 0 ]; then

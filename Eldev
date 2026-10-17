@@ -14,6 +14,7 @@
 (setf eldev-main-fileset
       '("tochemfig.el"
         "chem-ir.el"
+        "chem-indigo.el"
         "tochemfig-transient.el"
         "tochemfig-mode.el"
         "tochemfig-atom.el"
