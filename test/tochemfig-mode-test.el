@@ -13,8 +13,18 @@
 ;;; Code:
 
 (require 'ert)
+(require 'cl-lib)
 (require 'tex-mode)
 (require 'tochemfig-mode)
+
+(defun tochemfig-mode-test--generate-region ()
+  "Generate from the whole buffer as an active region."
+  (let ((transient-mark-mode t)
+        (mark-even-if-inactive nil))
+    (goto-char (point-min))
+    (push-mark (point-max) nil t)
+    (activate-mark)
+    (tochemfig)))
 
 (ert-deftest tochemfig-mode-context-p ()
   "LaTeX and Org buffers are recognised as wrapping contexts."
@@ -47,13 +57,13 @@
     (latex-mode)
     (tochemfig-mode 1)
     (insert "CCO")
-    (tochemfig-convert-region (point-min) (point-max))
+    (tochemfig-mode-test--generate-region)
     (should (string-prefix-p "\\chemfig{" (buffer-string))))
   (with-temp-buffer
     (emacs-lisp-mode)
     (tochemfig-mode 1)
     (insert "CCO")
-    (tochemfig-convert-region (point-min) (point-max))
+    (tochemfig-mode-test--generate-region)
     (should-not (string-prefix-p "\\chemfig{" (buffer-string)))))
 
 (ert-deftest tochemfig-mode-options-localize-lazily ()
@@ -82,7 +92,7 @@
     (latex-mode)
     (tochemfig-mode 1)
     (insert "CCO")
-    (tochemfig-convert-region (point-min) (point-max))
+    (tochemfig-mode-test--generate-region)
     (should (string-prefix-p "\\chemfig{" (buffer-string)))
     (should (equal (buffer-string)
                    (tochemfig--generate-from-string
@@ -135,75 +145,99 @@
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m g")) #'tochemfig))
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m o")) #'tochemfig-dispatch))
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m c")) #'tochemfig-copy))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m f")) #'tochemfig-input-file))
   (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m d"))
               #'tochemfig-describe-options))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m t"))
-              #'tochemfig-mode-toggle-terse))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m w"))
-              #'tochemfig-mode-toggle-wrap-chemfig))
-  (should (eq (lookup-key tochemfig-mode-map (kbd "C-c m r"))
-              #'tochemfig-mode-rotate))
   ;; The old one-shot bindings are gone (clean break).
+  (should-not (lookup-key tochemfig-mode-map (kbd "C-c m f")))
+  (should-not (lookup-key tochemfig-mode-map (kbd "C-c m t")))
+  (should-not (lookup-key tochemfig-mode-map (kbd "C-c m w")))
+  (should-not (lookup-key tochemfig-mode-map (kbd "C-c m r")))
   (should-not (lookup-key tochemfig-mode-map (kbd "C-c m p"))))
 
+(ert-deftest tochemfig-mode-one-shot-commands-removed ()
+  "The duplicated one-shot command surface is gone."
+  (dolist (command '(tochemfig-default
+                     tochemfig-input-file
+                     tochemfig-input-direct
+                     tochemfig-input-direct-output-file
+                     tochemfig-input-file-output-file
+                     tochemfig-terse
+                     tochemfig-verbose
+                     tochemfig-indent
+                     tochemfig-rotate
+                     tochemfig-show-carbons
+                     tochemfig-show-methyls
+                     tochemfig-add-hydrogens
+                     tochemfig-delete-hydrogens
+                     tochemfig-fancy-bonds
+                     tochemfig-vanilla-bonds
+                     tochemfig-aromatic-circles
+                     tochemfig-no-aromatic-circles
+                     tochemfig-show-atom-numbers
+                     tochemfig-hide-atom-numbers
+                     tochemfig-bond-scale
+                     tochemfig-bond-normalize
+                     tochemfig-markers
+                     tochemfig-cross-bond
+                     tochemfig-wrap-chemfig
+                     tochemfig-wrap-submol
+                     tochemfig-unwrap
+                     tochemfig-partial-submol
+                     tochemfig-convert-region
+                     tochemfig-mode-toggle-terse
+                     tochemfig-mode-toggle-wrap-chemfig
+                     tochemfig-mode-rotate))
+    (should-not (fboundp command))))
+
 (ert-deftest tochemfig-mode-toggle-terse-buffer-local ()
-  "The mode-aware terse toggle is buffer-local."
+  "The transient terse toggle is buffer-local."
   (with-temp-buffer
     (emacs-lisp-mode)
     (tochemfig-mode 1)
+    (setq tochemfig-mode--edit-buffer (current-buffer))
     (setq tochemfig-default-terse nil)
-    (tochemfig-mode-toggle-terse)
+    (tochemfig-toggle-terse)
     (should (local-variable-p 'tochemfig-default-terse))
     (should tochemfig-default-terse)
-    (tochemfig-mode-toggle-terse)
+    (tochemfig-toggle-terse)
     (should-not tochemfig-default-terse))
   (setq tochemfig-default-terse nil))
 
 (ert-deftest tochemfig-mode-toggle-wrap-buffer-local ()
-  "The mode-aware wrap toggle is buffer-local."
+  "The transient wrap toggle is buffer-local."
   (with-temp-buffer
     (emacs-lisp-mode)
     (tochemfig-mode 1)
+    (setq tochemfig-mode--edit-buffer (current-buffer))
     (setq tochemfig-default-wrap-chemfig nil)
-    (tochemfig-mode-toggle-wrap-chemfig)
+    (tochemfig-toggle-wrap-chemfig)
     (should (local-variable-p 'tochemfig-default-wrap-chemfig))
     (should tochemfig-default-wrap-chemfig)
-    (tochemfig-mode-toggle-wrap-chemfig)
+    (tochemfig-toggle-wrap-chemfig)
     (should-not tochemfig-default-wrap-chemfig))
   (setq tochemfig-default-wrap-chemfig nil))
 
-(ert-deftest tochemfig-mode-toggle-stale-edit-buffer ()
-  "Direct toggles target the current buffer, not a stale transient buffer."
-  (let ((stale (generate-new-buffer "tochemfig-stale"))
-        (current (generate-new-buffer "tochemfig-current")))
-    (unwind-protect
-        (progn
-          (setq tochemfig-default-terse nil)
-          (setq tochemfig-mode--edit-buffer stale)
-          (with-current-buffer current
-            (emacs-lisp-mode)
-            (tochemfig-mode 1)
-            (tochemfig-mode-toggle-terse))
-          (should (local-variable-p 'tochemfig-default-terse current))
-          (should (buffer-local-value 'tochemfig-default-terse current))
-          (should-not (local-variable-p 'tochemfig-default-terse stale)))
-      (setq tochemfig-mode--edit-buffer nil)
-      (setq tochemfig-default-terse nil)
-      (kill-buffer stale)
-      (kill-buffer current))))
-
-(ert-deftest tochemfig-mode-rotate ()
-  "Rotate generates the at-point molecule with a one-off angle."
+(ert-deftest tochemfig-mode-transient-rotate ()
+  "The transient rotates one generation without changing the default."
   (with-temp-buffer
     (emacs-lisp-mode)
     (tochemfig-mode 1)
+    (setq tochemfig-mode--edit-buffer (current-buffer))
+    (setq tochemfig-mode--pending-source nil)
+    (setq tochemfig-mode--pending-overrides nil)
+    (setq tochemfig-default-angle 0.0)
     (insert "CCO")
     (goto-char 2)
-    (tochemfig-mode-rotate 30)
+    (cl-letf (((symbol-function 'read-number) (lambda (&rest _) 30)))
+      (tochemfig-transient-rotate))
+    (should (equal (cdr (assoc "angle" tochemfig-mode--pending-overrides))
+                   30))
+    (should (= tochemfig-default-angle 0.0))
+    (tochemfig-transient-generate)
     (should (equal (buffer-string)
                    (tochemfig--generate-from-string
-                    "CCO" '(("angle" . 30)))))))
+                    "CCO" '(("angle" . 30)))))
+    (should-not tochemfig-mode--pending-overrides)))
 
 (ert-deftest tochemfig-mode-global-eligibility ()
   "The global mode enables only in eligible buffers by default."
@@ -237,18 +271,16 @@
             (should tochemfig-mode)))
       (tochemfig-global-mode -1))))
 
-(ert-deftest tochemfig-mode-convert-empty-region ()
-  "Converting an empty region signals a user-error."
-  (with-temp-buffer
-    (should-error (tochemfig-convert-region (point-min) (point-max))
-                  :type 'user-error)))
+(ert-deftest tochemfig-mode-empty-input-is-user-error ()
+  "Empty molecule input signals a user-error."
+  (should-error (tochemfig-mode--generate 'direct "") :type 'user-error))
 
 (ert-deftest tochemfig-mode-invalid-input-is-user-error ()
   "A generation failure surfaces as a user-error, not a raw Indigo error."
   (with-temp-buffer
+    (emacs-lisp-mode)
     (insert "not a smiles")
-    (goto-char 6)
-    (should-error (tochemfig-convert-region (point-min) (point-max))
+    (should-error (tochemfig-mode-test--generate-region)
                   :type 'user-error)))
 
 ;;; Thing-at-point and heuristic

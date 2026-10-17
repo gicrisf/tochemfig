@@ -31,31 +31,33 @@ Add to your Emacs config (`~/.emacs` or `~/.emacs.d/init.el`):
 ;; Load the package
 (require 'tochemfig)
 
-;; Optional: context-aware minor mode and options menu
+;; Optional: context-aware minor mode (the transient is autoloaded)
 (require 'tochemfig-mode)
 ```
 
-## Basic Usage
+## Transient menu (primary interface)
 
-### From SMILES strings
+`M-x tochemfig-dispatch` (also `tochemfig-custom`) opens the options menu. It
+works from any buffer and enables `tochemfig-mode` if needed. If the region or
+the text at point looks like a molecule, that is used; otherwise you are
+prompted with the current input mode.
 
-```
-M-x tochemfig-input-direct RET CCO RET
-```
+| Key   | Action                                             |
+|-------|----------------------------------------------------|
+| `RET` | Generate and insert                                |
+| `C`   | Copy generated code to the kill ring               |
+| `F`   | Generate from a MOL file (one-off)                 |
+| `A`   | Rotate the next generation only                    |
+| `?`   | Show the `C-c m` key bindings                      |
 
-Inserts `-[:330]-[:30,,,1]OH` (ethanol).
+For example, put point on `CCO` and press `RET`, or run `M-x tochemfig` to do
+the same without opening the menu. Ethanol is inserted as
+`-[:330]-[:30,,,1]OH`.
 
-### From MOL files
-
-```
-M-x tochemfig-input-file RET /path/to/molecule.mol RET
-```
-
-### Quick generation with configured defaults
-
-```
-M-x tochemfig-default RET <SMILES or file> RET
-```
+The old one-shot commands (`tochemfig-input-direct`, `tochemfig-input-file`,
+`tochemfig-terse`, `tochemfig-rotate`, `tochemfig-fancy-bonds`,
+`tochemfig-wrap-chemfig`, ...) have been removed. Use the corresponding menu
+option or `M-x tochemfig` instead.
 
 ## Context-aware mode
 
@@ -81,22 +83,17 @@ It only enables the mode in wrapping contexts; set
 
 The commands are bound under the `C-c m` prefix:
 
-| Key       | Command                              | Description                           |
-|-----------|--------------------------------------|---------------------------------------|
-| `C-c m g` | `tochemfig`                          | Generate for region / point / prompt  |
-| `C-c m o` | `tochemfig-dispatch`                 | Transient options menu                |
-| `C-c m c` | `tochemfig-copy`                     | Copy to the kill ring                 |
-| `C-c m f` | `tochemfig-input-file`               | Generate from a MOL file              |
-| `C-c m d` | `tochemfig-describe-options`         | Describe effective options            |
-| `C-c m t` | `tochemfig-mode-toggle-terse`        | Toggle terse output (buffer-local)    |
-| `C-c m w` | `tochemfig-mode-toggle-wrap-chemfig` | Toggle `\chemfig{}` wrapping          |
-| `C-c m r` | `tochemfig-mode-rotate`              | Rotate this generation by an angle    |
+| Key       | Command                      | Description                           |
+|-----------|------------------------------|---------------------------------------|
+| `C-c m g` | `tochemfig`                  | Generate for region / point / prompt  |
+| `C-c m o` | `tochemfig-dispatch`         | Transient options menu                |
+| `C-c m c` | `tochemfig-copy`             | Copy to the kill ring                 |
+| `C-c m d` | `tochemfig-describe-options` | Describe effective options            |
 
-Other useful mode commands:
+Other useful commands:
 
 | Command                     | Description                                       |
 |-----------------------------|---------------------------------------------------|
-| `tochemfig-convert-region`  | Replace the region with chemfig for its SMILES    |
 | `tochemfig-custom`          | Alias for `tochemfig-dispatch` (options menu)     |
 | `tochemfig-describe-options`| Show effective options (buffer-local vs global)   |
 | `tochemfig-save-options`    | Save effective options as the global defaults     |
@@ -105,31 +102,41 @@ Other useful mode commands:
 
 ## Options menu
 
-`tochemfig-custom` (or `C-c m o`) opens a transient menu that edits every
-option live. While `tochemfig-mode` is active the options are buffer-local.
+The menu edits every option live and generates with `RET`. Options are
+buffer-local, and are only localized the first time you edit them, so global
+default changes still reach untouched buffers. The action keys are `RET`
+(generate), `C` (copy), `F` (MOL file), `A` (rotate once) and `?` (bindings).
 
 ## Evil / Doom
 
 `tochemfig-mode` is plain Emacs; its `C-c m` bindings work in Evil's normal and
-visual states and there is no Evil dependency. Doom users usually map the
-commands under their leader:
+visual states and there is no Evil dependency. Doom users usually make the
+transient menu the primary entry point and map the top-level commands under
+their leader:
 
 ```elisp
 (map! :leader
       (:prefix ("C" . "tochemfig")
-       "g" #'tochemfig
+       :desc "Options menu (RET generate, C copy, F file, A rotate)"
        "o" #'tochemfig-dispatch
-       "c" #'tochemfig-copy
-       "f" #'tochemfig-input-file
-       "d" #'tochemfig-describe-options
-       "t" #'tochemfig-mode-toggle-terse
-       "w" #'tochemfig-mode-toggle-wrap-chemfig
-       "r" #'tochemfig-mode-rotate))
+       :desc "Generate at point/region" "g" #'tochemfig
+       :desc "Copy to kill ring" "c" #'tochemfig-copy
+       :desc "Describe options" "d" #'tochemfig-describe-options
+       :desc "Save options as global defaults" "s" #'tochemfig-save-options
+       :desc "Reload saved options" "r" #'tochemfig-reload-options
+       :desc "Reset buffer options" "R" #'tochemfig-reset-options))
 ```
+
+`SPC C o` is the primary entry point. Inside the menu use `RET` to generate,
+`C` to copy, `F` for one-off MOL input, `A` to rotate once and `?` for the
+bindings. The `g`, `c` and `d` leader keys are shortcuts for the same top-level
+commands; `s`, `r` and `R` manage the option defaults. File input and one-off
+rotation intentionally have no separate leader bindings: they live in the menu.
+The old `C-c m f/t/w/r` shortcuts are gone.
 
 Generating from a visual selection replaces it and exits visual state. The
 `*tochemfig options*` buffer is read-only and uses Emacs state, so `q` quits it.
-Doom's menu bar is off, so use `C-c m o` / which-key / your leader mapping.
+Doom's menu bar is off, so use `SPC C o` / `C-c m o` / which-key.
 
 ## Examples
 
@@ -148,8 +155,9 @@ Glycine:
 H_2N-[:330,,2]-[:30](=[:330]O)-[:90,,,1]OH
 ```
 
-Caffeine with wrapper (`M-x tochemfig-wrap-chemfig RET CN1C=NC2=C1C(=O)N(C(=O)N2C)C RET`)
-produces the fully annotated structure shown in the README.
+Caffeine with wrapper (open `M-x tochemfig-dispatch`, enable `w` if needed,
+then `RET` on `CN1C=NC2=C1C(=O)N(C(=O)N2C)C`) produces the fully annotated
+structure shown in the README.
 
 ## All options
 
@@ -216,8 +224,7 @@ If you prefer global bindings over the minor mode:
 
 ```elisp
 (global-set-key (kbd "C-c m g") 'tochemfig)          ; region / point / prompt
-(global-set-key (kbd "C-c m o") 'tochemfig-custom)   ; options menu
+(global-set-key (kbd "C-c m o") 'tochemfig-dispatch) ; options menu
 (global-set-key (kbd "C-c m c") 'tochemfig-copy)
-(global-set-key (kbd "C-c m f") 'tochemfig-input-file)
 (global-set-key (kbd "C-c m d") 'tochemfig-describe-options)
 ```

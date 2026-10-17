@@ -25,12 +25,11 @@
 ;; - MOL files
 ;;
 ;; Usage:
-;;   M-x tochemfig-input-direct RET <SMILES> RET
-;;   M-x tochemfig-input-file RET <path-to-mol-file> RET
+;;   M-x tochemfig-dispatch RET   (transient menu: options, generate, copy)
+;;   M-x tochemfig RET            (region / SMILES at point / prompt)
 ;;
 ;; For a context-aware experience enable `tochemfig-mode' (see
-;; tochemfig-mode.el), which adds commands under the `C-c m' prefix and a
-;; transient options menu.
+;; tochemfig-mode.el), which adds commands under the `C-c m' prefix.
 
 ;;; Code:
 
@@ -267,207 +266,31 @@ OVERRIDES is an alist of option overrides."
   (indigo-with-mol-file (mol path)
     (tochemfig--generate-from-mol mol overrides)))
 
-;;; Interactive Commands
+;;; Interactive entry points
+
+;; The interactive surface lives in `tochemfig-transient.el'.  These
+;; autoloads make the commands available as soon as the core is required,
+;; without pulling in the transient (or the mode) until one is invoked.
 
 ;;;###autoload
-(defun tochemfig-default (molecule)
-  "Generate chemfig code for MOLECULE using default settings.
-MOLECULE is interpreted according to `tochemfig-default-input'."
-  (interactive "sEnter molecule: ")
-  (insert (if (eq tochemfig-default-input 'file)
-              (tochemfig--generate-from-file molecule)
-            (tochemfig--generate-from-string molecule))))
+(autoload 'tochemfig "tochemfig-transient"
+  "Generate chemfig code for the molecule at point, in the region, or prompted."
+  t)
 
 ;;;###autoload
-(defun tochemfig-input-file (path)
-  "Generate chemfig code for a molecule from file at PATH."
-  (interactive "fEnter molecule file: ")
-  (insert (tochemfig--generate-from-file path)))
+(autoload 'tochemfig-copy "tochemfig-transient"
+  "Put chemfig code for the molecule at point or in the region on the kill ring."
+  t)
 
 ;;;###autoload
-(defun tochemfig-input-direct (molecule)
-  "Generate chemfig code for MOLECULE from a SMILES string."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule)))
+(autoload 'tochemfig-dispatch "tochemfig-transient"
+  "Customize `tochemfig' options and generate chemfig code."
+  t)
 
 ;;;###autoload
-(defun tochemfig-input-direct-output-file (molecule path)
-  "Generate chemfig code for MOLECULE and save to file at PATH."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-file-name "Output file: ")))
-  (with-temp-file path
-    (insert (tochemfig--generate-from-string molecule))))
-
-;;;###autoload
-(defun tochemfig-input-file-output-file (inpath outpath)
-  "Generate chemfig code from molecule file at INPATH, save to OUTPATH."
-  (interactive (list (read-file-name "Input molecule file: ")
-                     (read-file-name "Output file: ")))
-  (with-temp-file outpath
-    (insert (tochemfig--generate-from-file inpath))))
-
-;;;###autoload
-(defun tochemfig-terse (molecule)
-  "Generate chemfig code for MOLECULE with compact output."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("terse" . t)))))
-
-;;;###autoload
-(defun tochemfig-verbose (molecule)
-  "Generate chemfig code for MOLECULE with formatted output."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("terse" . nil)))))
-
-;;;###autoload
-(defun tochemfig-indent (molecule indent)
-  "Generate chemfig code for MOLECULE with INDENT spaces for branches."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-number "Indentation spaces: " 4)))
-  (insert (tochemfig--generate-from-string
-           molecule
-           (list (cons "indent" indent) (cons "terse" nil)))))
-
-;;;###autoload
-(defun tochemfig-rotate (molecule angle flip flop)
-  "Generate chemfig code for MOLECULE rotated by ANGLE degrees.
-FLIP mirrors horizontally, FLOP mirrors vertically."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-number "Rotation angle: " 0.0)
-                     (y-or-n-p "Flip horizontally? ")
-                     (y-or-n-p "Flip vertically? ")))
-  (insert (tochemfig--generate-from-string
-           molecule
-           (list (cons "angle" angle) (cons "flip" flip) (cons "flop" flop)))))
-
-;;;###autoload
-(defun tochemfig-show-carbons (molecule)
-  "Generate chemfig code for MOLECULE showing carbon labels."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("show-carbons" . t)))))
-
-;;;###autoload
-(defun tochemfig-show-methyls (molecule)
-  "Generate chemfig code for MOLECULE showing methyl group labels."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("show-methyls" . t)))))
-
-;;;###autoload
-(defun tochemfig-add-hydrogens (molecule)
-  "Generate chemfig code for MOLECULE with explicit hydrogen atoms."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("hydrogens" . add)))))
-
-;;;###autoload
-(defun tochemfig-delete-hydrogens (molecule)
-  "Generate chemfig code for MOLECULE with hydrogen atoms removed."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("hydrogens" . delete)))))
-
-;;;###autoload
-(defun tochemfig-fancy-bonds (molecule)
-  "Generate chemfig code for MOLECULE with fancy double/triple bonds."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("fancy-bonds" . t)))))
-
-;;;###autoload
-(defun tochemfig-vanilla-bonds (molecule)
-  "Generate chemfig code for MOLECULE with standard bond rendering."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("fancy-bonds" . nil)))))
-
-;;;###autoload
-(defun tochemfig-aromatic-circles (molecule)
-  "Generate chemfig code for MOLECULE with circles in aromatic rings."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("aromatic-circles" . t)))))
-
-;;;###autoload
-(defun tochemfig-no-aromatic-circles (molecule)
-  "Generate chemfig code for MOLECULE with explicit aromatic double bonds."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("aromatic-circles" . nil)))))
-
-;;;###autoload
-(defun tochemfig-show-atom-numbers (molecule)
-  "Generate chemfig code for MOLECULE showing atom numbers."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("atom-numbers" . t)))))
-
-;;;###autoload
-(defun tochemfig-hide-atom-numbers (molecule)
-  "Generate chemfig code for MOLECULE hiding atom numbers."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("atom-numbers" . nil)))))
-
-;;;###autoload
-(defun tochemfig-bond-scale (molecule factor)
-  "Generate chemfig code for MOLECULE with bonds scaled by FACTOR."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-number "Scale factor: " 1.0)))
-  (insert (tochemfig--generate-from-string
-           molecule
-           (list (cons "bond-scale" 'scale) (cons "bond-stretch" factor)))))
-
-;;;###autoload
-(defun tochemfig-bond-normalize (molecule average)
-  "Generate chemfig code for MOLECULE with bonds normalized to AVERAGE length."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-number "Target average length: " 1.0)))
-  (insert (tochemfig--generate-from-string
-           molecule
-           (list (cons "bond-scale" 'normalize) (cons "bond-stretch" average)))))
-
-;;;###autoload
-(defun tochemfig-markers (molecule prefix)
-  "Generate chemfig code for MOLECULE with atom/bond markers PREFIX."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-string "Marker prefix: " "a")))
-  (insert (tochemfig--generate-from-string
-           molecule (list (cons "markers" prefix)))))
-
-;;;###autoload
-(defun tochemfig-cross-bond (molecule start end)
-  "Generate chemfig code for MOLECULE drawing the START-END bond on top."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-number "Cross bond start atom: ")
-                     (read-number "Cross bond end atom: ")))
-  (insert (tochemfig--generate-from-string
-           molecule (list (cons "cross-bond" (list (list start end)))))))
-
-;;;###autoload
-(defun tochemfig-wrap-chemfig (molecule)
-  "Generate chemfig code for MOLECULE wrapped in \\chemfig{...}."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string molecule '(("wrap-chemfig" . t)))))
-
-;;;###autoload
-(defun tochemfig-wrap-submol (molecule submol)
-  "Generate chemfig code for MOLECULE wrapped as \\definesubmol{SUBMOL}{...}."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-string "Submol name: ")))
-  (insert (tochemfig--generate-from-string
-           molecule (list (cons "submol-name" submol)))))
-
-;;;###autoload
-(defun tochemfig-unwrap (molecule)
-  "Generate chemfig code for MOLECULE without any wrapper."
-  (interactive "sEnter SMILES: ")
-  (insert (tochemfig--generate-from-string
-           molecule
-           '(("wrap-chemfig" . nil) ("submol-name" . nil)))))
-
-;;;###autoload
-(defun tochemfig-partial-submol (molecule submol entry exit)
-  "Generate chemfig code for MOLECULE as submol with ENTRY and EXIT atoms."
-  (interactive (list (read-string "Enter SMILES: ")
-                     (read-string "Submol name: ")
-                     (read-number "Entry atom index: ")
-                     (read-number "Exit atom index: ")))
-  (insert (tochemfig--generate-from-string
-           molecule
-           (list (cons "submol-name" submol)
-                 (cons "entry-atom" entry)
-                 (cons "exit-atom" exit)))))
+(autoload 'tochemfig-custom "tochemfig-transient"
+  "Customize all options interactively and generate chemfig code."
+  t)
 
 (provide 'tochemfig)
 ;;; tochemfig.el ends here

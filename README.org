@@ -25,9 +25,7 @@ The following is a SMILES representation of caffeine:
 CN1C=NC2=C1C(=O)N(C(=O)N2C)C
 #+end_src
 
-You can turn this string into chemfig code by running =M-x tochemfig-input-direct=.
-
-The minibuffer will request an input: paste the SMILES, press =RET=, and Emacs will insert the chemfig code directly into your buffer.
+Put point on the SMILES and run =M-x tochemfig=, or open the options menu with =M-x tochemfig-dispatch=.  The dispatch menu is the primary interface: it edits every option interactively and generates with =RET=.  In the minibuffer flow, paste the SMILES, press =RET=, and Emacs inserts the chemfig code directly into your buffer.
 
 #+begin_export latex
 \chemfig{
@@ -73,7 +71,7 @@ This is fine, but maybe we're used to seeing xanthines with a slight rotation, w
 #+Caption: Caffeine rendered by LaTeX/TiKZ, flipped and rotated
 [[file:Quickstart/2022-11-08_00-50-01_screenshot.png]]
 
-To obtain this result, rotate the molecule by -30° and flip it horizontally using =M-x tochemfig-rotate=.
+To obtain this result, open =M-x tochemfig-dispatch=, set the rotation angle to =-30=, toggle horizontal flip, and generate with =RET=.  For a one-off rotation that leaves the default angle untouched, use the menu's /Rotate once/ action.
 
 You can also set these as defaults in your config:
 
@@ -155,47 +153,81 @@ The built package will be available in =./result=. Add the result path to your E
 
 * Usage
 
-There are *4 ways* to use tochemfig:
+The transient menu is the primary interface.  The minor mode adds buffer-aware
+commands and automatic wrapping on top of it.
 
-1. *Quick generation* with =tochemfig-default=: Input your molecule and get chemfig code instantly using your configured defaults.
+1. *Transient menu* with =M-x tochemfig-dispatch= (also =tochemfig-custom=): it
+   works from any buffer and enables =tochemfig-mode= if needed.  It edits every
+   option live, uses the region or the SMILES at point as input, and prompts
+   when there is no molecule there.
 
-2. *Context-aware minor mode* with =tochemfig-mode=: Enable it in a buffer to generate chemfig code from the SMILES string at point or in the region, with output wrapped in =\chemfig{...}= automatically in LaTeX and Org buffers (including LaTeX source blocks inside Org).  The commands live under the =C-c m= prefix; an optional menu-bar entry appears while the mode is active.
+   | Key   | Action                                            |
+   |-------+---------------------------------------------------|
+   | =RET= | Generate and insert                               |
+   | =C=   | Copy generated code to the kill ring              |
+   | =F=   | Generate from a MOL file (one-off, no option edit) |
+   | =A=   | Rotate the next generation only                   |
+   | =?=   | Show the =C-c m= key bindings                     |
 
-   Which major modes count as wrapping contexts is controlled by =tochemfig-mode-wrap-modes= (default: =tex-mode=, =latex-mode=, =LaTeX-mode=, =org-mode=, =markdown-mode=).  Wrapping is decided per command, so a single Org buffer can mix wrapped and unwrapped output.  Set =tochemfig-mode-auto-wrap= to nil to disable automatic wrapping.
+   Options are buffer-local, and are only localized the first time you edit
+   them, so changes to the global defaults still reach untouched buffers.  Use
+   =tochemfig-describe-options= to see the effective values,
+   =tochemfig-save-options= / =tochemfig-reload-options= to persist the global
+   defaults, and =tochemfig-reset-options= (=C-u= for global) to reset.
 
-   | Key       | Command                              | Description                          |
-   |-----------+--------------------------------------+--------------------------------------|
-   | =C-c m g= | =tochemfig=                          | Generate for region / point / prompt |
-   | =C-c m o= | =tochemfig-dispatch=                 | Transient options menu               |
-   | =C-c m c= | =tochemfig-copy=                     | Copy to the kill ring                |
-   | =C-c m f= | =tochemfig-input-file=               | Generate from a MOL file             |
-   | =C-c m d= | =tochemfig-describe-options=         | Describe effective options           |
-   | =C-c m t= | =tochemfig-mode-toggle-terse=        | Toggle terse output (buffer-local)   |
-   | =C-c m w= | =tochemfig-mode-toggle-wrap-chemfig= | Toggle =\chemfig{}= wrapping          |
-   | =C-c m r= | =tochemfig-mode-rotate=              | Rotate this generation by an angle   |
+2. *Context-aware minor mode* with =tochemfig-mode=: enable it in a buffer to
+   generate chemfig code from the SMILES string at point or in the region, with
+   output wrapped in =\chemfig{...}= automatically in LaTeX and Org buffers
+   (including LaTeX source blocks inside Org).  An optional menu-bar entry
+   appears while the mode is active.
+
+   Which major modes count as wrapping contexts is controlled by
+   =tochemfig-mode-wrap-modes= (default: =tex-mode=, =latex-mode=,
+   =LaTeX-mode=, =org-mode=, =markdown-mode=).  Wrapping is decided per
+   command, so a single Org buffer can mix wrapped and unwrapped output.  Set
+   =tochemfig-mode-auto-wrap= to nil to disable automatic wrapping.
+
+   | Key       | Command                      | Description                          |
+   |-----------+------------------------------+--------------------------------------|
+   | =C-c m g= | =tochemfig=                  | Generate for region / point / prompt |
+   | =C-c m o= | =tochemfig-dispatch=         | Transient options menu               |
+   | =C-c m c= | =tochemfig-copy=             | Copy to the kill ring                |
+   | =C-c m d= | =tochemfig-describe-options= | Describe effective options           |
 
    #+begin_src emacs-lisp
    (add-hook 'latex-mode-hook #'tochemfig-mode)
    (add-hook 'org-mode-hook #'tochemfig-mode)
    #+end_src
 
-   To turn it on everywhere it makes sense, use the global mode (it enables =tochemfig-mode= only in the wrapping contexts above; opt into every buffer with =tochemfig-global-mode-all-buffers=):
+   To turn it on everywhere it makes sense, use the global mode (it enables
+   =tochemfig-mode= only in the wrapping contexts above; opt into every buffer
+   with =tochemfig-global-mode-all-buffers=):
 
    #+begin_src emacs-lisp
    (tochemfig-global-mode 1)
    #+end_src
 
-3. *Interactive options menu* with =tochemfig-dispatch= (also bound to =tochemfig-custom=): a transient menu that edits every option live.  Options are buffer-local while =tochemfig-mode= is active, and are only localized the first time you edit them, so changes to the global defaults still reach untouched buffers.  Use =tochemfig-describe-options= to see the effective values, =tochemfig-save-options= / =tochemfig-reload-options= to persist the global defaults, and =tochemfig-reset-options= (=C-u= for global) to reset.
+** Migrating from the one-shot commands
 
-4. *Single-parameter override*: Functions like =tochemfig-input-direct=, =tochemfig-rotate=, or =tochemfig-fancy-bonds= let you override one specific setting while keeping all other defaults.
+The old =tochemfig-input-*=, =tochemfig-terse=, =tochemfig-rotate=,
+=tochemfig-fancy-bonds=, =tochemfig-wrap-chemfig= and similar commands have been
+removed.  They duplicated the transient menu with a fixed option and always
+prompted for SMILES.  Use the menu instead:
 
-   [[./custom-one-edit-demo.gif]]
-
-** Example: Single-parameter override
-
-If your default input is set to =file= but you need to paste a SMILES directly, use =tochemfig-input-direct= instead of changing your defaults or going through the options menu.
-
-Similarly, =tochemfig-terse= generates compact output without whitespace, =tochemfig-fancy-bonds= enables fancier double/triple bond rendering, etc.
+| Old command                                            | Replacement                                      |
+|--------------------------------------------------------+--------------------------------------------------|
+| =tochemfig-default=, =tochemfig-input-direct=          | =M-x tochemfig= or dispatch (=RET=)              |
+| =tochemfig-input-file=                                 | =M-x tochemfig= with input =file=, or dispatch =F= |
+| =tochemfig-terse=, =tochemfig-verbose=                 | dispatch =z=                                     |
+| =tochemfig-rotate=                                     | dispatch =a= (persistent) or =A= (one-off)       |
+| =tochemfig-fancy-bonds=, =tochemfig-vanilla-bonds=     | dispatch =f=                                     |
+| =tochemfig-show-carbons=, =tochemfig-show-methyls=     | dispatch =c= / =m=                               |
+| =tochemfig-add-hydrogens=, =tochemfig-delete-hydrogens= | dispatch =y=                                    |
+| =tochemfig-aromatic-circles=, =tochemfig-atom-numbers= | dispatch =o= / =n=                               |
+| =tochemfig-bond-scale=, =tochemfig-bond-normalize=     | dispatch =s= / =t=                               |
+| =tochemfig-markers=, =tochemfig-cross-bond=            | dispatch =g= / =k=                               |
+| =tochemfig-wrap-chemfig=, =tochemfig-wrap-submol=      | dispatch =w= / =l=                               |
+| output-file variants                                   | =tochemfig-copy=, then save the buffer            |
 
 ** Customizing defaults
 
@@ -218,31 +250,40 @@ Set your preferred defaults in your config file:
 (setq tochemfig-default-angle -30.0)
 #+end_src
 
-To see all available commands, run =M-x tochemfig-= and explore the completion list.
+The transient menu is the authoritative list of options: open
+=M-x tochemfig-dispatch= and press =?= for the key bindings.
 
 ** Evil / Doom
 
 =tochemfig-mode= is plain Emacs: its =C-c m= bindings already work in Evil's
 normal and visual states, and there is no dependency on Evil.  Doom users
-normally map the commands under their leader themselves, e.g.:
+usually make the transient menu the primary entry point and map the top-level
+commands under their leader, e.g.:
 
 #+begin_src emacs-lisp
 (map! :leader
       (:prefix ("C" . "tochemfig")
-       "g" #'tochemfig
+       :desc "Options menu (RET generate, C copy, F file, A rotate)"
        "o" #'tochemfig-dispatch
-       "c" #'tochemfig-copy
-       "f" #'tochemfig-input-file
-       "d" #'tochemfig-describe-options
-       "t" #'tochemfig-mode-toggle-terse
-       "w" #'tochemfig-mode-toggle-wrap-chemfig
-       "r" #'tochemfig-mode-rotate))
+       :desc "Generate at point/region" "g" #'tochemfig
+       :desc "Copy to kill ring" "c" #'tochemfig-copy
+       :desc "Describe options" "d" #'tochemfig-describe-options
+       :desc "Save options as global defaults" "s" #'tochemfig-save-options
+       :desc "Reload saved options" "r" #'tochemfig-reload-options
+       :desc "Reset buffer options" "R" #'tochemfig-reset-options))
 #+end_src
+
+=SPC C o= is the primary entry point.  Inside the menu use =RET= to generate,
+=C= to copy, =F= for one-off MOL input, =A= to rotate once and =?= for the
+bindings.  The =g=, =c= and =d= leader keys are shortcuts for the same top-level
+commands; =s=, =r= and =R= manage the option defaults.  File input and one-off
+rotation intentionally have no separate leader bindings: they live in the menu.
+The old =C-c m f/t/w/r= shortcuts are gone.
 
 Generating from a visual selection replaces the selection and leaves visual
 state.  The =*tochemfig options*= buffer is read-only and uses Emacs state under
-Evil, so =q= quits it.  Doom disables the menu bar, so use =C-c m o= /
-which-key / the leader mapping rather than the menu.
+Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
+=C-c m o= / which-key rather than the menu.
 
 * Features
 
@@ -267,8 +308,7 @@ which-key / the leader mapping rather than the menu.
 - [X] *Define submols* with entry/exit atoms
 - [X] Export submols as external =.tex= files
 - [X] *Customizable defaults*
-- [X] *Interactive transient options menu*
-- [X] Single-parameter override commands
+- [X] *Interactive transient options menu* (the primary interface)
 - [X] *Global mode* (=tochemfig-global-mode=) with configurable wrapping contexts
 - [X] Per-command wrapping (LaTeX/Org, plus Org LaTeX source blocks)
 - [X] Describe / save / reload / reset effective options
