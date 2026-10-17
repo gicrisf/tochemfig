@@ -197,19 +197,22 @@ buffer has been killed, CODE is inserted without deleting anything."
 
 ;;; Commands
 
-(defun tochemfig-mode--produce (copy &optional source)
+(defun tochemfig-mode--produce (copy &optional source overrides)
   "Generate chemfig code and either insert it or COPY it to the kill ring.
 SOURCE, when non-nil, is a (TEXT BOUNDS) list to use instead of the
-molecule at point or in the region."
+molecule at point or in the region.  OVERRIDES, when non-nil, is an alist
+of option overrides for this generation only."
   (let ((src (or source (tochemfig-mode--source-at-point)))
-        (overrides (and (tochemfig-mode--wrap-p) '(("wrap-chemfig" . t)))))
+        (options (append overrides
+                         (and (tochemfig-mode--wrap-p)
+                              '(("wrap-chemfig" . t))))))
     (if src
-        (let ((code (tochemfig-mode--generate 'direct (car src) overrides)))
+        (let ((code (tochemfig-mode--generate 'direct (car src) options)))
           (if copy
               (progn (kill-new code) (deactivate-mark t))
             (tochemfig-mode--insert code (cadr src))))
       (let* ((input (tochemfig-mode--read-input))
-             (code (tochemfig-mode--generate (car input) (cdr input) overrides)))
+             (code (tochemfig-mode--generate (car input) (cdr input) options)))
         (if copy (kill-new code) (insert code))))))
 
 ;;;###autoload
@@ -241,6 +244,34 @@ The region is interpreted as a SMILES string."
   "Put chemfig code for the molecule at point or in the region on the kill ring."
   (interactive)
   (tochemfig-mode--produce t))
+
+;;; Mode-aware option commands
+
+(defun tochemfig-mode--toggle (variable)
+  "Toggle VARIABLE buffer-locally in the current buffer."
+  (set (make-local-variable variable) (not (symbol-value variable))))
+
+(defun tochemfig-mode-toggle-terse ()
+  "Toggle `tochemfig-default-terse' buffer-locally."
+  (interactive)
+  (tochemfig-mode--toggle 'tochemfig-default-terse)
+  (message "tochemfig: terse output %s"
+           (if tochemfig-default-terse "on" "off")))
+
+(defun tochemfig-mode-toggle-wrap-chemfig ()
+  "Toggle `tochemfig-default-wrap-chemfig' buffer-locally."
+  (interactive)
+  (tochemfig-mode--toggle 'tochemfig-default-wrap-chemfig)
+  (message "tochemfig: wrap in \\chemfig{} %s"
+           (if tochemfig-default-wrap-chemfig "on" "off")))
+
+(defun tochemfig-mode-rotate (angle)
+  "Generate chemfig code rotated by ANGLE degrees.
+The molecule comes from the region or the SMILES at point (or is
+prompted), as with `tochemfig'.  ANGLE applies to this generation only;
+use the options menu to make a rotation persistent."
+  (interactive (list (read-number "Rotation angle: " tochemfig-default-angle)))
+  (tochemfig-mode--produce nil nil (list (cons "angle" angle))))
 
 ;;; Option introspection
 
@@ -585,13 +616,14 @@ evaluates to nil the suffix is hidden."
 
 (defvar tochemfig-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c m d") #'tochemfig)
-    (define-key map (kbd "C-c m c") #'tochemfig-dispatch)
+    (define-key map (kbd "C-c m g") #'tochemfig)
+    (define-key map (kbd "C-c m o") #'tochemfig-dispatch)
+    (define-key map (kbd "C-c m c") #'tochemfig-copy)
     (define-key map (kbd "C-c m f") #'tochemfig-input-file)
-    (define-key map (kbd "C-c m w") #'tochemfig-wrap-chemfig)
-    (define-key map (kbd "C-c m t") #'tochemfig-terse)
-    (define-key map (kbd "C-c m r") #'tochemfig-rotate)
-    (define-key map (kbd "C-c m p") #'tochemfig-copy)
+    (define-key map (kbd "C-c m d") #'tochemfig-describe-options)
+    (define-key map (kbd "C-c m t") #'tochemfig-mode-toggle-terse)
+    (define-key map (kbd "C-c m w") #'tochemfig-mode-toggle-wrap-chemfig)
+    (define-key map (kbd "C-c m r") #'tochemfig-mode-rotate)
     map)
   "Keymap for `tochemfig-mode'.
 The commands are bound under the `C-c m' prefix.")
@@ -600,13 +632,14 @@ The commands are bound under the `C-c m' prefix.")
   (when (fboundp 'which-key-add-keymap-based-replacements)
     (which-key-add-keymap-based-replacements tochemfig-mode-map
       "C-c m" "tochemfig"
-      "C-c m d" "Generate (region/point/prompt)"
-      "C-c m c" "Options menu"
+      "C-c m g" "Generate (region/point/prompt)"
+      "C-c m o" "Options menu"
+      "C-c m c" "Copy to kill ring"
       "C-c m f" "Generate from file"
-      "C-c m w" "Wrap in \\chemfig{}"
-      "C-c m t" "Terse output"
-      "C-c m r" "Rotate"
-      "C-c m p" "Copy to kill ring")))
+      "C-c m d" "Describe options"
+      "C-c m t" "Toggle terse output"
+      "C-c m w" "Toggle \\chemfig{} wrapping"
+      "C-c m r" "Rotate (one-off angle)")))
 
 ;;; Menu bar
 
