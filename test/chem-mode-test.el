@@ -6,8 +6,8 @@
 
 ;;; Commentary:
 
-;; Smoke tests for the generic commands, keymap, and dispatch.  The direct
-;; `tochemfig` command remains available for chemfig users.
+;; Smoke tests for the generic commands, keymap, and dispatch.  The old
+;; `tochemfig` command is intentionally not defined.
 
 ;;; Code:
 
@@ -55,6 +55,10 @@
   "The generic dispatch menu is defined."
   (should (fboundp 'chem-dispatch-menu))
   (should (fboundp 'chem-dispatch-option-exporter)))
+
+(ert-deftest chem-mode-no-tochemfig-alias ()
+  "The old `tochemfig` command is not provided."
+  (should-not (fboundp 'tochemfig)))
 
 (provide 'chem-mode-test)
 ;;; chem-mode-test.el ends here

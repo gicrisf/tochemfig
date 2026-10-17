@@ -15,7 +15,7 @@
 
 ;; Generic commands and minor mode for chem-mode.  Molecules are read into the
 ;; drawing IR and rendered by the selected exporter.  The chemfig exporter is
-;; the first registered exporter; `tochemfig' remains as its direct command.
+;; the first registered exporter.
 
 ;;; Code:
 
@@ -227,13 +227,6 @@ The selected exporter is `chem-default-exporter'."
   (interactive)
   (require 'chem-dispatch)
   (chem-dispatch-menu))
-
-;;;###autoload
-(defun tochemfig ()
-  "Generate chemfig code for the molecule at point or in the region."
-  (interactive)
-  (let ((chem-default-exporter 'chemfig))
-    (chem-export)))
 
 ;;; Option introspection
 

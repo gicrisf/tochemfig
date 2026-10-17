@@ -161,7 +161,8 @@
 
 (ert-deftest chem-mode-ui-one-shot-commands-removed ()
   "The duplicated one-shot command surface is gone."
-  (dolist (command '(tochemfig-default
+  (dolist (command '(tochemfig
+                     tochemfig-default
                      tochemfig-input-file
                      tochemfig-input-direct
                      tochemfig-input-direct-output-file
