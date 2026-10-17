@@ -50,14 +50,14 @@ prompted with the current input mode.
 | `A`   | Rotate the next generation only                    |
 | `?`   | Show the `C-c m` key bindings                      |
 
-For example, put point on `CCO` and press `RET`, or run `M-x tochemfig` to do
+For example, put point on `CCO` and press `RET`, or run `M-x chem-export` to do
 the same without opening the menu. Ethanol is inserted as
 `-[:330]-[:30,,,1]OH`.
 
 The old one-shot commands (`tochemfig-input-direct`, `tochemfig-input-file`,
 `tochemfig-terse`, `tochemfig-rotate`, `tochemfig-fancy-bonds`,
 `tochemfig-wrap-chemfig`, ...) have been removed. Use the corresponding menu
-option or `M-x tochemfig` instead.
+option or `M-x chem-export` instead.
 
 ## Context-aware mode
 
@@ -94,7 +94,6 @@ Other useful commands:
 
 | Command                     | Description                                       |
 |-----------------------------|---------------------------------------------------|
-| `tochemfig`             | Direct chemfig command (no menu)              |
 | `chem-describe-options`| Show effective options (buffer-local vs global)   |
 | `chem-save-options`    | Save effective options as the global defaults     |
 | `chem-reload-options`  | Reload the saved global defaults                  |

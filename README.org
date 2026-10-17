@@ -1,9 +1,13 @@
 #+title: chem-mode
 #+author: Giovanni Crisalfi
 
-# /Manipulating molecules with Emacs/.
+# /Drawing chemical structures with Emacs/.
 
-=chem-mode= converts molecular structures into LaTeX/chemfig code directly within Emacs.
+=chem-mode= draws chemical structures from SMILES or MOL files as
+LaTeX/chemfig, without leaving Emacs.
+
+Use it to produce publication-ready structures and paste the generated code
+into LaTeX or Org.
 
 [[./default-demo.gif]]
 
@@ -25,7 +29,7 @@ The following is a SMILES representation of caffeine:
 CN1C=NC2=C1C(=O)N(C(=O)N2C)C
 #+end_src
 
-Put point on the SMILES and run =M-x tochemfig=, or open the options menu with =M-x chem-dispatch=.  The dispatch menu is the primary interface: it edits every option interactively and generates with =RET=.  In the minibuffer flow, paste the SMILES, press =RET=, and Emacs inserts the chemfig code directly into your buffer.
+Put point on the SMILES and run =M-x chem-export=, or open the options menu with =M-x chem-dispatch=.  The dispatch menu is the primary interface: it edits every option interactively and generates with =RET=.  In the minibuffer flow, paste the SMILES, press =RET=, and Emacs inserts the chemfig code directly into your buffer.
 
 #+begin_export latex
 \chemfig{
@@ -148,13 +152,13 @@ commands and automatic wrapping on top of it.
    option live, uses the region or the SMILES at point as input, and prompts
    when there is no molecule there.
 
-   | Key   | Action                                            |
-   |-------+---------------------------------------------------|
-   | =RET= | Generate and insert                               |
-   | =C=   | Copy generated code to the kill ring              |
+   | Key   | Action                                             |
+   |-------+----------------------------------------------------|
+   | =RET= | Generate and insert                                |
+   | =C=   | Copy generated code to the kill ring               |
    | =F=   | Generate from a MOL file (one-off, no option edit) |
-   | =A=   | Rotate the next generation only                   |
-   | =?=   | Show the =C-c m= key bindings                     |
+   | =A=   | Rotate the next generation only                    |
+   | =?=   | Show the =C-c m= key bindings                      |
 
    Options are buffer-local, and are only localized the first time you edit
    them, so changes to the global defaults still reach untouched buffers.  Use
@@ -174,9 +178,9 @@ commands and automatic wrapping on top of it.
    command, so a single Org buffer can mix wrapped and unwrapped output.  Set
    =chem-mode-auto-wrap= to nil to disable automatic wrapping.
 
-   | Key       | Command                      | Description                          |
-   |-----------+------------------------------+--------------------------------------|
-   | =C-c m g= | =chem-export=               | Generate for region / point / prompt |
+   | Key       | Command                 | Description                          |
+   |-----------+-------------------------+--------------------------------------|
+   | =C-c m g= | =chem-export=           | Generate for region / point / prompt |
    | =C-c m o= | =chem-dispatch=         | Transient options menu               |
    | =C-c m c= | =chem-copy=             | Copy to the kill ring                |
    | =C-c m d= | =chem-describe-options= | Describe effective options           |
@@ -196,20 +200,9 @@ commands and automatic wrapping on top of it.
 
 ** Migrating from tochemfig
 
-The package is now =chem-mode=.  =tochemfig= remains as a direct chemfig
-command, and =chem-copy= is the generic copy command.  Old one-shot commands
-and =tochemfig-default-*= variables are gone.
-
-| Old | New |
-|---|---|
-| =tochemfig= package | =chem-mode= package |
-| =tochemfig= command | =tochemfig= from the chemfig exporter, or =chem-export= |
-| =tochemfig-copy= | =chem-copy= |
-| =tochemfig-dispatch=, =tochemfig-custom= | =chem-dispatch= |
-| =tochemfig-mode= | =chem-mode= |
-| =tochemfig-global-mode= | =chem-global-mode= |
-| =tochemfig-default-*= common | =chem-default-*= |
-| =tochemfig-default-*= output | =chem-exp-chemfig-default-*= |
+=chem-mode= makes a clean break: the old =tochemfig= commands and variables
+are not aliased.  See [[file:MIGRATION.org][MIGRATION.org]] for the complete mapping and
+optional snippets that recreate the old names in your config.
 
 ** Customizing defaults
 

@@ -27,16 +27,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   commands, and variables are removed.
 
 ** Migration
-| Old | New |
-|---|---|
-| =tochemfig= package | =chem-mode= package |
-| =tochemfig= command | =tochemfig= from the chemfig exporter, or =chem-export= |
-| =tochemfig-copy= | =chem-copy= |
-| =tochemfig-dispatch=, =tochemfig-custom= | =chem-dispatch= |
-| =tochemfig-mode= | =chem-mode= |
-| =tochemfig-global-mode= | =chem-global-mode= |
-| =tochemfig-default-*= common | =chem-default-*= |
-| =tochemfig-default-*= output | =chem-exp-chemfig-default-*= |
+=chem-mode= makes a clean break: the old =tochemfig= commands and variables
+are not aliased.  See [[file:MIGRATION.org][MIGRATION.org]] for the full mapping and optional
+compatibility snippets.
 
 * 0.3.0 (unreleased)
 

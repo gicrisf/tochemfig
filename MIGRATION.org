@@ -1,0 +1,102 @@
+#+title: Migrating from tochemfig to chem-mode
+#+options: toc:nil num:nil
+
+=chem-mode= is a clean break.  The package does not define the old
+=tochemfig= commands or variables.
+
+* Package and loading
+
+| Old                                              | New                   |
+|--------------------------------------------------+-----------------------|
+| =(require 'tochemfig)=                           | =(require 'chem-mode)= |
+| =M-x tochemfig=                                  | =M-x chem-export=     |
+| =M-x tochemfig-copy=                             | =M-x chem-copy=       |
+| =M-x tochemfig-dispatch=, =tochemfig-custom=     | =M-x chem-dispatch=   |
+| =tochemfig-mode=                                 | =chem-mode=           |
+| =tochemfig-global-mode=                          | =chem-global-mode=    |
+
+* Variable mapping
+
+| Old                                            | New                                           |
+|------------------------------------------------+-----------------------------------------------|
+| =tochemfig-default-input=                      | =chem-default-input=                          |
+| =tochemfig-default-strict=                     | =chem-default-strict=                         |
+| =tochemfig-default-recalculate-coordinates=    | =chem-default-recalculate-coordinates=        |
+| =tochemfig-default-angle=                      | =chem-default-angle=                          |
+| =tochemfig-default-flip=                       | =chem-default-flip=                           |
+| =tochemfig-default-flop=                       | =chem-default-flop=                           |
+| =tochemfig-default-show-carbons=               | =chem-default-show-carbons=                   |
+| =tochemfig-default-show-methyls=               | =chem-default-show-methyls=                   |
+| =tochemfig-default-hydrogens=                  | =chem-default-hydrogens=                      |
+| =tochemfig-default-aromatic-circles=           | =chem-default-aromatic-circles=               |
+| =tochemfig-default-fancy-bonds=                | =chem-default-fancy-bonds=                    |
+| =tochemfig-default-atom-numbers=               | =chem-default-atom-numbers=                   |
+| =tochemfig-default-bond-scale=                 | =chem-default-bond-scale=                     |
+| =tochemfig-default-bond-stretch=               | =chem-default-bond-stretch=                   |
+| =tochemfig-default-markers=                    | =chem-default-markers=                        |
+| =tochemfig-default-cross-bond=                 | =chem-default-cross-bond=                     |
+| =tochemfig-default-entry-atom=                 | =chem-default-entry-atom=                     |
+| =tochemfig-default-exit-atom=                  | =chem-default-exit-atom=                      |
+| =tochemfig-default-terse=                      | =chem-exp-chemfig-default-terse=              |
+| =tochemfig-default-indent=                     | =chem-exp-chemfig-default-indent=             |
+| =tochemfig-default-relative-angles=            | =chem-exp-chemfig-default-relative-angles=    |
+| =tochemfig-default-legacy-lewis=               | =chem-exp-chemfig-default-legacy-lewis=       |
+| =tochemfig-default-wrap-chemfig=               | =chem-exp-chemfig-default-wrap-chemfig=       |
+| =tochemfig-default-submol-name=                | =chem-exp-chemfig-default-submol-name=        |
+
+* Optional compatibility snippets
+
+These snippets are not part of =chem-mode=.  Add them to your init after
+requiring =chem-mode= if you want the old names locally.
+
+#+begin_src emacs-lisp
+;;; Commands
+(defun tochemfig ()
+  "Generate chemfig for the molecule at point or in the region."
+  (interactive)
+  (let ((chem-default-exporter 'chemfig))
+    (chem-export)))
+
+(defalias 'tochemfig-copy #'chem-copy)
+(defalias 'tochemfig-dispatch #'chem-dispatch)
+(define-obsolete-function-alias 'tochemfig-mode #'chem-mode "0.4")
+(define-obsolete-function-alias 'tochemfig-global-mode #'chem-global-mode "0.4")
+
+;;; Variables
+(dolist (pair '((tochemfig-default-input . chem-default-input)
+                (tochemfig-default-strict . chem-default-strict)
+                (tochemfig-default-recalculate-coordinates . chem-default-recalculate-coordinates)
+                (tochemfig-default-angle . chem-default-angle)
+                (tochemfig-default-flip . chem-default-flip)
+                (tochemfig-default-flop . chem-default-flop)
+                (tochemfig-default-show-carbons . chem-default-show-carbons)
+                (tochemfig-default-show-methyls . chem-default-show-methyls)
+                (tochemfig-default-hydrogens . chem-default-hydrogens)
+                (tochemfig-default-aromatic-circles . chem-default-aromatic-circles)
+                (tochemfig-default-fancy-bonds . chem-default-fancy-bonds)
+                (tochemfig-default-atom-numbers . chem-default-atom-numbers)
+                (tochemfig-default-bond-scale . chem-default-bond-scale)
+                (tochemfig-default-bond-stretch . chem-default-bond-stretch)
+                (tochemfig-default-markers . chem-default-markers)
+                (tochemfig-default-cross-bond . chem-default-cross-bond)
+                (tochemfig-default-entry-atom . chem-default-entry-atom)
+                (tochemfig-default-exit-atom . chem-default-exit-atom)
+                (tochemfig-default-terse . chem-exp-chemfig-default-terse)
+                (tochemfig-default-indent . chem-exp-chemfig-default-indent)
+                (tochemfig-default-relative-angles . chem-exp-chemfig-default-relative-angles)
+                (tochemfig-default-legacy-lewis . chem-exp-chemfig-default-legacy-lewis)
+                (tochemfig-default-wrap-chemfig . chem-exp-chemfig-default-wrap-chemfig)
+                (tochemfig-default-submol-name . chem-exp-chemfig-default-submol-name)))
+  (defvaralias (car pair) (cdr pair)))
+#+end_src
+
+Note: aliasing =tochemfig-mode= only aliases the command.  Code that reads
+the =tochemfig-mode= variable still needs to switch to =chem-mode=.
+
+* Minimal options example
+
+#+begin_src emacs-lisp
+(setq chem-default-angle -30.0)
+(setq chem-default-flip t)
+(setq chem-exp-chemfig-default-wrap-chemfig t)
+#+end_src
