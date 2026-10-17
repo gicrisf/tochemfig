@@ -23,7 +23,6 @@
 (require 'chem-indigo)
 (require 'chem-options)
 (require 'chem-export)
-(require 'chem-exp-chemfig)
 
 (declare-function chem-dispatch-menu "chem-dispatch" ())
 
@@ -184,8 +183,16 @@ OVERRIDES is an alist of option overrides."
            chem-mode-auto-wrap
            (chem-mode--wrap-context-p))))
 
+(defun chem-mode--ensure-exporter ()
+  "Load the selected exporter when needed."
+  (unless (chem-exporter chem-default-exporter)
+    (require (intern (concat "chem-exp-" (symbol-name chem-default-exporter))) nil t)
+    (unless (chem-exporter chem-default-exporter)
+      (user-error "Exporter not available: %s" chem-default-exporter))))
+
 (defun chem-mode--produce (copy &optional source overrides)
   "Generate output and either insert it or COPY it to the kill ring."
+  (chem-mode--ensure-exporter)
   (let ((src (or source (chem-mode--source-at-point)))
         (options (append overrides
                          (and (chem-mode--wrap-p)
@@ -232,12 +239,13 @@ The selected exporter is `chem-default-exporter'."
 
 (defun chem-mode--option-vars ()
   "Return all option variables used by the generic UI."
+  (chem-mode--ensure-exporter)
   (delete-dups
    (append (list 'chem-default-input)
            (mapcar (lambda (spec) (plist-get spec :variable))
                    chem-common-option-specs)
            (mapcar (lambda (spec) (plist-get spec :variable))
-                   (chem-exporter-option-specs 'chemfig)))))
+                   (chem-exporter-option-specs chem-default-exporter)))))
 
 (defun chem-mode--display (value)
   "Format VALUE for display in the options buffer."

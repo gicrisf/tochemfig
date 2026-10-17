@@ -27,6 +27,7 @@
 
 (require 'cl-lib)
 (require 'chem-mode)
+(require 'chem-exp-chemfig)
 (require 'chem-exp-chemfig-parser)
 
 (defun chem-validate-corpus--mol-files (root)
