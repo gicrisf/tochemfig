@@ -1,8 +1,8 @@
-# tochemfig Quickstart Guide
+# chem-mode Quickstart Guide
 
 Generate LaTeX chemfig code from molecular structures directly in Emacs.
 
-`tochemfig` is a native Emacs Lisp port of the `mol2chemfig` generator: it
+`chem-mode` is a native Emacs Lisp port of the `mol2chemfig` generator: it
 uses [emacs-indigo](https://github.com/gicrisf/emacs-indigo) to read and lay
 out molecules, and produces chemfig code with no Python or shell dependency.
 
@@ -16,7 +16,7 @@ out molecules, and produces chemfig code with no Python or shell dependency.
    ```
    If you installed it via Doom/straight, make sure it is not stale
    (`M-x straight-pull-package RET indigo`, or `doom sync -u`); old builds can
-   break byte-compilation of tochemfig.
+   break byte-compilation of chem-mode.
 3. **LaTeX** with the `chemfig`/TiKZ packages (to render the output).
 
 ## Installation
@@ -29,16 +29,16 @@ Add to your Emacs config (`~/.emacs` or `~/.emacs.d/init.el`):
 (add-to-list 'load-path "/path/to/tochemfig/emacs-indigo")
 
 ;; Load the package
-(require 'tochemfig)
+(require 'chem-mode)
 
 ;; Optional: context-aware minor mode (the transient is autoloaded)
-(require 'tochemfig-mode)
+(require 'chem-mode)
 ```
 
 ## Transient menu (primary interface)
 
-`M-x tochemfig-dispatch` (also `tochemfig-custom`) opens the options menu. It
-works from any buffer and enables `tochemfig-mode` if needed. If the region or
+`M-x chem-dispatch` opens the options menu. It
+works from any buffer and enables `chem-mode` if needed. If the region or
 the text at point looks like a molecule, that is used; otherwise you are
 prompted with the current input mode.
 
@@ -61,44 +61,44 @@ option or `M-x tochemfig` instead.
 
 ## Context-aware mode
 
-Enable `tochemfig-mode` in a buffer to generate chemfig code from the region
+Enable `chem-mode` in a buffer to generate chemfig code from the region
 or the SMILES string at point. In the wrapping contexts (LaTeX, Org and
 Markdown by default) the output is wrapped in `\chemfig{...}` automatically;
 wrapping is decided per command, so LaTeX source blocks inside Org work too.
 
 ```elisp
-(add-hook 'latex-mode-hook #'tochemfig-mode)
-(add-hook 'org-mode-hook #'tochemfig-mode)
+(add-hook 'latex-mode-hook #'chem-mode)
+(add-hook 'org-mode-hook #'chem-mode)
 ```
 
 To enable it across all the wrapping contexts at once, use the global mode:
 
 ```elisp
-(tochemfig-global-mode 1)
+(chem-global-mode 1)
 ```
 
 It only enables the mode in wrapping contexts; set
-`tochemfig-global-mode-all-buffers` to `t` to enable it everywhere, and
-`tochemfig-mode-wrap-modes` to change which major modes count.
+`chem-global-mode-all-buffers` to `t` to enable it everywhere, and
+`chem-mode-wrap-modes` to change which major modes count.
 
 The commands are bound under the `C-c m` prefix:
 
 | Key       | Command                      | Description                           |
 |-----------|------------------------------|---------------------------------------|
-| `C-c m g` | `tochemfig`                  | Generate for region / point / prompt  |
-| `C-c m o` | `tochemfig-dispatch`         | Transient options menu                |
-| `C-c m c` | `tochemfig-copy`             | Copy to the kill ring                 |
-| `C-c m d` | `tochemfig-describe-options` | Describe effective options            |
+| `C-c m g` | `chem-export`               | Generate for region / point / prompt  |
+| `C-c m o` | `chem-dispatch`         | Transient options menu                |
+| `C-c m c` | `chem-copy`             | Copy to the kill ring                 |
+| `C-c m d` | `chem-describe-options` | Describe effective options            |
 
 Other useful commands:
 
 | Command                     | Description                                       |
 |-----------------------------|---------------------------------------------------|
-| `tochemfig-custom`          | Alias for `tochemfig-dispatch` (options menu)     |
-| `tochemfig-describe-options`| Show effective options (buffer-local vs global)   |
-| `tochemfig-save-options`    | Save effective options as the global defaults     |
-| `tochemfig-reload-options`  | Reload the saved global defaults                  |
-| `tochemfig-reset-options`   | Reset buffer options (`C-u`: global defaults)     |
+| `tochemfig`             | Direct chemfig command (no menu)              |
+| `chem-describe-options`| Show effective options (buffer-local vs global)   |
+| `chem-save-options`    | Save effective options as the global defaults     |
+| `chem-reload-options`  | Reload the saved global defaults                  |
+| `chem-reset-options`   | Reset buffer options (`C-u`: global defaults)     |
 
 ## Options menu
 
@@ -109,22 +109,22 @@ default changes still reach untouched buffers. The action keys are `RET`
 
 ## Evil / Doom
 
-`tochemfig-mode` is plain Emacs; its `C-c m` bindings work in Evil's normal and
+`chem-mode` is plain Emacs; its `C-c m` bindings work in Evil's normal and
 visual states and there is no Evil dependency. Doom users usually make the
 transient menu the primary entry point and map the top-level commands under
 their leader:
 
 ```elisp
 (map! :leader
-      (:prefix ("C" . "tochemfig")
+      (:prefix ("C" . "chem")
        :desc "Options menu (RET generate, C copy, F file, A rotate)"
-       "o" #'tochemfig-dispatch
-       :desc "Generate at point/region" "g" #'tochemfig
-       :desc "Copy to kill ring" "c" #'tochemfig-copy
-       :desc "Describe options" "d" #'tochemfig-describe-options
-       :desc "Save options as global defaults" "s" #'tochemfig-save-options
-       :desc "Reload saved options" "r" #'tochemfig-reload-options
-       :desc "Reset buffer options" "R" #'tochemfig-reset-options))
+       "o" #'chem-dispatch
+       :desc "Generate at point/region" "g" #'chem-export
+       :desc "Copy to kill ring" "c" #'chem-copy
+       :desc "Describe options" "d" #'chem-describe-options
+       :desc "Save options as global defaults" "s" #'chem-save-options
+       :desc "Reload saved options" "r" #'chem-reload-options
+       :desc "Reset buffer options" "R" #'chem-reset-options))
 ```
 
 `SPC C o` is the primary entry point. Inside the menu use `RET` to generate,
@@ -135,7 +135,7 @@ rotation intentionally have no separate leader bindings: they live in the menu.
 The old `C-c m f/t/w/r` shortcuts are gone.
 
 Generating from a visual selection replaces it and exits visual state. The
-`*tochemfig options*` buffer is read-only and uses Emacs state, so `q` quits it.
+`*chem options*` buffer is read-only and uses Emacs state, so `q` quits it.
 Doom's menu bar is off, so use `SPC C o` / `C-c m o` / which-key.
 
 ## Examples
@@ -155,7 +155,7 @@ Glycine:
 H_2N-[:330,,2]-[:30](=[:330]O)-[:90,,,1]OH
 ```
 
-Caffeine with wrapper (open `M-x tochemfig-dispatch`, enable `w` if needed,
+Caffeine with wrapper (open `M-x chem-dispatch`, enable `w` if needed,
 then `RET` on `CN1C=NC2=C1C(=O)N(C(=O)N2C)C`) produces the fully annotated
 structure shown in the README.
 
@@ -163,39 +163,39 @@ structure shown in the README.
 
 | Variable                                   | Default     | Description                              |
 |--------------------------------------------|-------------|------------------------------------------|
-| `tochemfig-default-input`                  | `direct`    | Input mode: `direct` or `file`           |
-| `tochemfig-default-terse`                  | `nil`       | Compact output                           |
-| `tochemfig-default-strict`                 | `t`         | Abide by Indigo's structure validation   |
-| `tochemfig-default-indent`                 | `4`         | Branch indentation                       |
-| `tochemfig-default-recalculate-coordinates`| `nil`       | Discard and recalculate coordinates      |
-| `tochemfig-default-angle`                  | `0.0`       | Rotation angle (degrees)                 |
-| `tochemfig-default-relative-angles`        | `nil`       | Relative bond angles                     |
-| `tochemfig-default-flip`                   | `nil`       | Mirror horizontally                      |
-| `tochemfig-default-flop`                   | `nil`       | Mirror vertically                        |
-| `tochemfig-default-show-carbons`           | `nil`       | Show C labels                            |
-| `tochemfig-default-show-methyls`           | `nil`       | Show CH3 labels                          |
-| `tochemfig-default-hydrogens`              | `keep`      | H handling: `keep`/`add`/`delete`        |
-| `tochemfig-default-aromatic-circles`       | `nil`       | Draw circles in aromatic rings           |
-| `tochemfig-default-fancy-bonds`            | `nil`       | Enhanced double/triple bond style        |
-| `tochemfig-default-atom-numbers`           | `nil`       | Show atom indices                        |
-| `tochemfig-default-bond-scale`             | `normalize` | Bond scaling mode: `keep`/`scale`/`normalize` |
-| `tochemfig-default-bond-stretch`           | `1.0`       | Bond length factor / target average      |
-| `tochemfig-default-markers`                | `nil`       | Atom/bond marker prefix                  |
-| `tochemfig-default-cross-bond`             | `nil`       | Bonds to draw crossing over others       |
-| `tochemfig-default-legacy-lewis`           | `nil`       | Use legacy `\lewis` (ChemFig < 1.6)      |
-| `tochemfig-default-wrap-chemfig`           | `nil`       | Wrap in `\chemfig{...}`                  |
-| `tochemfig-default-submol-name`            | `nil`       | Wrap in `\definesubmol{NAME}{...}`       |
-| `tochemfig-default-entry-atom`             | `nil`       | First atom of a sub-molecule             |
-| `tochemfig-default-exit-atom`              | `nil`       | Last atom of a sub-molecule              |
+| `chem-default-input`                  | `direct`    | Input mode: `direct` or `file`           |
+| `chem-exp-chemfig-default-terse`                  | `nil`       | Compact output                           |
+| `chem-default-strict`                 | `t`         | Abide by Indigo's structure validation   |
+| `chem-exp-chemfig-default-indent`                 | `4`         | Branch indentation                       |
+| `chem-default-recalculate-coordinates`| `nil`       | Discard and recalculate coordinates      |
+| `chem-default-angle`                  | `0.0`       | Rotation angle (degrees)                 |
+| `chem-exp-chemfig-default-relative-angles`        | `nil`       | Relative bond angles                     |
+| `chem-default-flip`                   | `nil`       | Mirror horizontally                      |
+| `chem-default-flop`                   | `nil`       | Mirror vertically                        |
+| `chem-default-show-carbons`           | `nil`       | Show C labels                            |
+| `chem-default-show-methyls`           | `nil`       | Show CH3 labels                          |
+| `chem-default-hydrogens`              | `keep`      | H handling: `keep`/`add`/`delete`        |
+| `chem-default-aromatic-circles`       | `nil`       | Draw circles in aromatic rings           |
+| `chem-default-fancy-bonds`            | `nil`       | Enhanced double/triple bond style        |
+| `chem-default-atom-numbers`           | `nil`       | Show atom indices                        |
+| `chem-default-bond-scale`             | `normalize` | Bond scaling mode: `keep`/`scale`/`normalize` |
+| `chem-default-bond-stretch`           | `1.0`       | Bond length factor / target average      |
+| `chem-default-markers`                | `nil`       | Atom/bond marker prefix                  |
+| `chem-default-cross-bond`             | `nil`       | Bonds to draw crossing over others       |
+| `chem-exp-chemfig-default-legacy-lewis`           | `nil`       | Use legacy `\lewis` (ChemFig < 1.6)      |
+| `chem-exp-chemfig-default-wrap-chemfig`           | `nil`       | Wrap in `\chemfig{...}`                  |
+| `chem-exp-chemfig-default-submol-name`            | `nil`       | Wrap in `\definesubmol{NAME}{...}`       |
+| `chem-default-entry-atom`             | `nil`       | First atom of a sub-molecule             |
+| `chem-default-exit-atom`              | `nil`       | Last atom of a sub-molecule              |
 
 Set your preferred defaults in your config:
 
 ```elisp
-(setq tochemfig-default-input 'direct)
-(setq tochemfig-default-relative-angles t)
-(setq tochemfig-default-fancy-bonds t)
-(setq tochemfig-default-wrap-chemfig t)
-(setq tochemfig-default-angle -30.0)
+(setq chem-default-input 'direct)
+(setq chem-exp-chemfig-default-relative-angles t)
+(setq chem-default-fancy-bonds t)
+(setq chem-exp-chemfig-default-wrap-chemfig t)
+(setq chem-default-angle -30.0)
 ```
 
 ## Using in LaTeX
@@ -223,8 +223,8 @@ aromatic circles (`\mcfcringle`), wavy bonds (`\mcfwavy`) and fancy bonds
 If you prefer global bindings over the minor mode:
 
 ```elisp
-(global-set-key (kbd "C-c m g") 'tochemfig)          ; region / point / prompt
-(global-set-key (kbd "C-c m o") 'tochemfig-dispatch) ; options menu
-(global-set-key (kbd "C-c m c") 'tochemfig-copy)
-(global-set-key (kbd "C-c m d") 'tochemfig-describe-options)
+(global-set-key (kbd "C-c m g") 'chem-export)          ; region / point / prompt
+(global-set-key (kbd "C-c m o") 'chem-dispatch) ; options menu
+(global-set-key (kbd "C-c m c") 'chem-copy)
+(global-set-key (kbd "C-c m d") 'chem-describe-options)
 ```

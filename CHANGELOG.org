@@ -1,7 +1,42 @@
 #+title: Changelog
 #+author: Giovanni Crisalfi
 
-All notable changes to =tochemfig= are documented in this file.
+All notable changes to =chem-mode= are documented in this file.
+
+* 0.4.0 (unreleased)
+
+IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
+
+** Added
+- =chem-ir.el=: flat graph plus tree view, explicit geometry, and per-node
+  drawing attributes.
+- =chem-export.el= and =chem-options.el=: exporter and option registries.
+- =chem-exp-chemfig.el= and =chem-exp-chemfig-mappings.el=: the chemfig
+  exporter, including all chemfig presentation state.
+- =chem-mode.el= and =chem-dispatch.el=: generic commands, minor/global mode,
+  and a manually grouped transient with an exporter selector.
+- =tools/validate-corpus.el=: corpus output and graph validation helper.
+
+** Changed
+- Indigo ingestion now lives in =chem-indigo.el=; the drawing IR contains no
+  Indigo handle.
+- Common drawing decisions (labels, numbering, bond decoration, ring display)
+  are stored in the IR.  Exporters render attributes instead of re-reading
+  common options.
+- The package entry is =chem-mode.el=.  The old =tochemfig-*= mode, dispatch,
+  commands, and variables are removed.
+
+** Migration
+| Old | New |
+|---|---|
+| =tochemfig= package | =chem-mode= package |
+| =tochemfig= command | =tochemfig= from the chemfig exporter, or =chem-export= |
+| =tochemfig-copy= | =chem-copy= |
+| =tochemfig-dispatch=, =tochemfig-custom= | =chem-dispatch= |
+| =tochemfig-mode= | =chem-mode= |
+| =tochemfig-global-mode= | =chem-global-mode= |
+| =tochemfig-default-*= common | =chem-default-*= |
+| =tochemfig-default-*= output | =chem-exp-chemfig-default-*= |
 
 * 0.3.0 (unreleased)
 
