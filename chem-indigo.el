@@ -494,6 +494,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
           (tochemfig--process-cross-bonds state))
         (tochemfig--scale-bonds state)
         (tochemfig--annotate-rings state))
+      (chem-apply-drawing-options state options)
       state)))
 
 (provide 'chem-indigo)

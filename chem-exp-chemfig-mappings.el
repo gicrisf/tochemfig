@@ -187,10 +187,12 @@ Return (template-string string-position phantom phantom-position)."
           phantom
           (or phantom-pos 0))))
 
-(cl-defun tochemfig--format-atom (options idx element hydrogens charge radical
+(cl-defun tochemfig--format-atom (options idx label number element hydrogens charge radical
                                           first-quadrant second-quadrant charge-angle)
   "Render an atom.
-Return (atom-code string-position phantom phantom-position).  IDX is 1-based."
+LABEL is the display label, or nil for a hidden carbon.  NUMBER is the
+1-based atom number when numbering is requested.  Return
+\(atom-code string-position phantom phantom-position).  IDX is 1-based."
   (let* ((radicals (if (plist-get options :legacy-lewis)
                        tochemfig--radical-templates
                      tochemfig--radical-templates2))
@@ -201,25 +203,24 @@ Return (atom-code string-position phantom phantom-position).  IDX is 1-based."
                   (quadrant (if (and hydrogens (> hydrogens 0))
                                 second-quadrant first-quadrant)))
               (format (cdr (assq (intern quadrant) radicals)) symbol element))))
-         (data (list (cons 'number idx)
+         (data (list (cons 'number (or number idx))
                      (cons 'hydrogens hydrogens)
                      (cons 'element radical-element)))
          (element-phantom (format "\\phantom{%s}" (cdr (assoc 'element data)))))
     ;; Atom numbers take precedence.
-    (when (plist-get options :atom-numbers)
-      (if (and (equal element "C") (not (plist-get options :show-carbons)))
+    (when number
+      (if (null label)
           (cl-return-from tochemfig--format-atom
-            (tochemfig--fill-atom '(atom_no empty) data (format "\\phantom{%s}" idx)))
+            (tochemfig--fill-atom '(atom_no empty) data (format "\\phantom{%s}" number)))
         (cl-return-from tochemfig--format-atom
           (tochemfig--fill-atom (list 'atom_no (intern first-quadrant)) data element-phantom))))
+    ;; Hidden carbon.
+    (when (null label)
+      (cl-return-from tochemfig--format-atom
+        (list "" 0 "" 0)))
     (if (or (null charge) (= charge 0))
         ;; Neutral atoms.
         (cond
-         ((and (equal (cdr (assoc 'element data)) "C")
-               (not (plist-get options :show-carbons))
-               (or (not (plist-get options :show-methyls))
-                   (< hydrogens 3)))
-          (list "" 0 "" 0))
          ((or (null hydrogens) (= hydrogens 0))
           (list (cdr (assoc 'element data)) 0 element-phantom 0))
          (t

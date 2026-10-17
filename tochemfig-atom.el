@@ -26,7 +26,7 @@
   (dolist (slot '(options idx x y element hydrogens charge radical neighbors
                          first-quadrant second-quadrant charge-angle
                          string-pos phantom phantom-pos bond-angles explicit
-                         marker))
+                         label number marker))
     (chem-ir-alias-accessor
      (intern (concat "tochemfig-atom-" (symbol-name slot)))
      (intern (concat "chem-atom-" (symbol-name slot))))))

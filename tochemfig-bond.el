@@ -38,8 +38,8 @@ implementation where the dict literal overrides the aromatic entry.")
   (chem-ir-alias-accessor 'tochemfig-bond-p 'chem-bond-p)
   (chem-ir-alias-accessor 'copy-tochemfig-bond 'copy-chem-bond)
   (dolist (slot '(options kind start-atom end-atom tikz-styles tikz-values
-                         bond-type descendants length angle marker is-last
-                         to-phantom is-trunk parent clockwise parent-angle
+                         bond-type descendants length angle marker decoration
+                         is-last to-phantom is-trunk parent clockwise parent-angle
                          radius))
     (chem-ir-alias-accessor
      (intern (concat "tochemfig-bond-" (symbol-name slot)))
