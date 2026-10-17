@@ -327,5 +327,103 @@
                                         (chem-atom-y v)))))
      (chem-drawing-atoms plain))))
 
+;;; Traversal
+
+(ert-deftest chem-ir-traversal-nodes ()
+  "Traversal nodes form a consistent tree over the canonical graph."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+         (root (chem-drawing-root drawing))
+         (nodes (chem-tree-nodes drawing)))
+    (should (chem-node-p root))
+    (should-not (chem-node-bond root))
+    (should (= 6 (length nodes)))
+    (should (= 6 (length (chem-tree-bonds drawing))))
+    (should (eq root (chem-node-parent (car nodes))))
+    (dolist (node nodes)
+      (should (chem-node-p node))
+      (should (chem-node-bond node))
+      (should (chem-edge-at drawing
+                            (chem-bond-edge-id (chem-node-bond node))))
+      (should (= (chem-node-to node)
+                 (chem-atom-idx (chem-bond-end-atom (chem-node-bond node)))))
+      (should (memq node (chem-node-children (chem-node-parent node))))
+      (should (eq node (chem-tree-node-for-bond
+                        drawing (chem-node-bond node)))))
+    ;; Every node reaches the root through parent links.
+    (dolist (node nodes)
+      (let ((cursor node))
+        (while (chem-node-parent cursor)
+          (setq cursor (chem-node-parent cursor)))
+        (should (eq cursor root)))))
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/naphthalene.mol" nil))
+         (closures (cl-remove-if-not #'chem-node-closure-p
+                                     (chem-tree-nodes drawing))))
+    (should (= 2 (length closures)))
+    (dolist (node closures)
+      (should (chem-node-phantom-p node)))))
+
+(ert-deftest chem-ir-traversal-trunk ()
+  "Trunk flags mark the path from entry to exit."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/butene_e.mol" nil))
+         (root (chem-drawing-root drawing))
+         (exit (chem-drawing-exit-node drawing)))
+    (should exit)
+    (should (chem-node-trunk-p exit))
+    (let ((cursor exit))
+      (while (chem-node-parent cursor)
+        (unless (eq cursor root)
+          (should (chem-node-trunk-p cursor)))
+        (setq cursor (chem-node-parent cursor))))
+    (should-not (chem-node-trunk-p root)))
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/ethanol.mol" '(("entry-atom" . 1)
+                                          ("exit-atom" . 1)))))
+    (should (eq (chem-drawing-root drawing)
+                (chem-drawing-exit-node drawing)))
+    (should-not (cl-find-if #'chem-node-trunk-p (chem-tree-nodes drawing)))))
+
+(ert-deftest chem-ir-traversal-aromatic-node ()
+  "Aromatic circles are traversal nodes attached to a ring bond."
+  (let* ((plain (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+         (circles (chem-ir-test--drawing-from-file
+                   "corpus/benzene.mol" '(("aromatic-circles" . t))))
+         (plain-nodes (chem-tree-nodes plain))
+         (circle-nodes (chem-tree-nodes circles))
+         (aromatic (cl-remove-if-not
+                    (lambda (node)
+                      (let ((bond (chem-node-bond node)))
+                        (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
+                    circle-nodes)))
+    (should (= 1 (length aromatic)))
+    (should (= (1+ (length plain-nodes)) (length circle-nodes)))
+    (let* ((node (car aromatic))
+           (bond (chem-node-bond node)))
+      (should (chem-node-parent node))
+      (should (memq node (chem-node-children (chem-node-parent node))))
+      (should (chem-bond-radius bond))
+      (should (chem-bond-length bond)))))
+
+(ert-deftest chem-ir-traversal-cross ()
+  "Cross bonds are represented on traversal nodes, not chemical edges."
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/benzene.mol" '(("cross-bond" . ((1 2))))))
+         (nodes (chem-tree-nodes drawing))
+         (crossed (cl-remove-if-not #'chem-node-cross-p nodes))
+         (edge (chem-get-edge drawing 0 1))
+         (link-nodes (cl-remove-if-not
+                      (lambda (node)
+                        (let ((bond (chem-node-bond node)))
+                          (and bond
+                               (chem-bond-edge-id bond)
+                               (= (chem-bond-edge-id bond) (chem-edge-id edge))
+                               (eq (chem-bond-bond-type bond) 'link))))
+                      nodes)))
+    (should (= 1 (length crossed)))
+    (should (chem-edge-cross-p edge))
+    (should (chem-node-phantom-p (car crossed)))
+    (should (eq 'double (chem-bond-bond-type (chem-node-bond (car crossed)))))
+    (should (= 1 (length link-nodes)))
+    (should-not (chem-node-cross-p (car link-nodes)))))
+
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here

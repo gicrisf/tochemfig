@@ -102,18 +102,25 @@ EDGE-ID links the directed bond to its canonical `chem-edge'."
        :clockwise 0))))
 
 (defun chem-bond-refresh-geometry (drawing)
-  "Recompute directed bond lengths and angles from atom coordinates."
-  (maphash
-   (lambda (_ bond)
-     (let ((start (chem-bond-start-atom bond))
-           (end (chem-bond-end-atom bond)))
-       (when (and start end)
-         (let ((dims (chem--compare-positions
-                      (chem-atom-x start) (chem-atom-y start)
-                      (chem-atom-x end) (chem-atom-y end))))
-           (setf (chem-bond-length bond) (nth 0 dims))
-           (setf (chem-bond-angle bond) (nth 1 dims))))))
-   (chem-drawing-bonds drawing))
+  "Recompute directed bond lengths and angles from atom coordinates.
+Include traversal-only bonds such as cross-bond overlays."
+  (let ((seen (make-hash-table :test 'eq)))
+    (cl-labels
+        ((refresh (bond)
+           (unless (gethash bond seen)
+             (puthash bond t seen)
+             (let ((start (chem-bond-start-atom bond))
+                   (end (chem-bond-end-atom bond)))
+               (when (and start end)
+                 (let ((dims (chem--compare-positions
+                              (chem-atom-x start) (chem-atom-y start)
+                              (chem-atom-x end) (chem-atom-y end))))
+                   (setf (chem-bond-length bond) (nth 0 dims))
+                   (setf (chem-bond-angle bond) (nth 1 dims))))))))
+      (maphash (lambda (_ bond) (refresh bond))
+               (chem-drawing-bonds drawing))
+      (dolist (bond (chem-tree-bonds drawing))
+        (refresh bond))))
   drawing)
 
 (defun chem-bond-invert (bond)

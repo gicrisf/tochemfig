@@ -54,7 +54,7 @@
 
 (cl-defstruct (chem-bond (:constructor chem-bond-create))
   options                        ; Option plist
-  kind                           ; `bond', `dummy-first' or `aromatic-ring'
+  kind                           ; `bond' or `aromatic-ring'
   edge-id                        ; Canonical `chem-edge' id, or nil for pseudo bonds
   start-atom end-atom            ; Atom structs (nil for aromatic ring)
   bond-type                      ; Bond type / display type
@@ -69,6 +69,17 @@
   parent-angle                   ; Transitional aromatic ring parent angle
   radius)                        ; Transitional aromatic ring radius
 
+(cl-defstruct (chem-node (:constructor chem-node-create))
+  bond                           ; Directed chem-bond, or nil for the root
+  from to                        ; Atom indices; FROM is nil for the root
+  parent
+  children
+  closure-p                      ; Target atom already visited
+  phantom-p                      ; Render the target atom as a phantom
+  trunk-p
+  cross-p
+  cross-last-p)
+
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
   options
   toolkit                        ; Transitional Indigo handle
@@ -80,7 +91,10 @@
   atom-pairs                     ; list of (start . end)
   seen-atoms                     ; hash: idx -> t
   seen-bonds                     ; hash: (start . end) -> t
-  entry-atom exit-atom exit-bond root
+  entry-atom exit-atom
+  exit-bond                      ; Transitional directed exit bond
+  exit-node                      ; Traversal exit node
+  root                           ; Traversal root node
   bond-scale)
 
 (defun chem-edge-at (drawing id)
@@ -168,20 +182,29 @@ Invisible fragment links are excluded."
            (chem-drawing-atoms drawing))
   drawing)
 
-(defun chem-tree-bonds (drawing)
-  "Return all bonds in DRAWING's tree, excluding the dummy first bond."
-  (let ((all-bonds nil))
-    (cl-labels ((recurse (bond)
-                  (push bond all-bonds)
-                  (dolist (child (chem-bond-descendants bond))
+(defun chem-tree-nodes (drawing)
+  "Return DRAWING's traversal nodes in pre-order, excluding the root."
+  (let ((nodes nil))
+    (cl-labels ((recurse (node)
+                  (dolist (child (chem-node-children node))
+                    (push child nodes)
                     (recurse child))))
       (when (chem-drawing-root drawing)
         (recurse (chem-drawing-root drawing))))
-    (setq all-bonds (nreverse all-bonds))
-    (if (and all-bonds
-             (eq (chem-bond-kind (car all-bonds)) 'dummy-first))
-        (cdr all-bonds)
-      all-bonds)))
+    (nreverse nodes)))
+
+(defun chem-tree-bonds (drawing)
+  "Return all directed bonds in DRAWING's traversal, excluding the root."
+  (let (bonds)
+    (dolist (node (chem-tree-nodes drawing))
+      (when-let* ((bond (chem-node-bond node)))
+        (push bond bonds)))
+    (nreverse bonds)))
+
+(defun chem-tree-node-for-bond (drawing bond)
+  "Return the traversal node whose bond is BOND, or nil."
+  (cl-find bond (chem-tree-nodes drawing)
+           :key #'chem-node-bond :test #'eq))
 
 (defun chem-apply-drawing-options (drawing options)
   "Apply common drawing OPTIONS to DRAWING.

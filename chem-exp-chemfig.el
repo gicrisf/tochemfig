@@ -265,10 +265,14 @@ STATE supplies renderer-only atom flags."
 
 ;;; Bond rendering
 
-(defun chem-bond-to-chemfig (bond state)
-  "Render BOND (without its atom) to chemfig using STATE."
-  (let* ((options (chem-bond-options bond))
-         (to-phantom (chem-bond-to-phantom bond))
+(defun chem-bond-to-chemfig (node state)
+  "Render NODE's bond (without its atom) to chemfig using STATE."
+  (let* ((bond (chem-node-bond node))
+         (options (chem-bond-options bond))
+         (to-phantom (chem-node-phantom-p node))
+         (parent-angle (let ((parent (chem-node-parent node)))
+                         (when (and parent (chem-node-bond parent))
+                           (chem-bond-angle (chem-node-bond parent)))))
          (start-atom (chem-bond-start-atom bond))
          (end-atom (chem-bond-end-atom bond))
          (start-state (chem-exp-chemfig--atom-state state start-atom))
@@ -303,7 +307,7 @@ STATE supplies renderer-only atom flags."
     (setf (chem-exp-chemfig-bond-state-tikz-values bond-state) tikz-values)
     (setf (chem-exp-chemfig-bond-state-display-type bond-state) display-type)
     (chem--format-bond options (chem-bond-angle bond)
-                            (chem-bond-angle (chem-bond-parent bond))
+                            parent-angle
                             display-type
                             (chem-bond-clockwise bond)
                             (chem-exp-chemfig-bond-state-is-last bond-state)
@@ -314,62 +318,71 @@ STATE supplies renderer-only atom flags."
                             tikz-values
                             (chem-bond-marker bond))))
 
-(defun chem-bond-indent (bond level bond-code atom-code comment-code)
-  "Indent BOND-CODE and ATOM-CODE for LEVEL, padding the bond code."
+(defun chem-bond-indent (options level bond-code atom-code comment-code)
+  "Indent BOND-CODE and ATOM-CODE for LEVEL, padding the bond code.
+OPTIONS supplies the indentation width."
   (let* ((code-str (chem--str bond-code))
          (padded (concat (make-string (max 0 (- chem--bond-code-width (length code-str))) ?\s)
                          code-str))
-         (indent-len (* (or (plist-get (chem-bond-options bond) :indent) 4) level))
+         (indent-len (* (or (plist-get options :indent) 4) level))
          (stuff (concat (make-string indent-len ?\s) padded (or atom-code ""))))
     (when (and comment-code (not (equal comment-code "")))
       (setq stuff (concat stuff "% " comment-code)))
     (replace-regexp-in-string "[ \t\n]+\\'" "" stuff)))
 
-(defun chem-bond-render (bond state level)
-  "Render BOND and its trailing atom at LEVEL using STATE."
-  (cond
-   ((eq (chem-bond-kind bond) 'aromatic-ring)
-    (let* ((options (chem-bond-options bond))
-           (rendered (chem--format-aromatic-ring
-                      options (chem-bond-angle bond)
-                      (chem-bond-parent-angle bond)
-                      (chem-bond-length bond)
-                      (chem-bond-radius bond))))
-      (chem-bond-indent bond level (nth 0 rendered) (nth 1 rendered) (nth 2 rendered))))
-   ((eq (chem-bond-kind bond) 'dummy-first)
-    (let ((atom-render (chem-atom-render (chem-bond-end-atom bond) state)))
-      (chem-bond-indent bond level "" (car atom-render) (cdr atom-render))))
-   (t
-    (let* ((to-phantom (chem-bond-to-phantom bond))
-           (atom (chem-bond-end-atom bond))
-           (atom-render (if to-phantom
-                            (chem-atom-render-phantom atom state)
-                          (chem-atom-render atom state)))
-           (bond-code (chem-bond-to-chemfig bond state)))
-      (chem-bond-indent bond level bond-code (car atom-render) (cdr atom-render))))))
+(defun chem-bond-render (mol node state level)
+  "Render NODE and its trailing atom at LEVEL using STATE.
+MOL supplies the atom table for the traversal root."
+  (let ((bond (chem-node-bond node)))
+    (cond
+     ((null bond)
+      (let ((atom-render
+             (chem-atom-render
+              (gethash (chem-node-to node) (chem-drawing-atoms mol))
+              state)))
+        (chem-bond-indent (chem-drawing-options mol) level
+                          "" (car atom-render) (cdr atom-render))))
+     ((eq (chem-bond-kind bond) 'aromatic-ring)
+      (let* ((options (chem-bond-options bond))
+             (rendered (chem--format-aromatic-ring
+                        options (chem-bond-angle bond)
+                        (chem-bond-parent-angle bond)
+                        (chem-bond-length bond)
+                        (chem-bond-radius bond))))
+        (chem-bond-indent options level
+                          (nth 0 rendered) (nth 1 rendered) (nth 2 rendered))))
+     (t
+      (let* ((to-phantom (chem-node-phantom-p node))
+             (atom (chem-bond-end-atom bond))
+             (atom-render (if to-phantom
+                              (chem-atom-render-phantom atom state)
+                            (chem-atom-render atom state)))
+             (bond-code (chem-bond-to-chemfig node state)))
+        (chem-bond-indent (chem-bond-options bond) level
+                          bond-code (car atom-render) (cdr atom-render)))))))
 
 ;;; Drawing walk
 
-(defun chem--render-branches (mol state output level bonds)
-  "Append BONDS rendered as indented branches to OUTPUT.
+(defun chem--render-branches (mol state output level nodes)
+  "Append NODES rendered as indented branches to OUTPUT.
 OUTPUT is the reversed line accumulator; returns the updated accumulator."
   (let ((indent (or (plist-get (chem-drawing-options mol) :indent) 4)))
-    (dolist (bond bonds output)
+    (dolist (node nodes output)
       (let ((width (+ (* level indent) chem--bond-code-width)))
         (setq output (cons (concat (make-string (1- width) ?\s) "(") output))
-        (setq output (chem--render mol state output bond level))
+        (setq output (chem--render mol state output node level))
         (setq output (cons (concat (make-string (1- width) ?\s) ")") output))))))
 
-(defun chem--render (mol state output bond level)
-  "Recursively render BOND into OUTPUT at LEVEL using STATE."
-  (setq output (cons (chem-bond-render bond state level) output))
-  (let ((branches (copy-sequence (chem-bond-descendants bond))))
+(defun chem--render (mol state output node level)
+  "Recursively render NODE into OUTPUT at LEVEL using STATE."
+  (setq output (cons (chem-bond-render mol node state level) output))
+  (let ((branches (copy-sequence (chem-node-children node))))
     (cond
-     ((eq bond (chem-drawing-exit-bond mol))
+     ((eq node (chem-drawing-exit-node mol))
       (chem--render-branches mol state output (1+ level) branches))
      ((null branches) output)
      (t
-      (let ((trunk-idx (cl-position-if #'chem-bond-is-trunk branches))
+      (let ((trunk-idx (cl-position-if #'chem-node-trunk-p branches))
             (first nil))
         (if trunk-idx
             (setq first (nth trunk-idx branches)
@@ -388,9 +401,10 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
 
 (defun chem-exp-chemfig--prepare-cross-state (state drawing)
   "Fill STATE with cross-bond styling for DRAWING."
-  (dolist (bond (chem-tree-bonds drawing))
-    (when (chem-bond-cross-p bond)
-      (let* ((start-angles (mapcar #'cdr (chem-bond-upstream-angles bond)))
+  (dolist (node (chem-tree-nodes drawing))
+    (when (chem-node-cross-p node)
+      (let* ((bond (chem-node-bond node))
+             (start-angles (mapcar #'cdr (chem-bond-upstream-angles bond)))
              (end-angles (mapcar #'cdr (chem-bond-downstream-angles bond)))
              (start-angle (apply #'min (delq nil start-angles)))
              (end-angle (apply #'min (delq nil end-angles)))
@@ -401,7 +415,7 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
         (setf (chem-exp-chemfig-bond-state-tikz-values bond-state)
               (list (cons 'bgstart start) (cons 'bgend end)))
         (setf (chem-exp-chemfig-bond-state-is-last bond-state)
-              (chem-bond-cross-last-p bond))))))
+              (chem-node-cross-last-p node))))))
 
 (defun chem-exp-chemfig-render (drawing options)
   "Render DRAWING as chemfig using OPTIONS."
