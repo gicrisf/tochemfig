@@ -480,5 +480,33 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
       (chem-apply-drawing-options state options)
       state)))
 
+;;; Public entry points
+
+(defun tochemfig--prepare-mol (mol options)
+  "Apply hydrogen handling and coordinate layout to MOL per OPTIONS."
+  (pcase (plist-get options :hydrogens)
+    ('add (indigo-unfold-hydrogens mol) (indigo-layout mol))
+    ('delete (indigo-fold-hydrogens mol)))
+  (when (or (not (indigo-has-coordinates mol))
+            (plist-get options :recalculate-coordinates))
+    (indigo-layout mol)))
+
+(defun chem-from-molecule (mol options)
+  "Prepare Indigo molecule MOL and build a drawing with OPTIONS."
+  (tochemfig--prepare-mol mol options)
+  (chem-indigo-build mol options))
+
+(defun chem-from-string (smiles options)
+  "Build a drawing from SMILES with OPTIONS."
+  (when (or (null smiles) (string-empty-p (string-trim smiles)))
+    (user-error "Empty SMILES input"))
+  (indigo-with-molecule (mol smiles)
+    (chem-from-molecule mol options)))
+
+(defun chem-from-file (path options)
+  "Build a drawing from the molecule file at PATH with OPTIONS."
+  (indigo-with-mol-file (mol path)
+    (chem-from-molecule mol options)))
+
 (provide 'chem-indigo)
 ;;; chem-indigo.el ends here

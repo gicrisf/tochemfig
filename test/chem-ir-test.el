@@ -55,7 +55,7 @@
 
 (defun chem-ir-test--render (drawing &optional overrides)
   "Render DRAWING as chemfig with OVERRIDES."
-  (chem-export drawing 'chemfig (tochemfig--build-options overrides)))
+  (chem-render drawing 'chemfig (tochemfig--build-options overrides)))
 
 (ert-deftest chem-option-registry ()
   "Common and exporter options are registered."

@@ -20,7 +20,7 @@
 
 (defun tochemfig-generate (mol options)
   "Generate chemfig code for molecule MOL with OPTIONS plist."
-  (chem-export (chem-indigo-build mol options) 'chemfig options))
+  (chem-render (chem-indigo-build mol options) 'chemfig options))
 
 (provide 'tochemfig-molecule)
 ;;; tochemfig-molecule.el ends here

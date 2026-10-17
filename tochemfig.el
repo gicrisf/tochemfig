@@ -236,15 +236,6 @@ OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t))."
         (setq opts (plist-put opts key val))))
     opts))
 
-(defun tochemfig--prepare-mol (mol options)
-  "Apply hydrogen handling and coordinate layout to MOL per OPTIONS."
-  (pcase (plist-get options :hydrogens)
-    ('add (indigo-unfold-hydrogens mol) (indigo-layout mol))
-    ('delete (indigo-fold-hydrogens mol)))
-  (when (or (not (indigo-has-coordinates mol))
-            (plist-get options :recalculate-coordinates))
-    (indigo-layout mol)))
-
 (defun tochemfig--generate-from-mol (mol &optional overrides)
   "Generate chemfig code from Indigo molecule MOL.
 OVERRIDES is an alist of option overrides."

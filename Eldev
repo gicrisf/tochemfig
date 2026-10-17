@@ -21,6 +21,8 @@
         "chem-exp-chemfig-mappings.el"
         "chem-export.el"
         "chem-exp-chemfig.el"
+        "chem-mode.el"
+        "chem-dispatch.el"
         "tochemfig-molecule.el"
         "tochemfig-transient.el"
         "tochemfig-mode.el"))
@@ -28,5 +30,6 @@
 (setf eldev-test-fileset
       '("test/tochemfig-test.el"
         "test/chem-ir-test.el"
+        "test/chem-mode-test.el"
         "test/tochemfig-mode-test.el"
         "test/tochemfig-graph-test.el"))
