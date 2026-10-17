@@ -37,6 +37,10 @@ other exporter-specific information."
     (maphash (lambda (name _) (push name names)) chem-exporters)
     (sort names #'string<)))
 
+(defun chem-exporter-option-specs (name)
+  "Return the option specs declared by exporter NAME."
+  (plist-get (plist-get (chem-exporter name) :metadata) :options))
+
 (defun chem-export (drawing exporter &optional options)
   "Render DRAWING with EXPORTER, passing OPTIONS to the exporter.
 DRAWING must already be prepared; common drawing options are not applied

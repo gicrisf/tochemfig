@@ -412,8 +412,42 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
              (chem-drawing-atoms drawing))
     (tochemfig--format-output options (tochemfig--render-molecule drawing state))))
 
+(defconst chem-exp-chemfig-option-specs
+  '((:key :terse
+     :variable tochemfig-default-terse
+     :label "Terse output"
+     :type boolean
+     :group output)
+    (:key :indent
+     :variable tochemfig-default-indent
+     :label "Indentation"
+     :type number
+     :group output)
+    (:key :relative-angles
+     :variable tochemfig-default-relative-angles
+     :label "Relative angles"
+     :type boolean
+     :group output)
+    (:key :legacy-lewis
+     :variable tochemfig-default-legacy-lewis
+     :label "Legacy \\lewis (ChemFig < 1.6)"
+     :type boolean
+     :group advanced)
+    (:key :wrap-chemfig
+     :variable tochemfig-default-wrap-chemfig
+     :label "Wrap in \\chemfig{}"
+     :type boolean
+     :group output)
+    (:key :submol-name
+     :variable tochemfig-default-submol-name
+     :label "Submol name"
+     :type string
+     :group sub-molecule))
+  "Chemfig exporter option metadata.")
+
 (chem-register-exporter 'chemfig #'chem-exp-chemfig-render
-                        '(:label "Chemfig (LaTeX)"))
+                        (list :label "Chemfig (LaTeX)"
+                              :options chem-exp-chemfig-option-specs))
 
 (provide 'chem-exp-chemfig)
 ;;; chem-exp-chemfig.el ends here

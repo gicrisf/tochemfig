@@ -27,6 +27,7 @@
 
 (require 'tochemfig)
 (require 'chem-indigo)
+(require 'chem-options)
 (require 'chem-export)
 (require 'chem-exp-chemfig)
 
@@ -55,6 +56,17 @@
 (defun chem-ir-test--render (drawing &optional overrides)
   "Render DRAWING as chemfig with OVERRIDES."
   (chem-export drawing 'chemfig (tochemfig--build-options overrides)))
+
+(ert-deftest chem-option-registry ()
+  "Common and exporter options are registered."
+  (let ((common (mapcar (lambda (spec) (plist-get spec :key))
+                        chem-common-option-specs)))
+    (should (memq :angle common))
+    (should (memq :hydrogens common))
+    (should (memq :show-carbons common)))
+  (let ((chemfig (chem-exporter-option-specs 'chemfig)))
+    (should (cl-find :terse chemfig :key (lambda (spec) (plist-get spec :key))))
+    (should (cl-find :wrap-chemfig chemfig :key (lambda (spec) (plist-get spec :key))))))
 
 (ert-deftest chem-ir-fancy-decoration ()
   "Fancy bond choice comes from the IR, not from exporter options."

@@ -17,6 +17,7 @@
         "tochemfig-atom.el"
         "tochemfig-bond.el"
         "chem-indigo.el"
+        "chem-options.el"
         "chem-exp-chemfig-mappings.el"
         "chem-export.el"
         "chem-exp-chemfig.el"
