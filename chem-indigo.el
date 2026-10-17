@@ -474,10 +474,67 @@ Returns the node, or nil when the bond was already seen."
             (dolist (bond bonds)
               (chem-bond-is-clockwise bond center-x center-y))))))))
 
+(defun chem--ring-record (mol ring)
+  "Build an ordered `chem-ring' from Indigo RING."
+  (let ((atoms nil)
+        (adjacency (make-hash-table :test 'eql)))
+    (indigo-with-bonds-iterator (bit ring)
+      (let ((tk-bond (indigo-next bit)))
+        (while tk-bond
+          (let* ((start (indigo-index (indigo-source tk-bond)))
+                 (end (indigo-index (indigo-destination tk-bond)))
+                 (edge (chem-get-edge mol start end)))
+            (when edge
+              (let ((id (chem-edge-id edge)))
+                (cl-pushnew start atoms)
+                (cl-pushnew end atoms)
+                (push (cons end id) (gethash start adjacency))
+                (push (cons start id) (gethash end adjacency)))))
+          (setq tk-bond (indigo-next bit)))))
+    (setq atoms (sort atoms #'<))
+    (let* ((start (car atoms))
+           (ordered-atoms (list start))
+           (ordered-bonds nil)
+           (previous nil)
+           (current start)
+           (guard 0))
+      (while (and (< guard (1+ (length atoms)))
+                  (not (and previous (eq current start))))
+        (let* ((neighbors (gethash current adjacency))
+               (candidates (if previous
+                               (cl-remove-if (lambda (pair) (= (car pair) previous))
+                                             neighbors)
+                             neighbors)))
+          (if (null candidates)
+              (setq guard (1+ (length atoms)))
+            (let ((next (car (sort candidates
+                                   (lambda (a b) (< (car a) (car b)))))))
+              (push (cdr next) ordered-bonds)
+              (setq previous current)
+              (setq current (car next))
+              (unless (= current start)
+                (setq ordered-atoms (append ordered-atoms (list current)))))))
+        (setq guard (1+ guard)))
+      (chem-ring-create :atoms ordered-atoms
+                        :bonds (nreverse ordered-bonds)))))
+
+(defun chem--ring-record-less-p (a b)
+  "Return non-nil when ring record A sorts before B."
+  (let ((a-atoms (chem-ring-atoms a))
+        (b-atoms (chem-ring-atoms b)))
+    (cond ((/= (length a-atoms) (length b-atoms))
+           (< (length a-atoms) (length b-atoms)))
+          (t (cl-loop for x in a-atoms
+                      for y in b-atoms
+                      when (/= x y)
+                      return (< x y)
+                      finally return nil)))))
+
 (defun chem--annotate-rings (mol)
   "Annotate all SSSR rings of MOL."
   (indigo-aromatize (chem-drawing-toolkit mol))
-  (let ((rings nil))
+  (let ((rings nil)
+        (records nil))
     (indigo-with-sssr-iterator (it (chem-drawing-toolkit mol))
       (let ((ring (indigo-next it)))
         (while ring
@@ -488,8 +545,16 @@ Returns the node, or nil when the bond was already seen."
                   (unless (eq (indigo-bond-order tk-bond) :aromatic)
                     (setq is-aromatic nil))
                   (setq tk-bond (indigo-next bit)))))
-            (push (cons is-aromatic ring) rings))
+            (push (cons is-aromatic ring) rings)
+            (push (chem--ring-record mol ring) records))
           (setq ring (indigo-next it)))))
+    ;; Stable ring records, independent of the chemfig processing order.
+    (setq records (sort records #'chem--ring-record-less-p))
+    (let ((id 0))
+      (dolist (record records)
+        (setf (chem-ring-id record) id)
+        (setq id (1+ id))))
+    (setf (chem-drawing-rings mol) records)
     ;; Stable sort by aromaticity (nil/false first), then process reversed.
     (setq rings (sort (nreverse rings)
                       (lambda (a b) (and (not (car a)) (car b)))))

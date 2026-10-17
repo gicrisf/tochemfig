@@ -425,5 +425,123 @@
     (should (= 1 (length link-nodes)))
     (should-not (chem-node-cross-p (car link-nodes)))))
 
+;;; Rings
+
+(defun chem-ir-test--ring-cycle-consistent-p (drawing ring)
+  "Return non-nil when RING's atoms and bonds form an ordered cycle."
+  (let* ((atoms (chem-ring-atoms ring))
+         (bonds (chem-ring-bonds ring))
+         (n (length atoms)))
+    (and (= n (length bonds))
+         (cl-loop for i from 0 below n
+                  for from = (nth i atoms)
+                  for to = (nth (mod (1+ i) n) atoms)
+                  for edge = (chem-edge-at drawing (nth i bonds))
+                  always (or (and (= from (chem-edge-a edge))
+                                  (= to (chem-edge-b edge)))
+                             (and (= from (chem-edge-b edge))
+                                  (= to (chem-edge-a edge))))))))
+
+(ert-deftest chem-ir-rings ()
+  "Ring records are ordered, consistent, and derive geometry."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/benzene.mol" nil))
+         (rings (chem-drawing-rings drawing)))
+    (should (= 1 (length rings)))
+    (let ((ring (car rings)))
+      (should (= 0 (chem-ring-id ring)))
+      (should (eq ring (chem-ring-at drawing 0)))
+      (should (= 6 (length (chem-ring-atoms ring))))
+      (should (= 6 (length (chem-ring-bonds ring))))
+      (should (chem-ir-test--ring-cycle-consistent-p drawing ring))
+      (should (chem-ring-regular-p drawing ring))
+      (should (chem-ring-symmetric-p drawing ring))
+      (should (> (chem-ring-circumradius drawing ring) 0))
+      (should (> (chem-ring-apothem drawing ring) 0))
+      (dolist (idx (chem-ring-atoms ring))
+        (should (chem-atom-in-ring-p drawing idx))
+        (should (= 1 (length (chem-rings-for-atom drawing idx)))))
+      (dolist (edge-id (chem-ring-bonds ring))
+        (should (chem-bond-in-ring-p drawing edge-id))
+        (should (= 1 (length (chem-rings-for-edge drawing edge-id)))))))
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/naphthalene.mol" nil))
+         (rings (chem-drawing-rings drawing)))
+    (should (= 2 (length rings)))
+    (dolist (ring rings)
+      (should (chem-ir-test--ring-cycle-consistent-p drawing ring)))
+    (let ((shared (cl-find-if (lambda (edge-id)
+                                (> (length (chem-rings-for-edge drawing edge-id)) 1))
+                              (chem-ring-bonds (car rings)))))
+      (should shared)
+      (should (= 2 (length (chem-rings-for-edge drawing shared))))))
+  (let ((drawing (chem-ir-test--drawing-from-file "corpus/caffeine.mol" nil)))
+    (should (= 2 (length (chem-drawing-rings drawing))))
+    (dolist (ring (chem-drawing-rings drawing))
+      (should (chem-ir-test--ring-cycle-consistent-p drawing ring)))))
+
+(ert-deftest chem-ir-ring-side ()
+  "Ring sides are consistent per cycle and match the legacy clockwise sign."
+  (dolist (file '("corpus/benzene.mol" "corpus/naphthalene.mol"
+                  "corpus/indole.mol" "corpus/caffeine.mol"))
+    (let ((drawing (chem-ir-test--drawing-from-file file nil)))
+      (dolist (ring (chem-drawing-rings drawing))
+        (let* ((atoms (chem-ring-atoms ring))
+               (n (length atoms))
+               (sides (cl-loop for i from 0 below n
+                               collect (chem-ring-side
+                                        drawing ring
+                                        (nth i atoms)
+                                        (nth (mod (1+ i) n) atoms)))))
+          (should (cl-every (lambda (side) (eq side (car sides))) sides))))
+      (let ((ring-bonds (cl-remove-duplicates
+                         (apply #'append
+                                (mapcar #'chem-ring-bonds
+                                        (chem-drawing-rings drawing)))
+                         :test #'=)))
+        (dolist (edge-id ring-bonds)
+          (let ((node (cl-find-if
+                       (lambda (node)
+                         (let ((bond (chem-node-bond node)))
+                           (and bond (= (chem-bond-edge-id bond) edge-id))))
+                       (chem-tree-nodes drawing))))
+            (when node
+              (let* ((bond (chem-node-bond node))
+                     (from (chem-atom-idx (chem-bond-start-atom bond)))
+                     (to (chem-atom-idx (chem-bond-end-atom bond)))
+                     (clockwise (chem-bond-clockwise bond)))
+                (unless (zerop clockwise)
+                  (let ((expected (if (= clockwise -1) :left :right)))
+                    (should (cl-find expected
+                                     (mapcar (lambda (ring)
+                                               (chem-ring-side drawing ring from to))
+                                             (chem-rings-for-edge drawing edge-id))))))))))))))
+
+(ert-deftest chem-ir-ring-circle-geometry ()
+  "Derived ring geometry matches the current aromatic-circle placement."
+  (let* ((drawing (chem-ir-test--drawing-from-file
+                   "corpus/benzene.mol" '(("aromatic-circles" . t))))
+         (aromatic (cl-find-if
+                    (lambda (node)
+                      (let ((bond (chem-node-bond node)))
+                        (and bond (eq (chem-bond-kind bond) 'aromatic-ring))))
+                    (chem-tree-nodes drawing)))
+         (aromatic-bond (chem-node-bond aromatic))
+         (parent-bond (chem-node-bond (chem-node-parent aromatic)))
+         (edge-id (chem-bond-edge-id parent-bond))
+         (rings (chem-rings-for-edge drawing edge-id))
+         (ring (car rings))
+         (center (chem-ring-center drawing ring))
+         (atom (chem-bond-end-atom parent-bond))
+         (outer-r (sqrt (+ (expt (- (chem-atom-x atom) (nth 0 center)) 2)
+                           (expt (- (chem-atom-y atom) (nth 1 center)) 2))))
+         (n (length (chem-ring-atoms ring)))
+         (alpha (- (/ float-pi 2) (/ float-pi n)))
+         (inner-r (* (sin alpha) outer-r)))
+    (should (= 1 (length rings)))
+    (should (chem-ir-test--close-p outer-r
+                                   (chem-bond-length aromatic-bond) 0.01))
+    (should (chem-ir-test--close-p inner-r
+                                   (/ (chem-bond-radius aromatic-bond) 1.5)
+                                   0.01))))
+
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here

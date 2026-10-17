@@ -80,6 +80,11 @@
   cross-p
   cross-last-p)
 
+(cl-defstruct (chem-ring (:constructor chem-ring-create))
+  id                             ; Stable integer within the drawing
+  atoms                          ; Ordered atom indices around the cycle
+  bonds)                         ; Ordered canonical edge ids following the cycle
+
 (cl-defstruct (chem-drawing (:constructor chem-drawing-create))
   options
   toolkit                        ; Transitional Indigo handle
@@ -88,6 +93,7 @@
   edges                          ; hash: edge id -> canonical edge
   edge-lookup                    ; hash: canonical (a . b) -> edge
   adjacency                      ; hash: atom idx -> ordered (edge-id . neighbor-idx)
+  rings                          ; list of chem-ring, stable order
   atom-pairs                     ; list of (start . end)
   seen-atoms                     ; hash: idx -> t
   seen-bonds                     ; hash: (start . end) -> t
@@ -205,6 +211,132 @@ Invisible fragment links are excluded."
   "Return the traversal node whose bond is BOND, or nil."
   (cl-find bond (chem-tree-nodes drawing)
            :key #'chem-node-bond :test #'eq))
+
+;;; Rings
+
+(defun chem-ring-at (drawing id)
+  "Return DRAWING's ring with ID, or nil."
+  (cl-find id (chem-drawing-rings drawing)
+           :key #'chem-ring-id :test #'=))
+
+(defun chem-edge-length (drawing edge)
+  "Return the length of EDGE from atom coordinates."
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (a (gethash (chem-edge-a edge) atoms))
+         (b (gethash (chem-edge-b edge) atoms))
+         (dx (- (chem-atom-x b) (chem-atom-x a)))
+         (dy (- (chem-atom-y b) (chem-atom-y a))))
+    (sqrt (+ (* dx dx) (* dy dy)))))
+
+(defun chem-ring-center (drawing ring)
+  "Return the centroid of RING as (X Y)."
+  (let ((atoms (chem-drawing-atoms drawing))
+        (indices (chem-ring-atoms ring))
+        (sum-x 0.0)
+        (sum-y 0.0))
+    (dolist (idx indices)
+      (let ((atom (gethash idx atoms)))
+        (setq sum-x (+ sum-x (chem-atom-x atom)))
+        (setq sum-y (+ sum-y (chem-atom-y atom)))))
+    (list (/ sum-x (float (length indices)))
+          (/ sum-y (float (length indices))))))
+
+(defun chem-ring-vertex-radii (drawing ring)
+  "Return the center-to-vertex distances of RING."
+  (let ((center (chem-ring-center drawing ring))
+        (atoms (chem-drawing-atoms drawing))
+        radii)
+    (dolist (idx (chem-ring-atoms ring))
+      (let ((atom (gethash idx atoms)))
+        (push (sqrt (+ (expt (- (chem-atom-x atom) (nth 0 center)) 2)
+                        (expt (- (chem-atom-y atom) (nth 1 center)) 2)))
+              radii)))
+    (nreverse radii)))
+
+(defun chem-ring-circumradius (drawing ring)
+  "Return the mean center-to-vertex distance of RING."
+  (let ((radii (chem-ring-vertex-radii drawing ring)))
+    (/ (apply #'+ radii) (float (length radii)))))
+
+(defun chem-ring-apothem (drawing ring)
+  "Return the mean center-to-edge distance of RING."
+  (let ((center (chem-ring-center drawing ring))
+        (atoms (chem-drawing-atoms drawing))
+        (sum 0.0)
+        (count 0))
+    (dolist (edge-id (chem-ring-bonds ring))
+      (let* ((edge (chem-edge-at drawing edge-id))
+             (a (gethash (chem-edge-a edge) atoms))
+             (b (gethash (chem-edge-b edge) atoms))
+             (mid-x (/ (+ (chem-atom-x a) (chem-atom-x b)) 2.0))
+             (mid-y (/ (+ (chem-atom-y a) (chem-atom-y b)) 2.0)))
+        (setq sum (+ sum (sqrt (+ (expt (- mid-x (nth 0 center)) 2)
+                                   (expt (- mid-y (nth 1 center)) 2)))))
+        (setq count (1+ count))))
+    (/ sum (float count))))
+
+(defun chem-ring-regular-p (drawing ring &optional tolerance)
+  "Return non-nil when RING is close to a regular polygon.
+TOLERANCE defaults to 1.15, matching SmilesDrawer's radius-ratio check."
+  (let* ((tolerance (or tolerance 1.15))
+         (radii (chem-ring-vertex-radii drawing ring))
+         (min-r (apply #'min radii))
+         (max-r (apply #'max radii)))
+    (and (> min-r 1e-9)
+         (< (/ max-r min-r) tolerance))))
+
+(defun chem-ring-symmetric-p (drawing ring &optional tolerance)
+  "Return non-nil when RING's radii and bond lengths are uniform.
+TOLERANCE defaults to 0.05, matching the current chemfig symmetry check."
+  (let* ((tolerance (or tolerance 0.05))
+         (radii (chem-ring-vertex-radii drawing ring))
+         (lengths (mapcar (lambda (edge-id)
+                            (chem-edge-length drawing (chem-edge-at drawing edge-id)))
+                          (chem-ring-bonds ring)))
+         (r-max (apply #'max radii))
+         (l-max (apply #'max lengths)))
+    (and (> r-max 1e-9)
+         (> l-max 1e-9)
+         (<= (/ (- r-max (apply #'min radii)) r-max) tolerance)
+         (<= (/ (- l-max (apply #'min lengths)) l-max) tolerance))))
+
+(defun chem-rings-for-atom (drawing idx)
+  "Return the rings containing atom IDX."
+  (cl-remove-if-not (lambda (ring) (memq idx (chem-ring-atoms ring)))
+                    (chem-drawing-rings drawing)))
+
+(defun chem-rings-for-edge (drawing edge-id)
+  "Return the rings containing the canonical EDGE-ID."
+  (cl-remove-if-not (lambda (ring) (memq edge-id (chem-ring-bonds ring)))
+                    (chem-drawing-rings drawing)))
+
+(defun chem-rings-for-bond (drawing bond)
+  "Return the rings containing directed BOND."
+  (chem-rings-for-edge drawing (chem-bond-edge-id bond)))
+
+(defun chem-atom-in-ring-p (drawing idx)
+  "Return non-nil when atom IDX belongs to a ring."
+  (not (null (chem-rings-for-atom drawing idx))))
+
+(defun chem-bond-in-ring-p (drawing edge-id)
+  "Return non-nil when canonical EDGE-ID belongs to a ring."
+  (not (null (chem-rings-for-edge drawing edge-id))))
+
+(defun chem-ring-side (drawing ring from to)
+  "Return `:left' or `:right' for RING's center relative to FROM -> TO.
+Return nil when the three points are collinear."
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (a (gethash from atoms))
+         (b (gethash to atoms))
+         (center (chem-ring-center drawing ring))
+         (dx (- (chem-atom-x b) (chem-atom-x a)))
+         (dy (- (chem-atom-y b) (chem-atom-y a)))
+         (cx (- (nth 0 center) (chem-atom-x a)))
+         (cy (- (nth 1 center) (chem-atom-y a)))
+         (cross (- (* dx cy) (* dy cx))))
+    (cond ((> cross 1e-9) :left)
+          ((< cross -1e-9) :right)
+          (t nil))))
 
 (defun chem-apply-drawing-options (drawing options)
   "Apply common drawing OPTIONS to DRAWING.
