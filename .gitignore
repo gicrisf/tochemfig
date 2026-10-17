@@ -9,3 +9,6 @@ build
 /mol2chemfigPy3
 /cl-indigo
 /.claude
+
+# Local validation corpora
+/studies
