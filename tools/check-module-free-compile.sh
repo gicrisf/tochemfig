@@ -29,7 +29,7 @@ mkdir -p "$tmp/shim" "$tmp/src"
 # Stub the `indigo' feature: provides it without loading the dynamic module.
 printf "(provide 'indigo)\n" > "$tmp/shim/indigo.el"
 
-cp "$ROOT"/chem-ir.el "$ROOT"/chem-bond.el \
+cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el \
    "$ROOT"/chem-exp-chemfig-mappings.el "$ROOT"/chem-export.el \
    "$ROOT"/chem-exp-chemfig.el "$ROOT"/chem-options.el \
    "$ROOT"/chem-indigo.el "$ROOT"/chem-mode.el "$tmp/src/"
@@ -38,7 +38,7 @@ cd "$tmp/src"
 "$EMACS" -Q --batch \
   --eval "(setq load-path (append (list \"$tmp/shim\" \"$INDIGO_EL\" \"$tmp/src\") load-path))" \
   -f batch-byte-compile \
-  chem-ir.el chem-bond.el chem-exp-chemfig-mappings.el chem-export.el \
+  chem-ir.el chem-geometry.el chem-exp-chemfig-mappings.el chem-export.el \
   chem-exp-chemfig.el chem-options.el chem-indigo.el chem-mode.el \
   2>"$tmp/stderr" || true
 

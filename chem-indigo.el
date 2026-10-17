@@ -25,7 +25,7 @@
 (eval-when-compile (require 'indigo-mol))
 (eval-when-compile (require 'indigo-iter))
 (require 'chem-ir)
-(require 'chem-bond)
+(require 'chem-geometry)
 (require 'chem-exp-chemfig-mappings)
 
 (unless (macrop 'indigo-with-atoms-iterator)

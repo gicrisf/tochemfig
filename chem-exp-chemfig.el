@@ -17,7 +17,7 @@
 (require 'cl-lib)
 (require 'chem-ir)
 (require 'chem-export)
-(require 'chem-bond)
+(require 'chem-geometry)
 (require 'chem-exp-chemfig-mappings)
 
 ;;; Renderer state

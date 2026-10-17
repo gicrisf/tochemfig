@@ -1,4 +1,4 @@
-;;; chem-bond.el --- Geometry helpers -*- lexical-binding: t; -*-
+;;; chem-geometry.el --- Geometry helpers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022, 2025 Giovanni Crisalfi
 
@@ -42,5 +42,5 @@ The angle follows mol2chemfig's convention and may be negative."
                 (cond ((>= yd 0) (if (> xd 0) raw (- 180 raw)))
                       (t (if (> xd 0) (- raw) (+ 180 raw))))))))))
 
-(provide 'chem-bond)
-;;; chem-bond.el ends here
+(provide 'chem-geometry)
+;;; chem-geometry.el ends here

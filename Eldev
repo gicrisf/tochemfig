@@ -14,7 +14,7 @@
 (setf eldev-main-fileset
       '("chem-mode.el"
         "chem-ir.el"
-        "chem-bond.el"
+        "chem-geometry.el"
         "chem-indigo.el"
         "chem-options.el"
         "chem-exp-chemfig-mappings.el"
