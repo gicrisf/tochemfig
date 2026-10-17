@@ -127,6 +127,47 @@ Each entry is (EDGE-ID . NEIGHBOR-IDX)."
 Invisible fragment links are excluded."
   (cl-remove-if #'chem-edge-link-p (chem-edges drawing)))
 
+;;; Coordinate transforms
+;;
+;; These operate on atom coordinates only.  Derived bond geometry is refreshed
+;; separately by `chem-bond-refresh-geometry' after a transform.
+
+(defun chem-rotate (drawing degrees)
+  "Rotate DRAWING's coordinates counterclockwise by DEGREES."
+  (let* ((theta (* degrees (/ float-pi 180.0)))
+         (cos-theta (cos theta))
+         (sin-theta (sin theta)))
+    (maphash
+     (lambda (_ atom)
+       (let ((x (chem-atom-x atom))
+             (y (chem-atom-y atom)))
+         (setf (chem-atom-x atom) (- (* x cos-theta) (* y sin-theta)))
+         (setf (chem-atom-y atom) (+ (* x sin-theta) (* y cos-theta)))))
+     (chem-drawing-atoms drawing))
+    drawing))
+
+(defun chem-flip-horizontal (drawing)
+  "Mirror DRAWING's coordinates across the vertical axis."
+  (maphash (lambda (_ atom)
+             (setf (chem-atom-x atom) (- (chem-atom-x atom))))
+           (chem-drawing-atoms drawing))
+  drawing)
+
+(defun chem-flip-vertical (drawing)
+  "Mirror DRAWING's coordinates across the horizontal axis."
+  (maphash (lambda (_ atom)
+             (setf (chem-atom-y atom) (- (chem-atom-y atom))))
+           (chem-drawing-atoms drawing))
+  drawing)
+
+(defun chem-scale (drawing factor)
+  "Scale DRAWING's coordinates by FACTOR."
+  (maphash (lambda (_ atom)
+             (setf (chem-atom-x atom) (* factor (chem-atom-x atom)))
+             (setf (chem-atom-y atom) (* factor (chem-atom-y atom))))
+           (chem-drawing-atoms drawing))
+  drawing)
+
 (defun chem-tree-bonds (drawing)
   "Return all bonds in DRAWING's tree, excluding the dummy first bond."
   (let ((all-bonds nil))

@@ -218,5 +218,114 @@
                    (cons (chem-edge-a (car crossed))
                          (chem-edge-b (car crossed)))))))
 
+;;; Geometry transforms
+
+(defun chem-ir-test--close-p (a b &optional tolerance)
+  "Return non-nil when A and B are within TOLERANCE."
+  (< (abs (- a b)) (or tolerance 1e-6)))
+
+(defun chem-ir-test--angle-close-p (a b &optional tolerance)
+  "Return non-nil when angles A and B match modulo 360."
+  (let* ((tolerance (or tolerance 1e-6))
+         (diff (abs (mod (- a b) 360))))
+    (or (< diff tolerance)
+        (> diff (- 360 tolerance)))))
+
+(ert-deftest chem-ir-coordinate-transforms ()
+  "Coordinate transforms update atom positions."
+  (let* ((atom (chem-atom-create :idx 0 :x 1.0 :y 0.0))
+         (atoms (make-hash-table :test 'equal))
+         (drawing (chem-drawing-create :atoms atoms)))
+    (puthash 0 atom atoms)
+    (chem-rotate drawing 90.0)
+    (should (chem-ir-test--close-p 0.0 (chem-atom-x atom)))
+    (should (chem-ir-test--close-p 1.0 (chem-atom-y atom)))
+    (chem-flip-horizontal drawing)
+    (should (chem-ir-test--close-p 0.0 (chem-atom-x atom)))
+    (chem-flip-vertical drawing)
+    (should (chem-ir-test--close-p -1.0 (chem-atom-y atom)))
+    (chem-scale drawing 2.0)
+    (should (chem-ir-test--close-p 0.0 (chem-atom-x atom)))
+    (should (chem-ir-test--close-p -2.0 (chem-atom-y atom)))))
+
+(ert-deftest chem-ir-derived-geometry ()
+  "Stored bond geometry matches coordinates after transforms."
+  (dolist (case '(("corpus/ethanol.mol" nil)
+                  ("corpus/ethanol.mol" (("angle" . 30.0) ("flip" . t)))
+                  ("corpus/benzene.mol" (("bond-scale" . scale)
+                                         ("bond-stretch" . 2.0)))
+                  ("corpus/benzene.mol" (("aromatic-circles" . t)))))
+    (let ((drawing (chem-ir-test--drawing-from-file (car case) (cadr case))))
+      (maphash
+       (lambda (_ bond)
+         (let ((start (chem-bond-start-atom bond))
+               (end (chem-bond-end-atom bond)))
+           (when (and start end)
+             (let ((dims (chem--compare-positions
+                          (chem-atom-x start) (chem-atom-y start)
+                          (chem-atom-x end) (chem-atom-y end))))
+               (should (chem-ir-test--close-p (nth 0 dims)
+                                              (chem-bond-length bond)))
+               (should (chem-ir-test--angle-close-p (nth 1 dims)
+                                                    (chem-bond-angle bond)))))))
+       (chem-drawing-bonds drawing)))))
+
+(ert-deftest chem-ir-rotation-coordinates ()
+  "Rotation is applied to coordinates before bond geometry is derived."
+  (let ((plain (chem-ir-test--drawing-from-file "corpus/ethanol.mol" nil))
+        (rotated (chem-ir-test--drawing-from-file
+                  "corpus/ethanol.mol" '(("angle" . 90.0)))))
+    (maphash
+     (lambda (idx atom)
+       (let ((other (gethash idx (chem-drawing-atoms rotated))))
+         (should (chem-ir-test--close-p (- (chem-atom-y atom))
+                                        (chem-atom-x other)))
+         (should (chem-ir-test--close-p (chem-atom-x atom)
+                                        (chem-atom-y other)))))
+     (chem-drawing-atoms plain))))
+
+(ert-deftest chem-ir-scale-coordinates ()
+  "Scaling is applied to coordinates, not only to bond lengths."
+  (let ((keep (chem-ir-test--drawing-from-file
+               "corpus/ethanol.mol" '(("bond-scale" . keep))))
+        (scaled (chem-ir-test--drawing-from-file
+                 "corpus/ethanol.mol" '(("bond-scale" . scale)
+                                        ("bond-stretch" . 2.0)))))
+    (maphash
+     (lambda (idx atom)
+       (let ((other (gethash idx (chem-drawing-atoms scaled))))
+         (should (chem-ir-test--close-p (* 2.0 (chem-atom-x atom))
+                                        (chem-atom-x other)))
+         (should (chem-ir-test--close-p (* 2.0 (chem-atom-y atom))
+                                        (chem-atom-y other)))))
+     (chem-drawing-atoms keep))
+    (dolist (edge (chem-edges keep))
+      (let* ((pair (cons (chem-edge-a edge) (chem-edge-b edge)))
+             (before (gethash pair (chem-drawing-bonds keep)))
+             (after (gethash pair (chem-drawing-bonds scaled))))
+        (should (chem-ir-test--close-p (* 2.0 (chem-bond-length before))
+                                       (chem-bond-length after)))))))
+
+(ert-deftest chem-ir-flip-coordinates ()
+  "Flip and flop are applied to coordinates before bond geometry is derived."
+  (let ((plain (chem-ir-test--drawing-from-file "corpus/ethanol.mol" nil))
+        (flipped (chem-ir-test--drawing-from-file
+                  "corpus/ethanol.mol" '(("flip" . t))))
+        (flopped (chem-ir-test--drawing-from-file
+                  "corpus/ethanol.mol" '(("flop" . t)))))
+    (maphash
+     (lambda (idx atom)
+       (let ((f (gethash idx (chem-drawing-atoms flipped)))
+             (v (gethash idx (chem-drawing-atoms flopped))))
+         (should (chem-ir-test--close-p (- (chem-atom-x atom))
+                                        (chem-atom-x f)))
+         (should (chem-ir-test--close-p (chem-atom-y atom)
+                                        (chem-atom-y f)))
+         (should (chem-ir-test--close-p (chem-atom-x atom)
+                                        (chem-atom-x v)))
+         (should (chem-ir-test--close-p (- (chem-atom-y atom))
+                                        (chem-atom-y v)))))
+     (chem-drawing-atoms plain))))
+
 (provide 'chem-ir-test)
 ;;; chem-ir-test.el ends here

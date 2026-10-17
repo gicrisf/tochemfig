@@ -94,12 +94,27 @@ EDGE-ID links the directed bond to its canonical `chem-edge'."
        :bond-type bond-type
        :descendants nil
        :length (nth 0 dims)
-       :angle (+ (nth 1 dims) (or (plist-get options :angle) 0.0))
+       :angle (nth 1 dims)
        :marker (if marker-opt (format "%s%d-%d" marker-opt (nth 0 ids) (nth 1 ids)) "")
        :to-phantom nil
        :is-trunk nil
        :parent nil
        :clockwise 0))))
+
+(defun chem-bond-refresh-geometry (drawing)
+  "Recompute directed bond lengths and angles from atom coordinates."
+  (maphash
+   (lambda (_ bond)
+     (let ((start (chem-bond-start-atom bond))
+           (end (chem-bond-end-atom bond)))
+       (when (and start end)
+         (let ((dims (chem--compare-positions
+                      (chem-atom-x start) (chem-atom-y start)
+                      (chem-atom-x end) (chem-atom-y end))))
+           (setf (chem-bond-length bond) (nth 0 dims))
+           (setf (chem-bond-angle bond) (nth 1 dims))))))
+   (chem-drawing-bonds drawing))
+  drawing)
 
 (defun chem-bond-invert (bond)
   "Return a reversed copy of BOND."
@@ -124,7 +139,7 @@ EDGE-ID links the directed bond to its canonical `chem-edge'."
                   (chem-atom-x (chem-bond-end-atom bond))
                   (chem-atom-y (chem-bond-end-atom bond))
                   center-x center-y))
-           (center-angle (+ (nth 1 dims) (or (plist-get (chem-bond-options bond) :angle) 0.0)))
+           (center-angle (nth 1 dims))
            (center-kink (mod (- center-angle (chem-bond-angle bond)) 360)))
       (setf (chem-bond-clockwise bond) (if (> center-kink 180) 1 -1)))))
 
