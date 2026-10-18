@@ -279,6 +279,319 @@ and `alternating' draws dashed inner lines."
   (format "chem-exp-svg-%s"
           (if (symbolp name) (symbol-name name) name)))
 
+;;; Atom labels
+
+(defconst chem-exp-svg--subscript-digits "₀₁₂₃₄₅₆₇₈₉")
+(defconst chem-exp-svg--superscript-digits "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+(defun chem-exp-svg--digit-string (digits text)
+  "Translate each digit in TEXT using DIGITS."
+  (mapconcat (lambda (char)
+               (let ((index (- char ?0)))
+                 (if (and (>= index 0) (< index (length digits)))
+                     (substring digits index (1+ index))
+                   (char-to-string char))))
+             text ""))
+
+(defun chem-exp-svg--subscript (number)
+  "Return NUMBER as Unicode subscript digits."
+  (chem-exp-svg--digit-string chem-exp-svg--subscript-digits
+                              (number-to-string number)))
+
+(defun chem-exp-svg--superscript (number)
+  "Return NUMBER as Unicode superscript digits."
+  (chem-exp-svg--digit-string chem-exp-svg--superscript-digits
+                              (number-to-string number)))
+
+(defun chem-exp-svg--charge-text (charge)
+  "Return CHARGE as Unicode superscript text."
+  (if (zerop charge)
+      ""
+    (let ((sign (if (> charge 0) "⁺" "⁻"))
+          (magnitude (abs charge)))
+      (if (= magnitude 1)
+          sign
+        (concat (chem-exp-svg--superscript magnitude) sign)))))
+
+(defun chem-exp-svg--radical-text (radical)
+  "Return RADICAL as superscript dot text."
+  (if (or (null radical) (zerop radical))
+      ""
+    (make-string radical ?·)))
+
+(defun chem-exp-svg--hydrogen-text (hydrogens)
+  "Return HYDROGENS as label text."
+  (cond
+   ((or (null hydrogens) (zerop hydrogens)) "")
+   ((= hydrogens 1) "H")
+   (t (concat "H" (chem-exp-svg--subscript hydrogens)))))
+
+(defun chem-exp-svg--atom-text (atom)
+  "Return ATOM's display text, or nil when it has no label."
+  (let ((label (chem-atom-label atom))
+        (number (chem-atom-number atom)))
+    (cond
+     (number
+      (if label
+          (concat label (number-to-string number))
+        (number-to-string number)))
+     (label
+      (concat label
+              (chem-exp-svg--hydrogen-text (chem-atom-hydrogens atom))
+              (chem-exp-svg--charge-text (or (chem-atom-charge atom) 0))
+              (chem-exp-svg--radical-text (chem-atom-radical atom))))
+     (t nil))))
+
+(defun chem-exp-svg--atom-text-color (state atom)
+  "Return STATE's text color for ATOM."
+  (if (chem-atom-label atom)
+      (chem-exp-svg--theme-color (chem-exp-svg-state-theme state)
+                                 (chem-atom-element atom))
+    (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state))))
+
+(defun chem-exp-svg--text-direction (atom)
+  "Return ATOM's preferred text direction."
+  (let ((angles (mapcar (lambda (angle) (mod angle 360.0))
+                        (chem-atom-bond-angles atom))))
+    (if (< (length angles) 2)
+        'right
+      (let* ((radians (mapcar (lambda (angle)
+                                (* angle (/ float-pi 180.0)))
+                              angles))
+             (x (apply #'+ (mapcar #'cos radians)))
+             (y (apply #'+ (mapcar #'sin radians))))
+        (if (< (sqrt (+ (* x x) (* y y))) 1e-6)
+            'up
+          (let* ((mean (mod (* (atan y x) (/ 180.0 float-pi)) 360.0))
+                 (opposite (mod (+ mean 180.0) 360.0)))
+            (cond
+             ((or (< opposite 45.0) (>= opposite 315.0)) 'right)
+             ((< opposite 135.0) 'up)
+             ((< opposite 225.0) 'left)
+             (t 'down))))))))
+
+(defun chem-exp-svg--text-position (state atom direction)
+  "Return (X Y ANCHOR) for ATOM's text in DIRECTION."
+  (let* ((point (chem-exp-svg--point state
+                                    (chem-atom-x atom)
+                                    (chem-atom-y atom)))
+         (font-size (chem-exp-svg--option state :svg-font-size))
+         (offset (* 0.5 font-size)))
+    (pcase direction
+      ('right (list (+ (car point) offset) (cdr point) "start"))
+      ('left (list (- (car point) offset) (cdr point) "end"))
+      ('up (list (car point) (- (cdr point) offset) "middle"))
+      (_ (list (car point) (+ (cdr point) offset) "middle")))))
+
+(defun chem-exp-svg--label-radius (state text)
+  "Return an approximate mask radius for TEXT."
+  (let* ((font-size (chem-exp-svg--option state :svg-font-size))
+         (length (length (or text "")))
+         (base (* 0.75 font-size))
+         (half-width (* 0.3 font-size length)))
+    (+ (max base half-width) (* 0.1 font-size))))
+
+(defun chem-exp-svg--label-center (state atom text)
+  "Return the approximate center of ATOM's TEXT in STATE."
+  (let* ((direction (chem-exp-svg--text-direction atom))
+         (position (chem-exp-svg--text-position state atom direction))
+         (x (nth 0 position))
+         (y (nth 1 position))
+         (anchor (nth 2 position))
+         (font-size (chem-exp-svg--option state :svg-font-size))
+         (half-width (* 0.3 font-size (length text))))
+    (list (pcase anchor
+            ("start" (+ x half-width))
+            ("end" (- x half-width))
+            (_ x))
+          y)))
+
+(defun chem-exp-svg--marker-present-p (marker)
+  "Return non-nil when MARKER should be emitted."
+  (and marker (not (string-empty-p marker))))
+
+(defun chem-exp-svg--sanitize-id (string)
+  "Return STRING as a deterministic SVG ID."
+  (let* ((raw (if (stringp string) string (format "%s" string)))
+         (sanitized (replace-regexp-in-string "[^A-Za-z0-9_.-]" "-" raw)))
+    (if (string-match-p "\\`[A-Za-z_]" sanitized)
+        sanitized
+      (concat "marker-" sanitized))))
+
+(defun chem-exp-svg--marker-attributes (marker)
+  "Return SVG attributes for MARKER, or nil."
+  (when (chem-exp-svg--marker-present-p marker)
+    (let ((id (chem-exp-svg--sanitize-id marker)))
+      (concat
+       (format " id=\"%s\"" (chem-exp-svg--escape id))
+       (unless (equal id marker)
+         (format " data-marker=\"%s\"" (chem-exp-svg--escape marker)))))))
+
+(defun chem-exp-svg--sorted-atoms (drawing)
+  "Return DRAWING's atoms sorted by index."
+  (let (atoms)
+    (maphash (lambda (_ atom) (push atom atoms))
+             (chem-drawing-atoms drawing))
+    (sort atoms (lambda (a b) (< (chem-atom-idx a) (chem-atom-idx b))))))
+
+(defun chem-exp-svg--atom-svg (state atom)
+  "Return ATOM's label SVG for STATE."
+  (let* ((text (chem-exp-svg--atom-text atom))
+         (attributes (chem-exp-svg--marker-attributes
+                      (chem-atom-marker atom))))
+    (cond
+     (text
+      (let* ((direction (chem-exp-svg--text-direction atom))
+             (position (chem-exp-svg--text-position state atom direction))
+             (text-svg
+              (format "<text x=\"%s\" y=\"%s\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"%s\" dominant-baseline=\"central\">%s</text>\n"
+                      (chem-exp-svg--number (nth 0 position))
+                      (chem-exp-svg--number (nth 1 position))
+                      (chem-exp-svg--escape
+                       (chem-exp-svg--atom-text-color state atom))
+                      (chem-exp-svg--escape
+                       (chem-exp-svg--option state :svg-font-family))
+                      (chem-exp-svg--number
+                       (chem-exp-svg--option state :svg-font-size))
+                      (nth 2 position)
+                      (chem-exp-svg--escape text))))
+        (if attributes
+            (format "<g%s>%s</g>\n" attributes text-svg)
+          text-svg)))
+     (attributes
+      (let ((point (chem-exp-svg--point state
+                                        (chem-atom-x atom)
+                                        (chem-atom-y atom))))
+        (format "<g%s transform=\"translate(%s %s)\"></g>\n"
+                attributes
+                (chem-exp-svg--number (car point))
+                (chem-exp-svg--number (cdr point)))))
+     (t ""))))
+
+(defun chem-exp-svg--atoms (state)
+  "Return the atom label SVG for STATE."
+  (mapconcat (lambda (atom) (chem-exp-svg--atom-svg state atom))
+             (chem-exp-svg--sorted-atoms (chem-exp-svg-state-drawing state))
+             ""))
+
+(defun chem-exp-svg--label-mask-circle (state atom)
+  "Return a label mask circle for ATOM in STATE."
+  (let ((text (chem-exp-svg--atom-text atom)))
+    (when text
+      (let ((center (chem-exp-svg--label-center state atom text))
+            (radius (chem-exp-svg--label-radius state text)))
+        (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"black\"/>\n"
+                (chem-exp-svg--number (car center))
+                (chem-exp-svg--number (cadr center))
+                (chem-exp-svg--number radius))))))
+
+(defun chem-exp-svg--mask-id ()
+  "Return the deterministic label mask ID."
+  (chem-exp-svg--id 'label-mask))
+
+(defun chem-exp-svg--defs (state)
+  "Return the SVG defs block with STATE's label mask."
+  (let* ((viewbox (chem-exp-svg--viewbox state))
+         (width (chem-exp-svg--number (nth 2 viewbox)))
+         (height (chem-exp-svg--number (nth 3 viewbox)))
+         (circles
+          (mapconcat (lambda (atom)
+                       (or (chem-exp-svg--label-mask-circle state atom) ""))
+                     (chem-exp-svg--sorted-atoms
+                      (chem-exp-svg-state-drawing state))
+                     "")))
+    (format "<defs>\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"%s\" height=\"%s\">\n<rect x=\"0\" y=\"0\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
+            (chem-exp-svg--escape (chem-exp-svg--mask-id))
+            width height width height circles)))
+
+;;; Bonds
+
+(defun chem-exp-svg--bond-color (state)
+  "Return STATE's bond color."
+  (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state)))
+
+(defun chem-exp-svg--line (state x1 y1 x2 y2)
+  "Return a line element for STATE."
+  (format "<line x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\"/>\n"
+          (chem-exp-svg--number x1)
+          (chem-exp-svg--number y1)
+          (chem-exp-svg--number x2)
+          (chem-exp-svg--number y2)
+          (chem-exp-svg--escape (chem-exp-svg--bond-color state))
+          (chem-exp-svg--number
+           (chem-exp-svg--option state :svg-bond-thickness))))
+
+(defun chem-exp-svg--parallel-lines (state point-a point-b offsets)
+  "Return parallel lines from POINT-A to POINT-B at OFFSETS."
+  (let* ((x1 (car point-a))
+         (y1 (cdr point-a))
+         (x2 (car point-b))
+         (y2 (cdr point-b))
+         (dx (- x2 x1))
+         (dy (- y2 y1))
+         (length (sqrt (+ (* dx dx) (* dy dy)))))
+    (if (< length 1e-9)
+        (chem-exp-svg--line state x1 y1 x2 y2)
+      (let ((normal-x (/ (- dy) length))
+            (normal-y (/ dx length)))
+        (mapconcat
+         (lambda (offset)
+           (chem-exp-svg--line state
+                               (+ x1 (* normal-x offset))
+                               (+ y1 (* normal-y offset))
+                               (+ x2 (* normal-x offset))
+                               (+ y2 (* normal-y offset))))
+         offsets "")))))
+
+(defun chem-exp-svg--edge-svg (state edge)
+  "Return EDGE's SVG for STATE."
+  (let* ((atoms (chem-drawing-atoms (chem-exp-svg-state-drawing state)))
+         (atom-a (gethash (chem-edge-a edge) atoms))
+         (atom-b (gethash (chem-edge-b edge) atoms))
+         (point-a (chem-exp-svg--point state
+                                       (chem-atom-x atom-a)
+                                       (chem-atom-y atom-a)))
+         (point-b (chem-exp-svg--point state
+                                       (chem-atom-x atom-b)
+                                       (chem-atom-y atom-b)))
+         (spacing (chem-exp-svg--option state :svg-bond-spacing))
+         (lines
+          (pcase (chem-edge-order edge)
+            (:double
+             (let ((offset (/ spacing 2.0)))
+               (chem-exp-svg--parallel-lines state point-a point-b
+                                             (list (- offset) offset))))
+            (:triple
+             (let ((offset (/ spacing 1.5)))
+               (chem-exp-svg--parallel-lines state point-a point-b
+                                             (list (- offset) 0.0 offset))))
+            (_
+             (chem-exp-svg--parallel-lines state point-a point-b
+                                           (list 0.0)))))
+         (attributes (chem-exp-svg--marker-attributes
+                      (chem-edge-marker edge))))
+    (if attributes
+        (format "<g%s>%s</g>\n" attributes lines)
+      lines)))
+
+(defun chem-exp-svg--visible-edges (state)
+  "Return STATE's visible edges."
+  (chem-visible-edges (chem-exp-svg-state-drawing state)))
+
+(defun chem-exp-svg--bonds (state)
+  "Return the normal bond SVG for STATE."
+  (mapconcat (lambda (edge) (chem-exp-svg--edge-svg state edge))
+             (cl-remove-if #'chem-edge-cross-p
+                           (chem-exp-svg--visible-edges state))
+             ""))
+
+(defun chem-exp-svg--cross-bonds (state)
+  "Return the cross bond SVG for STATE."
+  (mapconcat (lambda (edge) (chem-exp-svg--edge-svg state edge))
+             (cl-remove-if-not #'chem-edge-cross-p
+                               (chem-exp-svg--visible-edges state))
+             ""))
+
 (defun chem-exp-svg--atom-bounds (drawing)
   "Return (MIN-X MIN-Y MAX-X MAX-Y) for DRAWING's atoms."
   (let (min-x min-y max-x max-y)
@@ -298,6 +611,17 @@ and `alternating' draws dashed inner lines."
 (defun chem-exp-svg--bounds (state)
   "Return STATE's (MIN-X MIN-Y MAX-X MAX-Y) bounds."
   (chem-exp-svg-state-bounds state))
+
+(defun chem-exp-svg--expanded-bounds (state)
+  "Return STATE's bounds expanded for atom labels."
+  (let* ((bounds (chem-exp-svg--bounds state))
+         (scale (max (chem-exp-svg--option state :svg-scale) 1e-6))
+         (font-size (chem-exp-svg--option state :svg-font-size))
+         (margin (/ (* 2.0 font-size) scale)))
+    (list (- (nth 0 bounds) margin)
+          (- (nth 1 bounds) margin)
+          (+ (nth 2 bounds) margin)
+          (+ (nth 3 bounds) margin))))
 
 (defun chem-exp-svg--point (state x y)
   "Map IR coordinates X and Y to SVG user coordinates in STATE."
@@ -359,25 +683,33 @@ and `alternating' draws dashed inner lines."
 
 ;;; Renderer
 
-(defun chem-exp-svg--background (_state)
+(defun chem-exp-svg--background (state)
   "Return the background SVG."
-  "")
-
-(defun chem-exp-svg--bonds (_state)
-  "Return the bond SVG."
-  "")
+  (let ((color (chem-exp-svg--theme-background
+                (chem-exp-svg-state-theme state))))
+    (if color
+        (let ((viewbox (chem-exp-svg--viewbox state)))
+          (format "<rect x=\"0\" y=\"0\" width=\"%s\" height=\"%s\" fill=\"%s\"/>\n"
+                  (chem-exp-svg--number (nth 2 viewbox))
+                  (chem-exp-svg--number (nth 3 viewbox))
+                  (chem-exp-svg--escape color)))
+      "")))
 
 (defun chem-exp-svg--rings (_state)
   "Return the ring SVG."
   "")
 
-(defun chem-exp-svg--atoms (_state)
-  "Return the atom label SVG."
-  "")
-
 (defun chem-exp-svg--stereo-labels (_state)
   "Return the stereochemistry label SVG."
   "")
+
+(defun chem-exp-svg--masked-content (state)
+  "Return STATE's masked bond and ring content."
+  (format "<g mask=\"url(#%s)\">\n%s%s%s</g>\n"
+          (chem-exp-svg--escape (chem-exp-svg--mask-id))
+          (chem-exp-svg--bonds state)
+          (chem-exp-svg--rings state)
+          (chem-exp-svg--cross-bonds state)))
 
 (defun chem-exp-svg--make-state (drawing options)
   "Create an SVG renderer state for DRAWING and OPTIONS."
@@ -387,14 +719,16 @@ and `alternating' draws dashed inner lines."
                 :bounds (chem-exp-svg--atom-bounds drawing))))
     (setf (chem-exp-svg-state-theme state)
           (chem-exp-svg--theme state))
+    (setf (chem-exp-svg-state-bounds state)
+          (chem-exp-svg--expanded-bounds state))
     state))
 
 (defun chem-exp-svg-render (drawing options)
   "Render DRAWING to an SVG string using OPTIONS."
   (let* ((state (chem-exp-svg--make-state drawing options))
-         (body (concat (chem-exp-svg--background state)
-                       (chem-exp-svg--bonds state)
-                       (chem-exp-svg--rings state)
+         (body (concat (chem-exp-svg--defs state)
+                       (chem-exp-svg--background state)
+                       (chem-exp-svg--masked-content state)
                        (chem-exp-svg--atoms state)
                        (chem-exp-svg--stereo-labels state))))
     (chem-exp-svg--document state body)))

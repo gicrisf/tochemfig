@@ -17,7 +17,10 @@ and ring-record implementation.
 - Branch: `svg`, created from `chem-mode` at `dfa1ce5`.
 - Current baseline on the base commit: 406 ERT tests pass.
 - Phase 1 is implemented on this branch: exporter skeleton, options/themes,
-  primitives, and exporter tests.  The suite currently has 421 tests.
+  primitives, and exporter tests.
+- Phase 2 is implemented on this branch: basic bonds, cross-bond ordering,
+  atom labels, charges, radicals, atom numbers, markers, masks, text
+  direction, and theme backgrounds.  The suite currently has 436 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -953,6 +956,8 @@ Status: complete.
 ### Phase 2 — basic molecules
 
 Commit: `render atoms and bonds in svg`
+
+Status: complete.
 
 - Single, double, and triple bonds.
 - Cross-bond draw ordering.

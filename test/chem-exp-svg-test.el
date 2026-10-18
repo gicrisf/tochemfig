@@ -45,6 +45,19 @@
         (libxml-parse-xml-region (point-min) (point-max))
       (xml-parse-region (point-min) (point-max)))))
 
+(defun chem-exp-svg-test--count (regexp string)
+  "Count matches of REGEXP in STRING."
+  (let ((count 0)
+        (start 0))
+    (while (string-match regexp string start)
+      (setq count (1+ count))
+      (setq start (match-end 0)))
+    count))
+
+(defun chem-exp-svg-test--root (svg)
+  "Return the opening SVG tag from SVG."
+  (substring svg 0 (string-match ">" svg)))
+
 (ert-deftest chem-exp-svg-exporter-registered ()
   "The SVG exporter is registered with image metadata."
   (let ((entry (chem-exporter 'svg)))
@@ -172,18 +185,137 @@
 
 (ert-deftest chem-exp-svg-dimensions ()
   "Width and height are emitted only when requested."
+  (let* ((svg (chem-exp-svg-test--render "CCO"))
+         (root (chem-exp-svg-test--root svg)))
+    (should-not (string-match-p " width=\"" root))
+    (should-not (string-match-p " height=\"" root)))
+  (let* ((svg (chem-exp-svg-test--render "CCO" '(("svg-width" . 300))))
+         (root (chem-exp-svg-test--root svg)))
+    (should (string-match-p " width=\"300\"" root))
+    (should (string-match-p " height=\"" root)))
+  (let* ((svg (chem-exp-svg-test--render "CCO" '(("svg-height" . 200))))
+         (root (chem-exp-svg-test--root svg)))
+    (should (string-match-p " width=\"" root))
+    (should (string-match-p " height=\"200\"" root)))
+  (let* ((svg (chem-exp-svg-test--render "CCO" '(("svg-width" . 300)
+                                                 ("svg-height" . 200))))
+         (root (chem-exp-svg-test--root svg)))
+    (should (string-match-p "preserveAspectRatio=\"xMidYMid meet\"" root))))
+
+(ert-deftest chem-exp-svg-background ()
+  "The theme background is emitted as a rectangle."
   (let ((svg (chem-exp-svg-test--render "CCO")))
-    (should-not (string-match-p " width=\"" svg))
-    (should-not (string-match-p " height=\"" svg)))
-  (let ((svg (chem-exp-svg-test--render "CCO" '(("svg-width" . 300)))))
-    (should (string-match-p " width=\"300\"" svg))
-    (should (string-match-p " height=\"" svg)))
-  (let ((svg (chem-exp-svg-test--render "CCO" '(("svg-height" . 200)))))
-    (should (string-match-p " width=\"" svg))
-    (should (string-match-p " height=\"200\"" svg)))
-  (let ((svg (chem-exp-svg-test--render "CCO" '(("svg-width" . 300)
-                                                ("svg-height" . 200)))))
-    (should (string-match-p "preserveAspectRatio=\"xMidYMid meet\"" svg))))
+    (should (string-match-p "<rect[^>]*fill=\"#ffffff\"" svg)))
+  (let ((chem-exp-svg-themes
+         '((light . (:foreground "#222222"
+                    :background nil
+                    :default "#222222"
+                    :C "#222222")))))
+    (let ((svg (chem-exp-svg-test--render "CCO")))
+      (should-not (string-match-p "<rect[^>]*fill=\"#ffffff\"" svg)))))
+
+(ert-deftest chem-exp-svg-dark-background ()
+  "Selecting the dark theme changes the background rectangle."
+  (let ((svg (chem-exp-svg-test--render "CCO" '(("svg-theme" . "dark")))))
+    (should (string-match-p "<rect[^>]*fill=\"#141414\"" svg))))
+
+(ert-deftest chem-exp-svg-bond-orders ()
+  "Single, double, and triple bonds emit one, two, and three lines."
+  (should (= 2 (chem-exp-svg-test--count
+                "<line " (chem-exp-svg-test--render "CCO"))))
+  (should (= 2 (chem-exp-svg-test--count
+                "<line " (chem-exp-svg-test--render "C=C"))))
+  (should (= 3 (chem-exp-svg-test--count
+                "<line " (chem-exp-svg-test--render "C#C")))))
+
+(ert-deftest chem-exp-svg-aromatic-lines ()
+  "Aromatic bonds fall back to single lines until ring rendering lands."
+  (should (= 6 (chem-exp-svg-test--count
+                "<line " (chem-exp-svg-test--render "c1ccccc1")))))
+
+(ert-deftest chem-exp-svg-link-bonds ()
+  "Link bonds are not drawn."
+  (let ((svg (chem-exp-svg-test--render "[Na+].[Cl-]")))
+    (should (= 0 (chem-exp-svg-test--count "<line " svg)))
+    (should (= 2 (chem-exp-svg-test--count "<text " svg)))))
+
+(ert-deftest chem-exp-svg-cross-bonds ()
+  "Cross bonds render in a separate layer after normal bonds."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("cross-bond" . ((1 2))))))
+         (drawing (chem-from-string "c1ccccc1" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (normal (chem-exp-svg--bonds state))
+         (cross (chem-exp-svg--cross-bonds state))
+         (svg (chem-render drawing 'svg options)))
+    (should (string-match-p "<line " normal))
+    (should (string-match-p "<line " cross))
+    (should (< (string-search normal svg)
+               (string-search cross svg)))))
+
+(ert-deftest chem-exp-svg-atom-labels ()
+  "Heteroatom labels appear and hidden carbons stay hidden."
+  (let ((svg (chem-exp-svg-test--render "CCO")))
+    (should (= 1 (chem-exp-svg-test--count "<text " svg)))
+    (should (string-match-p ">OH</text>" svg))))
+
+(ert-deftest chem-exp-svg-caffeine ()
+  "Caffeine renders as valid SVG."
+  (let ((svg (chem-exp-svg-test--render "CN1C=NC2=C1C(=O)N(C(=O)N2C)C")))
+    (should (chem-exp-svg-test--xml svg))
+    (should (> (chem-exp-svg-test--count "<text " svg) 0))
+    (should (> (chem-exp-svg-test--count "<line " svg) 0))))
+
+(ert-deftest chem-exp-svg-atom-numbers ()
+  "Atom numbers replace hydrogen and charge annotations."
+  (let ((svg (chem-exp-svg-test--render "CCO" '(("atom-numbers" . t)))))
+    (should (= 3 (chem-exp-svg-test--count "<text " svg)))
+    (should (string-match-p ">1</text>" svg))
+    (should (string-match-p ">2</text>" svg))
+    (should (string-match-p ">O3</text>" svg))
+    (should-not (string-match-p ">H" svg))))
+
+(ert-deftest chem-exp-svg-charge-and-hydrogens ()
+  "Charges and hydrogens use Unicode sub/superscripts."
+  (let ((svg (chem-exp-svg-test--render "[NH4+]")))
+    (should (string-match-p ">NH₄⁺</text>" svg))))
+
+(ert-deftest chem-exp-svg-radical ()
+  "Radicals are rendered as superscript dots."
+  (let ((svg (chem-exp-svg-test--render "[CH3]")))
+    (should (string-match-p ">CH₃·</text>" svg))))
+
+(ert-deftest chem-exp-svg-markers ()
+  "Markers become stable SVG IDs, including hidden atoms."
+  (let ((svg (chem-exp-svg-test--render "CCO" '(("markers" . "a")))))
+    (should (string-match-p "id=\"a1-2\"" svg))
+    (should (string-match-p "id=\"a1\"" svg))
+    (should (string-match-p "id=\"a2\"" svg))
+    (should (string-match-p "id=\"a3\"" svg))))
+
+(ert-deftest chem-exp-svg-marker-sanitization ()
+  "Marker IDs are valid and deterministic."
+  (should (equal "a1" (chem-exp-svg--sanitize-id "a1")))
+  (should (equal "marker-1a" (chem-exp-svg--sanitize-id "1a")))
+  (should (equal "a-b" (chem-exp-svg--sanitize-id "a b"))))
+
+(ert-deftest chem-exp-svg-label-mask ()
+  "The label mask applies to bonds and not to labels."
+  (let ((svg (chem-exp-svg-test--render "CCO")))
+    (should (string-match-p "<mask id=\"chem-exp-svg-label-mask\"" svg))
+    (should (string-match-p
+             "<g mask=\"url(#chem-exp-svg-label-mask)\">" svg))
+    (should (= 1 (chem-exp-svg-test--count "fill=\"black\"" svg)))))
+
+(ert-deftest chem-exp-svg-text-direction ()
+  "Text direction is deterministic for every atom."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "CCO" options))
+         (atoms (chem-drawing-atoms drawing)))
+    (dolist (idx '(0 1 2))
+      (should (memq (chem-exp-svg--text-direction (gethash idx atoms))
+                    '(right left up down))))))
 
 (ert-deftest chem-exp-svg-option-merge-is-exporter-specific ()
   "SVG and chemfig options do not leak into each other."
