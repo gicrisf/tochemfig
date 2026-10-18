@@ -82,10 +82,9 @@ and rebuild chem-mode"))
        iter))
     atoms))
 
-(defun chem--parse-bonds (options mol atoms edges edge-lookup)
+(defun chem--parse-bonds (options mol edges edge-lookup)
   "Extract bonds from MOL into canonical EDGES and EDGE-LOOKUP.
-OPTIONS supplies marker settings; ATOMS is used for stereo configuration.
-Returns atom-index pairs in input order."
+OPTIONS supplies marker settings.  Returns atom-index pairs in input order."
   (let ((pairs nil))
     (indigo-with-bonds-iterator (iter mol)
       (indigo-map
@@ -104,16 +103,12 @@ Returns atom-index pairs in input order."
                        :order order
                        :stereo (chem--canonical-stereo stereo start end)
                        :stereo-center (when (memq stereo '(:up :down)) start)
-                       :configuration nil
                        :link-p nil :cross-p nil
                        :marker (if marker-opt
                                    (format "%s%d-%d" marker-opt
                                            (1+ a) (1+ b-index))
                                  "")
                        :decoration 'plain)))
-           (when (chem-edge-stereo-center edge)
-             (setf (chem-edge-configuration edge)
-                   (chem-stereo-sign atoms edge)))
            (puthash id edge edges)
            (puthash (cons a b-index) edge edge-lookup)
            (push (cons start end) pairs)
@@ -545,7 +540,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
                  :edges (make-hash-table :test 'eql)
                  :edge-lookup (make-hash-table :test 'equal)
                  :adjacency (make-hash-table :test 'eql))))
-    (let* ((pairs (chem--parse-bonds options mol atoms
+    (let* ((pairs (chem--parse-bonds options mol
                                      (chem-drawing-edges state)
                                      (chem-drawing-edge-lookup state)))
            (rotation (or (plist-get options :angle) 0.0)))

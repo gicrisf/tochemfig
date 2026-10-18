@@ -104,20 +104,25 @@
      ((chem-node-link-p node) 'link)
      ((null edge-id) 'link)
      (t
-      (let ((edge (chem-edge-at drawing edge-id)))
+      (let* ((edge (chem-edge-at drawing edge-id))
+             (atoms (chem-drawing-atoms drawing)))
         (cond
          ((chem-edge-link-p edge) 'link)
          ((gethash node (chem-exp-chemfig-state-display-type state)))
          (t
-          (let ((stereo (chem-edge-stereo edge))
-                (center (chem-edge-stereo-center edge))
-                (configuration (chem-edge-configuration edge)))
+          (let* ((stereo (chem-edge-stereo edge))
+                 (center (chem-edge-stereo-center edge))
+                 (stereocenter
+                  (and center (chem-atom-stereocenter (gethash center atoms))))
+                 (configuration
+                  (and stereocenter
+                       (chem-stereocenter-configuration stereocenter))))
             (cond
              ((eq stereo :either) 'either)
              ((and center configuration (memq stereo '(:up :down)))
               (let ((wedge-up-p
-                     (chem-stereo-wedge-up-p
-                      (chem-drawing-atoms drawing) edge configuration)))
+                     (chem-stereocenter-wedge-up-p
+                      atoms center edge configuration)))
                 (if (= center (chem-node-to node))
                     (if wedge-up-p 'upfrom 'downfrom)
                   (if wedge-up-p 'upto 'downto))))

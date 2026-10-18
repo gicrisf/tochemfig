@@ -29,7 +29,6 @@
   stereo                         ; :none :up :down :either :cis :trans
                                  ; relative to a -> b
   stereo-center                  ; Atom at the wide end of a wedge, or nil
-  configuration                  ; +1/-1 wedge configuration sign, or nil
   link-p                         ; Invisible fragment connector
   cross-p                        ; Draw over crossing bonds
   marker                         ; Marker string

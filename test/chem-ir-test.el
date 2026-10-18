@@ -61,6 +61,25 @@
   "Return DRAWING's stereocenter record for atom IDX."
   (chem-atom-stereocenter (gethash idx (chem-drawing-atoms drawing))))
 
+(defun chem-ir-test--stereocenter-wedge-up-states (drawing)
+  "Return (ATOM . WEDGE-UP) for stereocenters with wedge edges in DRAWING."
+  (let ((atoms (chem-drawing-atoms drawing))
+        (states nil))
+    (maphash
+     (lambda (idx atom)
+       (when-let ((stereocenter (chem-atom-stereocenter atom)))
+         (let ((edge (chem-edge-at
+                      drawing
+                      (chem-stereocenter-wedge-edge stereocenter))))
+           (when edge
+             (push (cons idx
+                         (chem-stereocenter-wedge-up-p
+                          atoms idx edge
+                          (chem-stereocenter-configuration stereocenter)))
+                   states)))))
+     atoms)
+    (nreverse states)))
+
 (ert-deftest chem-option-registry ()
   "Common and exporter options are registered."
   (let ((common (mapcar (lambda (spec) (plist-get spec :key))
@@ -169,7 +188,6 @@
     (should edge)
     (should (memq (chem-edge-stereo-center edge)
                   (list (chem-edge-a edge) (chem-edge-b edge))))
-    (should (memq (chem-edge-configuration edge) '(-1 1)))
     (let ((from-a (chem-edge-stereo-directed edge (chem-edge-a edge)))
           (from-b (chem-edge-stereo-directed edge (chem-edge-b edge))))
       (should (memq from-a '(:up :down)))
@@ -184,20 +202,25 @@
     (should (eq :cis (chem-edge-stereo edge)))))
 
 (ert-deftest chem-ir-stereo-derivation ()
-  "Wedge direction is derived from configuration and geometry."
+  "Wedge direction is derived from the stereocenter configuration."
   (let* ((drawing (chem-ir-test--drawing-from-file
                    "corpus/bromochloromethane_stereo.mol" nil))
          (edge (cl-find-if #'chem-edge-stereo-center (chem-edges drawing)))
          (atoms (chem-drawing-atoms drawing))
-         (configuration (chem-edge-configuration edge))
-         (before (chem-stereo-wedge-up-p atoms edge configuration)))
+         (center (chem-edge-stereo-center edge))
+         (stereocenter (chem-ir-test--stereocenter drawing center))
+         (configuration (chem-stereocenter-configuration stereocenter))
+         (before (chem-stereocenter-wedge-up-p
+                  atoms center edge configuration)))
     (should (memq configuration '(-1 1)))
     (should (booleanp before))
     (chem-flip-horizontal drawing)
-    (let ((mirrored (chem-stereo-wedge-up-p atoms edge configuration)))
+    (let ((mirrored (chem-stereocenter-wedge-up-p
+                     atoms center edge configuration)))
       (should (not (eq before mirrored))))
     (chem-flip-vertical drawing)
-    (let ((rotated (chem-stereo-wedge-up-p atoms edge configuration)))
+    (let ((rotated (chem-stereocenter-wedge-up-p
+                    atoms center edge configuration)))
       (should (eq before rotated)))))
 
 (ert-deftest chem-ir-stereocenter-data ()
@@ -254,40 +277,27 @@
     (should (memq (chem-stereocenter-configuration first) '(-1 1)))
     (should (memq (chem-stereocenter-configuration second) '(-1 1)))))
 
-(ert-deftest chem-ir-stereocenter-pyramid-parity ()
-  "Pyramid-derived wedge direction matches the old derivation."
+(ert-deftest chem-ir-stereocenter-pyramid-transforms ()
+  "Pyramid-derived wedge direction follows flips and rotations."
   (dolist (smiles '("N[C@@H](C)C(=O)O"
                     "C[C@H](O)C(=O)O"
                     "C[C@H](Cl)Br"
                     "F[C@](Cl)(Br)I"
                     "C[C@H](O)[C@@H](C)O"))
     (let* ((drawing (chem-ir-test--drawing smiles nil))
-           (atoms (chem-drawing-atoms drawing)))
-      (cl-labels
-          ((check ()
-             (maphash
-              (lambda (idx atom)
-                (when-let ((center (chem-atom-stereocenter atom)))
-                  (let ((edge (chem-edge-at
-                               drawing
-                               (chem-stereocenter-wedge-edge center))))
-                    (when edge
-                      (let ((old-up
-                             (chem-stereo-wedge-up-p
-                              atoms edge (chem-edge-configuration edge)))
-                            (new-up
-                             (chem-stereocenter-wedge-up-p
-                              atoms idx edge
-                              (chem-stereocenter-configuration center))))
-                        (should (eq old-up new-up)))))))
-              atoms)))
-        (check)
-        (chem-flip-horizontal drawing)
-        (check)
-        (chem-rotate drawing 30.0)
-        (check)
-        (chem-flip-vertical drawing)
-        (check)))))
+           (before (chem-ir-test--stereocenter-wedge-up-states drawing)))
+      (should before)
+      (chem-flip-horizontal drawing)
+      (let ((mirrored (chem-ir-test--stereocenter-wedge-up-states drawing)))
+        (dolist (pair before)
+          (should (not (eq (cdr pair)
+                           (cdr (assq (car pair) mirrored)))))))
+      (chem-flip-vertical drawing)
+      (should (equal before
+                     (chem-ir-test--stereocenter-wedge-up-states drawing)))
+      (chem-rotate drawing 30.0)
+      (should (equal before
+                     (chem-ir-test--stereocenter-wedge-up-states drawing))))))
 
 (ert-deftest chem-ir-stereocenter-negative-controls ()
   "Molecules without stereocenters leave every atom slot empty."
@@ -573,8 +583,8 @@
     (dolist (slot '(edge-id from to link-p))
       (should (memq slot node-slots)))
     (should-not (memq 'bond node-slots))
-    (dolist (slot '(stereo-center configuration))
-      (should (memq slot edge-slots)))
+    (should (memq 'stereo-center edge-slots))
+    (should-not (memq 'configuration edge-slots))
     (should-not (memq 'source-a-p edge-slots))))
 
 ;;; Rings
