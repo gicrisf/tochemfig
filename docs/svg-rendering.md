@@ -30,7 +30,9 @@ and ring-record implementation.
   labels with combined formatting and XML escaping.
 - Phase 6 is implemented on this branch: SVG image insertion, deterministic
   UTF-8 image files, Org/Markdown links, exporter-aware transient groups, and
-  the SVG theme selector.  The suite currently has 467 tests.
+  the SVG theme selector.
+- Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
+  and documentation updates.  The suite currently has 468 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -46,6 +48,17 @@ and ring-record implementation.
   - all scalar options are declared in `chem-exp-svg-option-specs`;
   - all palettes are declared in `chem-exp-svg-themes`;
   - background is a theme property; there is no `:svg-background`.
+
+## Current limitations
+
+- No best-wedge edge selection; the input wedge edge is used.
+- No E/Z labels, allene aR/aS labels, or isotope labels.
+- Text metrics are approximate, and stereochemistry labels do not avoid
+  collisions yet.
+- SVG IDs are fixed, so multiple SVGs on one page may share IDs.
+- `chem-exp-svg-themes` is a palette defcustom; it is not part of the
+  `chem-save-options` / `chem-reload-options` surface.
+- Org Babel integration is still a separate phase.
 
 ## Goals
 
@@ -238,6 +251,8 @@ per-render results if profiling shows a problem.
 - ERT suite: `eldev test`
 - Byte compilation: `eldev compile`
 - Module-free compile: `tools/check-module-free-compile.sh`
+- SVG exporter tests: `test/chem-exp-svg-test.el`
+- SVG corpus smoke test: included, skips when the studies corpus is absent
 - Studies corpus parity: `tools/validate-corpus.el` compare
 - Studies graph check: `tools/validate-corpus.el` graph
 
@@ -820,22 +835,22 @@ Minimal v1:
 - `chem-render DRAWING 'svg OPTIONS` returns the SVG string.
 - `chem-export` and `chem-copy` work with `svg` as source text.  This is not
   the primary Org workflow but is useful for debugging.
-- Add `chem-insert-image` if it does not already exist:
-  - render the selected drawing to SVG;
-  - write it to `chem-image-directory` or a per-buffer cache using UTF-8 and a
-    deterministic file name derived from the drawing and options;
-  - insert an Org or Markdown link;
-  - do not make this command depend on Org at load time.
+- `chem-insert-image`:
+  - renders the selected drawing to SVG;
+  - writes it to `chem-image-directory` using UTF-8 and a deterministic
+    content-hash file name;
+  - inserts an Org or Markdown link;
+  - does not depend on Org at load time.
 
 Transient menu (`chem-dispatch.el`):
 
-- Add an SVG output group with `:svg-*` suffixes for the settled options.
-- Add a theme selector whose choices come from `chem-exp-svg-themes`.
-- Hide chemfig options when the exporter is `svg`.
-- Hide SVG options when the exporter is `chemfig`.
-- Keep the exporter selector.
-- Keep image insertion as a separate action.
-- Add UI tests for option resolution, buffer-local defaults, and group
+- The SVG groups expose the `:svg-*` options.
+- The theme selector sources its choices from `chem-exp-svg-themes`.
+- Chemfig options are hidden when the exporter is `svg`.
+- SVG options are hidden when the exporter is `chemfig`.
+- The exporter selector remains visible.
+- Image insertion is a separate action.
+- UI tests cover option resolution, buffer-local defaults, and group
   visibility.
 
 Org Babel is a separate phase.  Do not combine it with the first SVG renderer
@@ -916,13 +931,14 @@ Manual, not automated:
 
 ### Corpus tests
 
-Add a smoke test over the 1000-molecule studies corpus:
+The smoke test over the 1000-molecule studies corpus:
 
-- render every MOL to SVG;
-- parse every result as XML;
-- verify deterministic output on a sample;
-- record failures with file names;
-- do not require visual comparison.
+- renders every MOL to SVG;
+- parses every result as XML;
+- verifies deterministic output on a sample;
+- records failures with file names;
+- does not require visual comparison;
+- skips when `studies/external-corpus` is unavailable.
 
 ### Regression gates
 
@@ -1033,6 +1049,8 @@ Status: complete.
 ### Phase 7 — corpus and docs
 
 Commit: `validate and document svg rendering`
+
+Status: complete.
 
 - Corpus smoke test.
 - README/CHANGELOG updates.
@@ -1246,4 +1264,5 @@ emacs -Q --batch -L . -L emacs-indigo -L test \
   --eval '(chem-validate-corpus-graph "studies/external-corpus")'
 ```
 
-The SVG corpus smoke test will be added separately in `test/chem-exp-svg-test.el`.
+The SVG corpus smoke test lives in `test/chem-exp-svg-test.el` and skips when
+the studies corpus is not available.

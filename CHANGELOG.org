@@ -20,8 +20,22 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   chemfig output during the derivation switch.
 - Allene center detection as =chem-allene= records, preserving input wedges
   without treating allene centers as tetrahedral stereocenters.
+- =chem-exp-svg.el=: pure-Elisp, deterministic SVG exporter with centralized
+  options and themes, aromatic circles or alternating ring bonds, ring-side
+  double bonds, solid/hashed wedges, and optional CIP/enhanced-stereo labels.
+- =chem-insert-image= and =chem-image-directory=: write deterministic UTF-8
+  SVG files and insert Org/Markdown links.
+- Exporter-aware transient groups, SVG option suffixes, an SVG theme selector,
+  and an /Insert image/ action.
+- Generic exporter option merging in =chem-options.el=.
+- A 1000-molecule SVG corpus smoke test in =test/chem-exp-svg-test.el=.
 
 ** Changed
+- The transient menu now shows chemfig or SVG options based on the selected
+  exporter instead of showing every exporter's options at once.
+- The mode keymap adds =C-c m i= for =chem-insert-image=.
+- =chem-mode--generate= loads the selected exporter before building options,
+  so exporter-specific defaults are always available.
 - Indigo ingestion now lives in =chem-indigo.el=; the drawing IR contains no
   Indigo handle.
 - Common drawing decisions (labels, numbering, bond decoration, ring display)

@@ -584,5 +584,39 @@
     (should (string-match-p "\\`<svg "
                             (chem-mode--generate 'direct "CCO" nil)))))
 
+(ert-deftest chem-exp-svg-corpus-smoke ()
+  "Render every studies corpus MOL as SVG and parse the result."
+  (let* ((root (expand-file-name "../studies/external-corpus"
+                                 chem-exp-svg-test--root))
+         (files (and (file-directory-p root)
+                     (directory-files-recursively root "\\.mol\\'"))))
+    (unless files
+      (ert-skip "studies corpus not available"))
+    (let ((failures nil)
+          (count 0))
+      (dolist (path files)
+        (condition-case err
+            (let* ((chem-default-exporter 'svg)
+                   (options (chem--build-options nil))
+                   (drawing (chem-from-file path options))
+                   (svg (chem-render drawing 'svg options)))
+              (unless (chem-exp-svg-test--xml svg)
+                (push (list path "invalid XML") failures))
+              (setq count (1+ count)))
+          (error
+           (push (list path (error-message-string err)) failures))))
+      (dolist (path (cl-subseq files 0 (min 10 (length files))))
+        (let* ((chem-default-exporter 'svg)
+               (options (chem--build-options nil))
+               (drawing (chem-from-file path options))
+               (first (chem-render drawing 'svg options))
+               (second (chem-render drawing 'svg options)))
+          (unless (equal first second)
+            (push (list path "non-deterministic output") failures))))
+      (message "chem-exp-svg corpus: %d files, %d failures"
+               count (length failures))
+      (should (= 0 (length failures)))
+      (should (> count 0)))))
+
 (provide 'chem-exp-svg-test)
 ;;; chem-exp-svg-test.el ends here

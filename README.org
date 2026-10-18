@@ -4,10 +4,10 @@
 # /Drawing chemical structures with Emacs/.
 
 =chem-mode= draws chemical structures from SMILES or MOL files as
-LaTeX/chemfig, without leaving Emacs.
+LaTeX/chemfig or standalone SVG, without leaving Emacs.
 
-Use it to produce publication-ready structures and paste the generated code
-into LaTeX or Org.
+Use it to produce publication-ready structures for LaTeX/Org, or insert SVG
+images directly.
 
 [[./default-demo.gif]]
 
@@ -15,9 +15,11 @@ into LaTeX or Org.
 
 - Emacs 29.1+ with dynamic module support
 - [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.13.0 or newer
-- LaTeX with chemfig and TiKZ packages (for rendering output)
+- LaTeX with chemfig and TiKZ packages (chemfig output only)
 
-The package generates chemfig code natively in Elisp using =emacs-indigo= for molecular structure handling. No Python or external commands required.
+The package generates chemfig or SVG natively in Elisp using =emacs-indigo= for
+molecular structure handling. No Python or external commands required.  SVG
+output needs no LaTeX toolchain.
 
 Some output uses helper macros inherited from =mol2chemfig= (charges such as =\mcfplus=, aromatic circles =\mcfcringle=, wavy bonds =\mcfwavy=, fancy bonds =\dbl=/\dbr=/\trpl=, ...). Include mol2chemfig's =mcfmacros= preamble (or equivalent definitions) when rendering structures that use them.
 
@@ -61,6 +63,11 @@ Put point on the SMILES and run =M-x chem-export=, or open the options menu with
       -[:60]% 13
 }
 #+end_export
+
+For standalone SVG output, select the =svg= exporter in the transient menu
+with =E= (or set =chem-default-exporter= to =svg=), then use =M-x
+chem-insert-image= (=C-c m i=).  It writes an SVG file and inserts an
+Org/Markdown link, with no LaTeX toolchain required.
 
 Export the LaTeX document as a PDF to see the rendered molecule:
 
@@ -158,6 +165,8 @@ commands and automatic wrapping on top of it.
    | =C=   | Copy generated code to the kill ring               |
    | =F=   | Generate from a MOL file (one-off, no option edit) |
    | =A=   | Rotate the next generation only                    |
+   | =E=   | Select the exporter (chemfig or SVG)               |
+   | =M=   | Insert an SVG image link                           |
    | =?=   | Show the =C-c m= key bindings                      |
 
    Options are buffer-local, and are only localized the first time you edit
@@ -183,6 +192,7 @@ commands and automatic wrapping on top of it.
    | =C-c m g= | =chem-export=           | Generate for region / point / prompt |
    | =C-c m o= | =chem-dispatch=         | Transient options menu               |
    | =C-c m c= | =chem-copy=             | Copy to the kill ring                |
+   | =C-c m i= | =chem-insert-image=     | Insert an SVG image link             |
    | =C-c m d= | =chem-describe-options= | Describe effective options           |
 
    #+begin_src emacs-lisp
@@ -197,6 +207,28 @@ commands and automatic wrapping on top of it.
    #+begin_src emacs-lisp
    (chem-global-mode 1)
    #+end_src
+
+** SVG output and images
+
+The =svg= exporter produces standalone, deterministic SVG without a LaTeX
+toolchain.  Select it with =E= in the transient menu, or set it as the default:
+
+#+begin_src emacs-lisp
+(setq chem-default-exporter 'svg)
+(setq chem-exp-svg-default-theme 'dark)
+(setq chem-image-directory "~/org/images/chem/")
+#+end_src
+
+=M-x chem-insert-image= (=C-c m i=) renders the molecule at point or in the
+region, writes a deterministic UTF-8 SVG file to =chem-image-directory=, and
+inserts an Org (=[[file:...]]=) or Markdown (=![](...)=) link.  With a prefix
+argument it prompts for the molecule instead of using point.
+
+SVG options use the =chem-exp-svg-default-*= prefix: canvas size and padding,
+bond spacing and thickness, font, aromatic display, stereochemistry labels,
+and the selected theme.  Themes are centralized in =chem-exp-svg-themes=
+(=light= and =dark= by default); add or customize an entry there and select it
+with =chem-exp-svg-default-theme=.
 
 ** Migrating from tochemfig
 
@@ -238,10 +270,11 @@ commands under their leader, e.g.:
 #+begin_src emacs-lisp
 (map! :leader
       (:prefix ("C" . "chem")
-       :desc "Options menu (RET generate, C copy, F file, A rotate)"
+       :desc "Options menu (RET generate, C copy, F file, A rotate, M image)"
        "o" #'chem-dispatch
        :desc "Generate at point/region" "g" #'chem-export
        :desc "Copy to kill ring" "c" #'chem-copy
+       :desc "Insert SVG image" "i" #'chem-insert-image
        :desc "Describe options" "d" #'chem-describe-options
        :desc "Save options as global defaults" "s" #'chem-save-options
        :desc "Reload saved options" "r" #'chem-reload-options
@@ -249,11 +282,12 @@ commands under their leader, e.g.:
 #+end_src
 
 =SPC C o= is the primary entry point.  Inside the menu use =RET= to generate,
-=C= to copy, =F= for one-off MOL input, =A= to rotate once and =?= for the
-bindings.  The =g=, =c= and =d= leader keys are shortcuts for the same top-level
-commands; =s=, =r= and =R= manage the option defaults.  File input and one-off
-rotation intentionally have no separate leader bindings: they live in the menu.
-The old =C-c m f/t/w/r= shortcuts are gone.
+=C= to copy, =F= for one-off MOL input, =A= to rotate once, =E= to select the
+exporter, =M= to insert an SVG image, and =?= for the bindings.  The =g=, =c=,
+=i= and =d= leader keys are shortcuts for the same top-level commands; =s=,
+=r= and =R= manage the option defaults.  File input and one-off rotation
+intentionally have no separate leader bindings: they live in the menu.  The old
+=C-c m f/t/w/r= shortcuts are gone.
 
 Generating from a visual selection replaces the selection and leaves visual
 state.  The =*chem options*= buffer is read-only and uses Emacs state under
@@ -264,6 +298,13 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 
 - [X] *Generate chemfig code from SMILES strings*
 - [X] *Generate chemfig code from MOL files*
+- [X] *Render standalone SVG* with deterministic output
+- [X] *Insert SVG images* with Org/Markdown links
+- [X] Aromatic circles or alternating bonds, ring-side double bonds, and
+  fused-ring fallbacks in SVG
+- [X] Wedges, hashes, either fallback, and optional CIP/enhanced-stereo labels
+  in SVG
+- [X] Centralized light/dark SVG themes
 - [X] Flip structure horizontally or vertically
 - [X] Rotate structure by custom angle
 - [X] Generate compact (terse) or formatted output
@@ -293,7 +334,8 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 * Testing
 
 The chemfig generator is a native port of the reference =mol2chemfig=
-implementation. Three layers of tests guard against regressions:
+implementation, and the SVG exporter shares the same IR. Four layers of tests
+guard against regressions:
 
 1. *Parity*: ~330 ERT tests compare output against golden files produced by
    =mol2chemfigPy3= for a corpus of molecules and option combinations, plus a
@@ -312,6 +354,11 @@ implementation. Three layers of tests guard against regressions:
    SMILES for every corpus MOL with both =emacs-indigo= and the reference
    =epam.indigo=, and =tools/gen-goldens.py= refuses to regenerate goldens if
    the two builds disagree.
+
+4. *SVG exporter*: =test/chem-exp-svg-test.el= covers options/themes, bonds,
+   rings, stereochemistry, labels, UI integration, and a 1000-molecule corpus
+   smoke test (skipped when the studies corpus is absent).  The full ERT suite
+   currently has 468 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.
