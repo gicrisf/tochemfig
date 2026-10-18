@@ -72,6 +72,19 @@
       (setq start (match-end 0)))
     count))
 
+(defun chem-exp-svg-test--edge-between (drawing a b)
+  "Return DRAWING's visible edge between atom indices A and B."
+  (let ((ends (sort (list a b) #'<)))
+    (cl-find-if
+     (lambda (edge)
+       (equal ends
+              (sort (list (chem-edge-a edge) (chem-edge-b edge)) #'<)))
+     (chem-visible-edges drawing))))
+
+(defun chem-exp-svg-test--line-count (string)
+  "Return the number of SVG line elements in STRING."
+  (chem-exp-svg-test--count "<line " string))
+
 (defun chem-exp-svg-test--root (svg)
   "Return the opening SVG tag from SVG."
   (substring svg 0 (string-match ">" svg)))
@@ -517,6 +530,69 @@
     (should (chem-exp-svg-test--xml svg))
     (should (> (chem-exp-svg-test--count "<text " svg) 0))
     (should (> (chem-exp-svg-test--count "<line " svg) 0))))
+
+(ert-deftest chem-exp-svg-circle-double-bonds ()
+  "Explicit ring double bonds do not intrude into aromatic circles."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("svg-aromatic" . circle))))
+         (drawing (chem-from-string "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (circle-edge (chem-exp-svg-test--edge-between drawing 2 3))
+         (shared-edge (chem-exp-svg-test--edge-between drawing 4 5))
+         (carbonyl-edge (chem-exp-svg-test--edge-between drawing 6 7))
+         (inner-ring (chem-exp-svg--edge-inner-ring state shared-edge)))
+    (should circle-edge)
+    (should shared-edge)
+    (should carbonyl-edge)
+    (should (= 1 (chem-exp-svg-test--line-count
+                  (chem-exp-svg--edge-svg state circle-edge))))
+    (should (= 2 (chem-exp-svg-test--line-count
+                  (chem-exp-svg--edge-svg state shared-edge))))
+    (should (= 2 (chem-exp-svg-test--line-count
+                  (chem-exp-svg--edge-svg state carbonyl-edge))))
+    (should inner-ring)
+    (should (= 1 (chem-ring-id inner-ring)))))
+
+(ert-deftest chem-exp-svg-explicit-kekule-circle ()
+  "Explicit double bonds inside an aromatic circle draw as single edges."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("svg-aromatic" . circle))))
+         (drawing (chem-from-string "C1=CC=CC=C1" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (double-edges
+          (cl-remove-if-not (lambda (edge) (eq :double (chem-edge-order edge)))
+                            (chem-visible-edges drawing))))
+    (should (= 3 (length double-edges)))
+    (dolist (edge double-edges)
+      (should (= 1 (chem-exp-svg-test--line-count
+                    (chem-exp-svg--edge-svg state edge)))))))
+
+(ert-deftest chem-exp-svg-terminal-label-on-bond-axis ()
+  "One-bond labels stay centered on the outward bond axis."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("svg-aromatic" . circle))))
+         (drawing (chem-from-string "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (checked 0))
+    (dolist (atom (chem-exp-svg--sorted-atoms drawing))
+      (let ((angles (chem-atom-bond-angles atom))
+            (text (chem-exp-svg--atom-text atom)))
+        (when (and text (= 1 (length angles)))
+          (setq checked (1+ checked))
+          (let* ((point (chem-exp-svg--point state
+                                              (chem-atom-x atom)
+                                              (chem-atom-y atom)))
+                 (center (chem-exp-svg--label-center state atom text))
+                 (radians (* (car angles) (/ float-pi 180.0)))
+                 (bond-x (cos radians))
+                 (bond-y (- (sin radians)))
+                 (label-x (- (car center) (car point)))
+                 (label-y (- (cadr center) (cdr point)))
+                 (dot (+ (* bond-x label-x) (* bond-y label-y)))
+                 (cross (- (* bond-x label-y) (* bond-y label-x))))
+            (should (< dot 0.0))
+            (should (< (abs cross) 1e-6))))))
+    (should (= 2 checked))))
 
 (ert-deftest chem-exp-svg-atom-numbers ()
   "Atom numbers replace hydrogen and charge annotations."

@@ -8,11 +8,10 @@
 
 ;;; Commentary:
 
-;; Pure-Elisp SVG exporter for prepared `chem-drawing' values.  The exporter
-;; consumes the shared IR and keeps all SVG presentation local: viewBox,
-;; colors, fonts, IDs, and XML.  This is the Phase 1 skeleton: options,
-;; themes, primitives, and a valid empty document.  Bond and atom drawing are
-;; added in later phases.
+;; Pure-Elisp SVG exporter for prepared `chem-drawing' values.  It renders
+;; atoms, bonds, rings, aromatic displays, stereochemistry, labels, themes, and
+;; deterministic SVG documents from the shared IR.  All SVG presentation stays
+;; local to this exporter: viewBox, colors, fonts, IDs, masks, and XML.
 
 ;;; Code:
 
@@ -350,12 +349,24 @@ and `alternating' draws dashed inner lines."
                                  (chem-atom-element atom))
     (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state))))
 
+(defun chem-exp-svg--direction-from-angle (angle)
+  "Return the cardinal text direction for ANGLE in degrees."
+  (let ((angle (mod angle 360.0)))
+    (cond
+     ((or (< angle 45.0) (>= angle 315.0)) 'right)
+     ((< angle 135.0) 'up)
+     ((< angle 225.0) 'left)
+     (t 'down))))
+
 (defun chem-exp-svg--text-direction (atom)
   "Return ATOM's preferred text direction."
   (let ((angles (mapcar (lambda (angle) (mod angle 360.0))
                         (chem-atom-bond-angles atom))))
-    (if (< (length angles) 2)
-        'right
+    (cond
+     ((null angles) 'right)
+     ((null (cdr angles))
+      (chem-exp-svg--direction-from-angle (+ (car angles) 180.0)))
+     (t
       (let* ((radians (mapcar (lambda (angle)
                                 (* angle (/ float-pi 180.0)))
                               angles))
@@ -365,24 +376,34 @@ and `alternating' draws dashed inner lines."
             'up
           (let* ((mean (mod (* (atan y x) (/ 180.0 float-pi)) 360.0))
                  (opposite (mod (+ mean 180.0) 360.0)))
-            (cond
-             ((or (< opposite 45.0) (>= opposite 315.0)) 'right)
-             ((< opposite 135.0) 'up)
-             ((< opposite 225.0) 'left)
-             (t 'down))))))))
+            (chem-exp-svg--direction-from-angle opposite))))))))
 
-(defun chem-exp-svg--text-position (state atom direction)
-  "Return (X Y ANCHOR) for ATOM's text in DIRECTION."
+(defun chem-exp-svg--text-position (state atom direction &optional text)
+  "Return (X Y ANCHOR) for ATOM's text in DIRECTION.
+For atoms with one bond, place TEXT along the outward extension of
+that bond so terminal labels stay centered on the bond axis."
   (let* ((point (chem-exp-svg--point state
                                     (chem-atom-x atom)
                                     (chem-atom-y atom)))
          (font-size (chem-exp-svg--option state :svg-font-size))
-         (offset (* 0.5 font-size)))
-    (pcase direction
-      ('right (list (+ (car point) offset) (cdr point) "start"))
-      ('left (list (- (car point) offset) (cdr point) "end"))
-      ('up (list (car point) (- (cdr point) offset) "middle"))
-      (_ (list (car point) (+ (cdr point) offset) "middle")))))
+         (offset (* 0.5 font-size))
+         (angles (mapcar (lambda (angle) (mod angle 360.0))
+                         (chem-atom-bond-angles atom))))
+    (if (= 1 (length angles))
+        (let* ((radians (* (car angles) (/ float-pi 180.0)))
+               (distance (+ offset
+                            (* 0.3 font-size (length (or text "")))))
+               (dx (* (cos radians) distance))
+               (dy (* (sin radians) distance)))
+          ;; The label goes opposite the bond; SVG Y grows downward.
+          (list (- (car point) dx)
+                (+ (cdr point) dy)
+                "middle"))
+      (pcase direction
+        ('right (list (+ (car point) offset) (cdr point) "start"))
+        ('left (list (- (car point) offset) (cdr point) "end"))
+        ('up (list (car point) (- (cdr point) offset) "middle"))
+        (_ (list (car point) (+ (cdr point) offset) "middle"))))))
 
 (defun chem-exp-svg--label-radius (state text)
   "Return an approximate mask radius for TEXT."
@@ -395,7 +416,7 @@ and `alternating' draws dashed inner lines."
 (defun chem-exp-svg--label-center (state atom text)
   "Return the approximate center of ATOM's TEXT in STATE."
   (let* ((direction (chem-exp-svg--text-direction atom))
-         (position (chem-exp-svg--text-position state atom direction))
+         (position (chem-exp-svg--text-position state atom direction text))
          (x (nth 0 position))
          (y (nth 1 position))
          (anchor (nth 2 position))
@@ -443,7 +464,7 @@ and `alternating' draws dashed inner lines."
     (cond
      (text
       (let* ((direction (chem-exp-svg--text-direction atom))
-             (position (chem-exp-svg--text-position state atom direction))
+             (position (chem-exp-svg--text-position state atom direction text))
              (text-svg
               (format "<text x=\"%s\" y=\"%s\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"%s\" dominant-baseline=\"central\">%s</text>\n"
                       (chem-exp-svg--number (nth 0 position))
@@ -569,20 +590,37 @@ and `alternating' draws dashed inner lines."
               (chem-exp-svg--stereo-edge-svg state edge point-a point-b)
             (pcase (chem-edge-order edge)
               (:double
-               (let ((offset
-                      (and ring
-                           (chem-exp-svg--ring-normal-offset
-                            state edge ring (/ spacing 2.0)))))
-                 (if offset
-                     (concat
-                      (chem-exp-svg--line state
-                                          (car point-a) (cdr point-a)
-                                          (car point-b) (cdr point-b))
-                      (chem-exp-svg--ring-inner-line
-                       state point-a point-b short-fraction offset nil))
+               (let* ((drawing (chem-exp-svg-state-drawing state))
+                      (rings (chem-rings-for-edge drawing (chem-edge-id edge)))
+                      (circle-ring
+                       (cl-find-if
+                        (lambda (ring)
+                          (eq 'circle
+                              (chem-exp-svg--ring-aromatic-display state ring)))
+                        rings))
+                      (target-ring
+                       (if circle-ring
+                           (chem-exp-svg--edge-inner-ring state edge)
+                         ring))
+                      (base (chem-exp-svg--line state
+                                                (car point-a) (cdr point-a)
+                                                (car point-b) (cdr point-b))))
+                 (cond
+                  ((and circle-ring (null target-ring)) base)
+                  (target-ring
+                   (let ((offset
+                          (chem-exp-svg--ring-normal-offset
+                           state edge target-ring (/ spacing 2.0))))
+                     (if offset
+                         (concat
+                          base
+                          (chem-exp-svg--ring-inner-line
+                           state point-a point-b short-fraction offset nil))
+                       base)))
+                  (t
                    (let ((half (/ spacing 2.0)))
                      (chem-exp-svg--parallel-lines
-                      state point-a point-b (list (- half) half))))))
+                      state point-a point-b (list (- half) half)))))))
               (:triple
                (let ((offset (/ spacing 1.5)))
                  (chem-exp-svg--parallel-lines
@@ -946,6 +984,31 @@ and `alternating' draws dashed inner lines."
     (+ (expt (- (nth 0 center) x) 2)
        (expt (- (nth 1 center) y) 2))))
 
+(defun chem-exp-svg--closest-edge-ring (state edge rings)
+  "Return the ring in RINGS closest to EDGE's midpoint.
+Break ties by ring id."
+  (if (= 1 (length rings))
+      (car rings)
+    (let* ((drawing (chem-exp-svg-state-drawing state))
+           (atoms (chem-drawing-atoms drawing))
+           (atom-a (gethash (chem-edge-a edge) atoms))
+           (atom-b (gethash (chem-edge-b edge) atoms))
+           (mid-x (/ (+ (chem-atom-x atom-a) (chem-atom-x atom-b))
+                     2.0))
+           (mid-y (/ (+ (chem-atom-y atom-a) (chem-atom-y atom-b))
+                     2.0)))
+      (car (sort (copy-sequence rings)
+                 (lambda (ring-a ring-b)
+                   (let ((distance-a
+                          (chem-exp-svg--ring-distance-squared
+                           drawing ring-a mid-x mid-y))
+                         (distance-b
+                          (chem-exp-svg--ring-distance-squared
+                           drawing ring-b mid-x mid-y)))
+                     (if (= distance-a distance-b)
+                         (< (chem-ring-id ring-a) (chem-ring-id ring-b))
+                       (< distance-a distance-b)))))))))
+
 (defun chem-exp-svg--edge-ring (state edge)
   "Return the ring used for EDGE's inner stroke.
 For fused edges choose the ring whose center is closest to the edge
@@ -953,26 +1016,23 @@ midpoint, breaking ties by ring id."
   (let* ((drawing (chem-exp-svg-state-drawing state))
          (rings (chem-rings-for-edge drawing (chem-edge-id edge))))
     (when rings
-      (if (= 1 (length rings))
-          (car rings)
-        (let* ((atoms (chem-drawing-atoms drawing))
-               (atom-a (gethash (chem-edge-a edge) atoms))
-               (atom-b (gethash (chem-edge-b edge) atoms))
-               (mid-x (/ (+ (chem-atom-x atom-a) (chem-atom-x atom-b))
-                         2.0))
-               (mid-y (/ (+ (chem-atom-y atom-a) (chem-atom-y atom-b))
-                         2.0)))
-          (car (sort (copy-sequence rings)
-                     (lambda (ring-a ring-b)
-                       (let ((distance-a
-                              (chem-exp-svg--ring-distance-squared
-                               drawing ring-a mid-x mid-y))
-                             (distance-b
-                              (chem-exp-svg--ring-distance-squared
-                               drawing ring-b mid-x mid-y)))
-                         (if (= distance-a distance-b)
-                             (< (chem-ring-id ring-a) (chem-ring-id ring-b))
-                           (< distance-a distance-b)))))))))))
+      (chem-exp-svg--closest-edge-ring state edge rings))))
+
+(defun chem-exp-svg--edge-inner-ring (state edge)
+  "Return the non-circle ring that should receive EDGE's inner stroke.
+An aromatic circle replaces the inner strokes of its own ring.  When
+EDGE is shared with another ring, keep the inner stroke on that
+ring's side."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (rings (chem-rings-for-edge drawing (chem-edge-id edge)))
+         (inner-rings
+          (cl-remove-if
+           (lambda (ring)
+             (eq 'circle
+                 (chem-exp-svg--ring-aromatic-display state ring)))
+           rings)))
+    (when inner-rings
+      (chem-exp-svg--closest-edge-ring state edge inner-rings))))
 
 (defun chem-exp-svg--ring-normal-offset (state edge ring distance)
   "Return a normal offset from EDGE toward RING by DISTANCE."
