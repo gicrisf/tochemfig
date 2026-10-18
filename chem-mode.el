@@ -50,6 +50,13 @@ Set it to nil to rely on other persistence."
   :group 'chem-mode
   :type '(choice (const :tag "Disabled" nil) file))
 
+(defcustom chem-image-directory
+  (locate-user-emacs-file "chem-images/")
+  "Directory where `chem-insert-image' writes SVG files.
+The directory is created on demand."
+  :group 'chem-mode
+  :type 'directory)
+
 ;;; Input helpers
 
 (defconst chem-mode--smiles-charset "A-Za-z0-9@+[]()=#$:/\\.%*-"
@@ -207,6 +214,51 @@ OVERRIDES is an alist of option overrides."
              (code (chem-mode--generate (car input) (cdr input) options)))
         (if copy (kill-new code) (insert code))))))
 
+;;; Images
+
+(defun chem-mode--image-name (svg)
+  "Return a deterministic file name for SVG content."
+  (format "chem-%s.svg" (secure-hash 'sha1 svg)))
+
+(defun chem-mode--image-path (svg)
+  "Return the image path for SVG content."
+  (expand-file-name (chem-mode--image-name svg) chem-image-directory))
+
+(defun chem-mode--write-image (svg)
+  "Write SVG to `chem-image-directory' and return the path."
+  (make-directory chem-image-directory t)
+  (let ((path (chem-mode--image-path svg))
+        (coding-system-for-write 'utf-8-unix))
+    (write-region svg nil path nil 'silent)
+    path))
+
+(defun chem-mode--image-link (path)
+  "Return a buffer-appropriate link to PATH."
+  (let* ((base (or (and buffer-file-name
+                        (file-name-directory buffer-file-name))
+                   default-directory))
+         (relative (file-relative-name path base)))
+    (cond
+     ((derived-mode-p 'org-mode)
+      (format "[[file:%s]]" relative))
+     ((derived-mode-p 'markdown-mode)
+      (format "![](%s)" (replace-regexp-in-string " " "%20" relative)))
+     (t relative))))
+
+(defun chem-mode--insert-image (source &optional overrides)
+  "Generate and insert an SVG image link for SOURCE.
+SOURCE is (TEXT BOUNDS) or nil.  OVERRIDES are option overrides."
+  (let* ((input (if source
+                    (cons 'direct (car source))
+                  (chem-mode--read-input)))
+         (svg (let ((chem-default-exporter 'svg))
+                (chem-mode--generate (car input) (cdr input) overrides)))
+         (path (chem-mode--write-image svg))
+         (link (chem-mode--image-link path)))
+    (if source
+        (chem-mode--insert link (cadr source))
+      (insert link))))
+
 ;;; Commands
 
 ;;;###autoload
@@ -221,6 +273,13 @@ The selected exporter is `chem-default-exporter'."
   "Copy a chemical drawing for the molecule at point or in the region."
   (interactive)
   (chem-mode--produce t))
+
+;;;###autoload
+(defun chem-insert-image (&optional arg)
+  "Generate an SVG image for the molecule at point and insert a link.
+With prefix ARG, prompt for the molecule instead of using point."
+  (interactive "P")
+  (chem-mode--insert-image (unless arg (chem-mode--source-at-point))))
 
 ;;;###autoload
 (defun chem-dispatch ()
@@ -334,6 +393,7 @@ The selected exporter is `chem-default-exporter'."
     (define-key map (kbd "C-c m g") #'chem-export)
     (define-key map (kbd "C-c m o") #'chem-dispatch)
     (define-key map (kbd "C-c m c") #'chem-copy)
+    (define-key map (kbd "C-c m i") #'chem-insert-image)
     (define-key map (kbd "C-c m d") #'chem-describe-options)
     map)
   "Keymap for `chem-mode'.")

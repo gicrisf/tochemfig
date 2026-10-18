@@ -16,6 +16,7 @@
 (require 'chem-mode)
 (require 'chem-options)
 (require 'chem-export)
+(require 'chem-exp-svg)
 
 (defvar chem-dispatch--edit-buffer nil
   "Buffer the transient menu was invoked from.")
@@ -65,6 +66,23 @@
   (lambda (prompt initial &rest _)
     (intern (completing-read prompt choices nil t nil nil
                              (and initial (symbol-name initial))))))
+
+(defun chem-dispatch--chemfig-exporter-p ()
+  "Return non-nil when the selected exporter is chemfig."
+  (eq (chem-dispatch--value 'chem-default-exporter) 'chemfig))
+
+(defun chem-dispatch--svg-exporter-p ()
+  "Return non-nil when the selected exporter is svg."
+  (eq (chem-dispatch--value 'chem-default-exporter) 'svg))
+
+(defun chem-dispatch--svg-theme-reader (prompt initial &rest _)
+  "Reader for the SVG theme option."
+  (intern
+   (completing-read prompt
+                    (mapcar (lambda (entry) (symbol-name (car entry)))
+                            chem-exp-svg-themes)
+                    nil t nil nil
+                    (and initial (symbol-name initial)))))
 
 (defun chem-dispatch--cross-bond-reader (prompt initial &rest _)
   "Reader for the cross-bond option, a list of (START END) pairs."
@@ -186,6 +204,46 @@ function used to read a new value, and GUARD an optional form."
   "k" chem-default-cross-bond "Cross bonds"
   #'chem-dispatch--cross-bond-reader)
 
+(chem-dispatch--define-option chem-dispatch-option-svg-width
+  "W" chem-exp-svg-default-width "SVG width"
+  #'chem-dispatch--optional-number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-height
+  "H" chem-exp-svg-default-height "SVG height"
+  #'chem-dispatch--optional-number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-padding
+  "P" chem-exp-svg-default-padding "SVG padding"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-scale
+  "S" chem-exp-svg-default-scale "SVG scale"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-bond-spacing
+  "B" chem-exp-svg-default-bond-spacing "SVG bond spacing"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-bond-thickness
+  "T" chem-exp-svg-default-bond-thickness "SVG bond thickness"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-short-bond-length
+  "L" chem-exp-svg-default-short-bond-length "SVG short bond length"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-font-family
+  "N" chem-exp-svg-default-font-family "SVG font family"
+  #'chem-dispatch--string-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-font-size
+  "Z" chem-exp-svg-default-font-size "SVG font size"
+  #'chem-dispatch--number-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-theme
+  "O" chem-exp-svg-default-theme "SVG theme"
+  #'chem-dispatch--svg-theme-reader)
+(chem-dispatch--define-option chem-dispatch-option-svg-aromatic
+  "R" chem-exp-svg-default-aromatic "SVG aromatic display"
+  (chem-dispatch--choice-reader '("auto" "circle" "alternating")))
+(chem-dispatch--define-toggle chem-dispatch-toggle-svg-show-stereo
+  "V" chem-exp-svg-default-show-stereo "SVG show stereo")
+(chem-dispatch--define-toggle chem-dispatch-toggle-svg-show-cip-labels
+  "I" chem-exp-svg-default-show-cip-labels "SVG CIP labels")
+(chem-dispatch--define-toggle chem-dispatch-toggle-svg-show-enhanced-stereo
+  "U" chem-exp-svg-default-show-enhanced-stereo "SVG enhanced stereo")
+
 (defun chem-dispatch--consume-overrides ()
   "Return and clear the pending one-off option overrides."
   (prog1 chem-dispatch--pending-overrides
@@ -230,6 +288,19 @@ function used to read a new value, and GUARD an optional form."
                              (current-buffer))
       (insert (chem-mode--generate 'file path overrides)))))
 
+(transient-define-suffix chem-dispatch-insert-image ()
+  "Insert an SVG image link using the current options."
+  :key "M"
+  :description "Insert image"
+  (interactive)
+  (let ((buffer chem-dispatch--edit-buffer)
+        (source chem-dispatch--pending-source)
+        (overrides (chem-dispatch--consume-overrides)))
+    (setq chem-dispatch--pending-source nil)
+    (with-current-buffer (or (and (buffer-live-p buffer) buffer)
+                             (current-buffer))
+      (chem-mode--insert-image source overrides))))
+
 (transient-define-suffix chem-dispatch-rotate ()
   "Rotate the next generated structure without changing the default angle."
   :key "A"
@@ -266,36 +337,62 @@ function used to read a new value, and GUARD an optional form."
   ["Geometry"
    (chem-dispatch-option-angle)
    (chem-dispatch-toggle-flip)
-   (chem-dispatch-toggle-flop)
-   (chem-dispatch-toggle-relative-angles)]
+   (chem-dispatch-toggle-flop)]
   ["Atoms"
    (chem-dispatch-toggle-show-carbons)
    (chem-dispatch-toggle-show-methyls)
-   (chem-dispatch-toggle-atom-numbers)
-   (chem-dispatch-toggle-aromatic-circles)]
+   (chem-dispatch-toggle-atom-numbers)]
   ["Bonds"
    (chem-dispatch-toggle-fancy-bonds)
    (chem-dispatch-option-bond-scale)
    (chem-dispatch-option-bond-stretch)]
-  ["Output"
-   (chem-dispatch-toggle-terse)
-   (chem-dispatch-option-indent)
-   (chem-dispatch-toggle-wrap-chemfig)
+  ["Markers"
    (chem-dispatch-option-markers)]
-  ["Sub-molecule"
-   (chem-dispatch-option-submol-name)
-   (chem-dispatch-option-entry-atom)
-   (chem-dispatch-option-exit-atom)]
   ["Advanced"
    (chem-dispatch-toggle-strict)
    (chem-dispatch-toggle-recalculate-coordinates)
-   (chem-dispatch-toggle-legacy-lewis)
    (chem-dispatch-option-cross-bond)]
+  ["Chemfig"
+   :if (lambda () (chem-dispatch--chemfig-exporter-p))
+   (chem-dispatch-toggle-relative-angles)
+   (chem-dispatch-toggle-aromatic-circles)
+   (chem-dispatch-toggle-terse)
+   (chem-dispatch-option-indent)
+   (chem-dispatch-toggle-wrap-chemfig)
+   (chem-dispatch-option-submol-name)
+   (chem-dispatch-option-entry-atom)
+   (chem-dispatch-option-exit-atom)
+   (chem-dispatch-toggle-legacy-lewis)]
+  ["SVG canvas"
+   :if (lambda () (chem-dispatch--svg-exporter-p))
+   (chem-dispatch-option-svg-width)
+   (chem-dispatch-option-svg-height)
+   (chem-dispatch-option-svg-padding)
+   (chem-dispatch-option-svg-scale)]
+  ["SVG bonds"
+   :if (lambda () (chem-dispatch--svg-exporter-p))
+   (chem-dispatch-option-svg-bond-spacing)
+   (chem-dispatch-option-svg-bond-thickness)
+   (chem-dispatch-option-svg-short-bond-length)
+   (chem-dispatch-option-svg-aromatic)]
+  ["SVG atoms"
+   :if (lambda () (chem-dispatch--svg-exporter-p))
+   (chem-dispatch-option-svg-font-family)
+   (chem-dispatch-option-svg-font-size)]
+  ["SVG colors"
+   :if (lambda () (chem-dispatch--svg-exporter-p))
+   (chem-dispatch-option-svg-theme)]
+  ["SVG stereo"
+   :if (lambda () (chem-dispatch--svg-exporter-p))
+   (chem-dispatch-toggle-svg-show-stereo)
+   (chem-dispatch-toggle-svg-show-cip-labels)
+   (chem-dispatch-toggle-svg-show-enhanced-stereo)]
   ["Actions"
    (chem-dispatch-generate)
    (chem-dispatch-copy)
    (chem-dispatch-file)
    (chem-dispatch-rotate)
+   (chem-dispatch-insert-image)
    (chem-dispatch-bindings)]
   (interactive)
   (unless (bound-and-true-p chem-mode)

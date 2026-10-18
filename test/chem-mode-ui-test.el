@@ -150,6 +150,7 @@
   (should (eq (lookup-key chem-mode-map (kbd "C-c m g")) #'chem-export))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m o")) #'chem-dispatch))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m c")) #'chem-copy))
+  (should (eq (lookup-key chem-mode-map (kbd "C-c m i")) #'chem-insert-image))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m d"))
               #'chem-describe-options))
   ;; The old one-shot bindings are gone (clean break).
@@ -387,6 +388,100 @@
       (chem-dispatch-generate)
       (should (string-prefix-p "PREFIX" (buffer-string)))
       (should (string-match-p "OH" (buffer-string))))))
+
+(ert-deftest chem-mode-ui-svg-options-visible ()
+  "Exporter-specific menu predicates follow the selected exporter."
+  (with-temp-buffer
+    (setq chem-dispatch--edit-buffer (current-buffer))
+    (setq-local chem-default-exporter 'chemfig)
+    (should (chem-dispatch--chemfig-exporter-p))
+    (should-not (chem-dispatch--svg-exporter-p))
+    (setq-local chem-default-exporter 'svg)
+    (should (chem-dispatch--svg-exporter-p))
+    (should-not (chem-dispatch--chemfig-exporter-p))))
+
+(ert-deftest chem-mode-ui-toggle-svg-option ()
+  "SVG options are buffer-local through the transient."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (chem-mode 1)
+    (setq chem-dispatch--edit-buffer (current-buffer))
+    (setq-local chem-default-exporter 'svg)
+    (setq-local chem-exp-svg-default-show-cip-labels nil)
+    (call-interactively #'chem-dispatch-toggle-svg-show-cip-labels)
+    (should chem-exp-svg-default-show-cip-labels)
+    (should (local-variable-p 'chem-exp-svg-default-show-cip-labels))))
+
+(ert-deftest chem-mode-ui-svg-theme-option ()
+  "The SVG theme selector sets a buffer-local theme."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (chem-mode 1)
+    (setq chem-dispatch--edit-buffer (current-buffer))
+    (setq-local chem-default-exporter 'svg)
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest _) "dark")))
+      (call-interactively #'chem-dispatch-option-svg-theme))
+    (should (eq (chem-dispatch--value 'chem-exp-svg-default-theme) 'dark))
+    (should (local-variable-p 'chem-exp-svg-default-theme))))
+
+(ert-deftest chem-mode-ui-svg-option-vars ()
+  "SVG variables are part of the generic option surface."
+  (with-temp-buffer
+    (setq-local chem-default-exporter 'svg)
+    (should (memq 'chem-exp-svg-default-width
+                  (chem-mode--option-vars)))))
+
+(ert-deftest chem-mode-ui-insert-image-org ()
+  "`chem-insert-image' writes SVG and inserts an Org link."
+  (require 'org)
+  (let* ((dir (make-temp-file "chem-images-" t))
+         (default-directory (file-name-as-directory dir)))
+    (unwind-protect
+        (with-temp-buffer
+          (org-mode)
+          (insert "CCO")
+          (goto-char (point-max))
+          (let ((chem-image-directory dir))
+            (chem-insert-image))
+          (let ((link (buffer-string)))
+            (should (string-match "\\`\\[\\[file:\\(.*\\)\\]\\]\\'" link))
+            (let* ((relative (match-string 1 link))
+                   (path (expand-file-name relative default-directory)))
+              (should (file-exists-p path))
+              (with-temp-buffer
+                (insert-file-contents path)
+                (should (string-match-p "<svg " (buffer-string)))))))
+      (delete-directory dir t))))
+
+(ert-deftest chem-mode-ui-insert-image-deterministic ()
+  "Image names are derived from SVG content."
+  (let* ((dir (make-temp-file "chem-images-" t))
+         (default-directory (file-name-as-directory dir)))
+    (unwind-protect
+        (let* ((chem-image-directory dir)
+               (link-a (with-temp-buffer
+                         (insert "CCO")
+                         (goto-char (point-max))
+                         (chem-insert-image)
+                         (buffer-string)))
+               (link-b (with-temp-buffer
+                         (insert "CCO")
+                         (goto-char (point-max))
+                         (chem-insert-image)
+                         (buffer-string))))
+          (should (equal link-a link-b))
+          (should (= 1 (length (directory-files dir nil "\\.svg\\'")))))
+      (delete-directory dir t))))
+
+(ert-deftest chem-mode-ui-image-link-markdown ()
+  "Markdown image links escape spaces."
+  (let ((default-directory "/tmp/")
+        (buffer-file-name nil))
+    (cl-letf (((symbol-function 'derived-mode-p)
+               (lambda (&rest modes) (memq 'markdown-mode modes))))
+      (should (equal "![](foo%20bar.svg)"
+                     (chem-mode--image-link "/tmp/foo bar.svg"))))))
 
 (provide 'chem-mode-test)
 ;;; chem-mode-test.el ends here

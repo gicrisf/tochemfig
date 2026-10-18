@@ -27,8 +27,10 @@ and ring-record implementation.
   fallback, `:svg-show-stereo`, configuration-derived wedge direction, and
   allene input-wedge preservation.
 - Phase 5 is implemented on this branch: optional CIP and enhanced-stereo
-  labels with combined formatting and XML escaping.  The suite currently has
-  460 tests.
+  labels with combined formatting and XML escaping.
+- Phase 6 is implemented on this branch: SVG image insertion, deterministic
+  UTF-8 image files, Org/Markdown links, exporter-aware transient groups, and
+  the SVG theme selector.  The suite currently has 467 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -1018,6 +1020,8 @@ Status: complete.
 
 Commit: `add svg image insertion`
 
+Status: complete.
+
 - Add `chem-insert-image` if absent.
 - Add `chem-image-directory` and deterministic UTF-8 file naming.
 - Add Org/Markdown link insertion.
@@ -1092,16 +1096,14 @@ Commit: `validate and document svg rendering`
 2. Should small molecules use golden SVG strings, or structural assertions
    only?  Recommended: structural assertions plus a small golden for ethanol
    and benzene.
-3. Should `chem-insert-image` be part of the first SVG milestone or the Org
-   milestone?  Recommended: a minimal version after the renderer works.
-4. Should isotope labels be added when `emacs-indigo` exposes an isotope
+3. Should isotope labels be added when `emacs-indigo` exposes an isotope
    accessor?  Defer until the API exists.
-5. Should multiple SVGs share IDs?  Recommend content-derived prefixes for
+4. Should multiple SVGs share IDs?  Recommend content-derived prefixes for
    inserted images; fixed IDs are acceptable for a single rendered string.
-6. Should `chem-exp-svg-themes` participate in the generic option
+5. Should `chem-exp-svg-themes` participate in the generic option
    describe/save/reload surface, or remain a palette defcustom edited through
    `customize`?  Recommended: customize-only for v1.
-7. Should custom themes be selectable only by name (recommended) or also by an
+6. Should custom themes be selectable only by name (recommended) or also by an
    inline `:svg-themes` override?  Recommend name-only for v1; add inline
    overrides later if needed.
 
@@ -1122,6 +1124,9 @@ Commit: `validate and document svg rendering`
 - Aromatic circles and alternating representations work.
 - CIP and enhanced-stereo labels are optional and default off.
 - Allene input wedges render; no aR/aS label is produced.
+- `chem-insert-image` writes deterministic UTF-8 SVG files and inserts
+  Org/Markdown links.
+- Transient groups expose only the selected exporter's options.
 - XML validity, determinism, and corpus smoke tests pass.
 - `eldev test`, `eldev compile`, and module-free compile pass.
 - Chemfig output and goldens are unchanged.
