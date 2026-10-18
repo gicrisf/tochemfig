@@ -121,6 +121,44 @@ Returns atom-index pairs in input order."
        iter))
     (nreverse pairs)))
 
+;;; Stereocenters
+
+(defun chem--collect-stereocenters (mol atoms edges)
+  "Collect stereocenter descriptors from MOL into ATOMS.
+EDGES maps canonical edge ids to `chem-edge' records.  The collected
+data contains atom indices, keywords, integers, and lists, never
+Indigo handles.  CIP computation is best-effort: Indigo rejects some
+complex molecules, leaving their descriptors at `:none'."
+  (ignore-errors (indigo-add-cip-stereo-descriptors mol))
+  (let ((wedges (make-hash-table :test 'eql)))
+    (maphash
+     (lambda (_ edge)
+       (let ((center (chem-edge-stereo-center edge)))
+         (when (and center (memq (chem-edge-stereo edge) '(:up :down)))
+           (let ((current (gethash center wedges)))
+             (when (or (null current)
+                       (< (chem-edge-id edge) (chem-edge-id current)))
+               (puthash center edge wedges))))))
+     edges)
+    (indigo-with-stereocenters-iterator (iter mol)
+      (indigo-map
+       (lambda (atom)
+         (let* ((idx (indigo-index atom))
+                (center (gethash idx atoms))
+                (wedge (gethash idx wedges)))
+           (when center
+             (setf (chem-atom-stereocenter center)
+                   (chem-stereocenter-create
+                    :type (indigo-stereocenter-type atom)
+                    :group (indigo-stereocenter-group atom)
+                    :pyramid (indigo-stereocenter-pyramid atom)
+                    :cip (indigo-stereocenter-cip-descriptor atom)
+                    :wedge-edge (when wedge (chem-edge-id wedge))
+                    :configuration nil)))
+           nil))
+       iter))
+    atoms))
+
 ;;; Fragment handling
 
 (defun chem--split-pairs (pair-list)
@@ -507,6 +545,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
                                      (chem-drawing-edges state)
                                      (chem-drawing-edge-lookup state)))
            (rotation (or (plist-get options :angle) 0.0)))
+      (chem--collect-stereocenters mol atoms (chem-drawing-edges state))
       ;; Configuration signs are computed from the original coordinates.
       ;; Apply depiction transforms before deriving label angles.
       (when (plist-get options :flip)

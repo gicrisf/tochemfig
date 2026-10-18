@@ -57,6 +57,10 @@
   "Render DRAWING as chemfig with OVERRIDES."
   (chem-render drawing 'chemfig (chem--build-options overrides)))
 
+(defun chem-ir-test--stereocenter (drawing idx)
+  "Return DRAWING's stereocenter record for atom IDX."
+  (chem-atom-stereocenter (gethash idx (chem-drawing-atoms drawing))))
+
 (ert-deftest chem-option-registry ()
   "Common and exporter options are registered."
   (let ((common (mapcar (lambda (spec) (plist-get spec :key))
@@ -195,6 +199,102 @@
     (chem-flip-vertical drawing)
     (let ((rotated (chem-stereo-wedge-up-p atoms edge configuration)))
       (should (eq before rotated)))))
+
+(ert-deftest chem-ir-stereocenter-data ()
+  "Stereocenter descriptors are collected as plain IR data."
+  (let* ((drawing (chem-ir-test--drawing "N[C@@H](C)C(=O)O" nil))
+         (center (chem-ir-test--stereocenter drawing 1))
+         (edge (chem-edge-at drawing (chem-stereocenter-wedge-edge center))))
+    (should center)
+    (should (eq :abs (chem-stereocenter-type center)))
+    (should (= 0 (chem-stereocenter-group center)))
+    (should (equal '(2 3 0 -1) (chem-stereocenter-pyramid center)))
+    (should (eq :S (chem-stereocenter-cip center)))
+    (should (= 0 (chem-stereocenter-wedge-edge center)))
+    (should-not (chem-stereocenter-configuration center))
+    (should edge)
+    (should (eq :down (chem-edge-stereo edge)))
+    (should (= 1 (chem-edge-stereo-center edge)))))
+
+(ert-deftest chem-ir-stereocenter-enhanced-stereo ()
+  "Enhanced stereo type and group are preserved in the IR."
+  (dolist (case '(("N[C@@H](C)C(=O)O |&1:1|" :and 1)
+                  ("N[C@@H](C)C(=O)O |o1:1|" :or 1)
+                  ("N[C@@H](C)C(=O)O |a:1|" :abs 0)))
+    (let* ((smiles (nth 0 case))
+           (type (nth 1 case))
+           (group (nth 2 case))
+           (drawing (chem-ir-test--drawing smiles nil))
+           (center (chem-ir-test--stereocenter drawing 1)))
+      (should center)
+      (should (eq type (chem-stereocenter-type center)))
+      (should (= group (chem-stereocenter-group center))))))
+
+(ert-deftest chem-ir-stereocenter-four-explicit-neighbors ()
+  "A four-explicit-neighbor pyramid has no implicit-hydrogen slot."
+  (let* ((drawing (chem-ir-test--drawing "F[C@](Cl)(Br)I" nil))
+         (center (chem-ir-test--stereocenter drawing 1)))
+    (should center)
+    (should (equal '(2 3 4 0) (chem-stereocenter-pyramid center)))
+    (should-not (memq -1 (chem-stereocenter-pyramid center)))
+    (should (eq :S (chem-stereocenter-cip center)))
+    (should (= 0 (chem-stereocenter-wedge-edge center)))))
+
+(ert-deftest chem-ir-stereocenter-two-centers ()
+  "Each stereocenter gets its own record and input wedge edge."
+  (let* ((drawing (chem-ir-test--drawing "C[C@H](O)[C@@H](C)O" nil))
+         (first (chem-ir-test--stereocenter drawing 1))
+         (second (chem-ir-test--stereocenter drawing 3)))
+    (should first)
+    (should second)
+    (should (eq :S (chem-stereocenter-cip first)))
+    (should (eq :R (chem-stereocenter-cip second)))
+    (should (= 0 (chem-stereocenter-wedge-edge first)))
+    (should (= 3 (chem-stereocenter-wedge-edge second)))
+    (should-not (chem-stereocenter-configuration first))
+    (should-not (chem-stereocenter-configuration second))))
+
+(ert-deftest chem-ir-stereocenter-negative-controls ()
+  "Molecules without stereocenters leave every atom slot empty."
+  (dolist (smiles '("CCO" "c1ccccc1"))
+    (let ((drawing (chem-ir-test--drawing smiles nil)))
+      (maphash (lambda (_ atom)
+                 (should-not (chem-atom-stereocenter atom)))
+               (chem-drawing-atoms drawing)))))
+
+(ert-deftest chem-ir-stereocenter-cip-failure ()
+  "A CIP computation failure does not abort stereocenter collection."
+  (let* ((drawing (chem-ir-test--drawing-from-file "corpus/ChEBI_12820.mol" nil))
+         (centers nil))
+    (maphash (lambda (_ atom)
+               (when-let ((center (chem-atom-stereocenter atom)))
+                 (push center centers)))
+             (chem-drawing-atoms drawing))
+    (should (= 16 (length centers)))
+    (should (cl-every (lambda (center)
+                        (eq :none (chem-stereocenter-cip center)))
+                      centers))))
+
+(ert-deftest chem-ir-stereocenter-handle-ownership ()
+  "Stereocenter data is plain and collection leaves no references."
+  (let ((initial (indigo-count-references)))
+    (let* ((drawing (chem-ir-test--drawing "N[C@@H](C)C(=O)O" nil))
+           (atoms (chem-drawing-atoms drawing))
+           (center (chem-ir-test--stereocenter drawing 1))
+           (pyramid (chem-stereocenter-pyramid center))
+           (wedge-edge (chem-stereocenter-wedge-edge center)))
+      (should (cl-every (lambda (idx)
+                          (or (= idx -1)
+                              (and (integerp idx)
+                                   (>= idx 0)
+                                   (< idx (hash-table-count atoms)))))
+                        pyramid))
+      (should (integerp wedge-edge))
+      (should (chem-edge-at drawing wedge-edge))
+      (should (keywordp (chem-stereocenter-type center)))
+      (should (integerp (chem-stereocenter-group center)))
+      (should (keywordp (chem-stereocenter-cip center))))
+    (should (= initial (indigo-count-references)))))
 
 (ert-deftest chem-ir-link-edge ()
   "Fragment links are canonical edges with link-p set."
@@ -434,6 +534,7 @@
                     bond-scale exit-bond parity))
       (should-not (memq slot drawing-slots)))
     (should-not (memq 'options atom-slots))
+    (should (memq 'stereocenter atom-slots))
     (dolist (slot '(edge-id from to link-p))
       (should (memq slot node-slots)))
     (should-not (memq 'bond node-slots))

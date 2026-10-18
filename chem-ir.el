@@ -35,6 +35,14 @@
   marker                         ; Marker string
   decoration)                    ; :plain or :fancy
 
+(cl-defstruct (chem-stereocenter (:constructor chem-stereocenter-create))
+  type                           ; :abs :or :and :either
+  group                          ; Integer; 0 is valid
+  pyramid                        ; Four atom indices, -1 for implicit H
+  cip                            ; CIP keyword, or nil
+  wedge-edge                     ; Canonical edge id, or nil
+  configuration)                 ; +1/-1 wedge sign, or nil
+
 (cl-defstruct (chem-atom (:constructor chem-atom-create))
   idx                            ; Integer index (0-based)
   x y                            ; 2D coordinates
@@ -46,7 +54,8 @@
   bond-angles                    ; Angles of all attached bonds
   label                          ; Display label, or nil for a hidden carbon
   number                         ; 1-based number when numbering is requested
-  marker)                        ; Marker string
+  marker                         ; Marker string
+  stereocenter)                  ; `chem-stereocenter', or nil
 
 (cl-defstruct (chem-node (:constructor chem-node-create))
   edge-id                        ; Canonical edge id, or nil for root/synthetic links
