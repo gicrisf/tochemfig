@@ -228,10 +228,63 @@
   (should (= 3 (chem-exp-svg-test--count
                 "<line " (chem-exp-svg-test--render "C#C")))))
 
-(ert-deftest chem-exp-svg-aromatic-lines ()
-  "Aromatic bonds fall back to single lines until ring rendering lands."
-  (should (= 6 (chem-exp-svg-test--count
-                "<line " (chem-exp-svg-test--render "c1ccccc1")))))
+(ert-deftest chem-exp-svg-aromatic-auto ()
+  "Default auto mode draws an aromatic circle and single ring bonds."
+  (let ((svg (chem-exp-svg-test--render "c1ccccc1")))
+    (should (= 1 (chem-exp-svg-test--count "<circle " svg)))
+    (should (= 6 (chem-exp-svg-test--count "<line " svg)))
+    (should (string-match-p "<circle[^>]*fill=\"none\"" svg))))
+
+(ert-deftest chem-exp-svg-aromatic-circle ()
+  "Circle mode draws an aromatic circle."
+  (let ((svg (chem-exp-svg-test--render
+              "c1ccccc1" '(("svg-aromatic" . circle)))))
+    (should (= 1 (chem-exp-svg-test--count "<circle " svg)))
+    (should (= 6 (chem-exp-svg-test--count "<line " svg)))))
+
+(ert-deftest chem-exp-svg-aromatic-alternating ()
+  "Alternating mode draws dashed inner ring lines."
+  (let ((svg (chem-exp-svg-test--render
+              "c1ccccc1" '(("svg-aromatic" . alternating)))))
+    (should (= 0 (chem-exp-svg-test--count "<circle " svg)))
+    (should (= 12 (chem-exp-svg-test--count "<line " svg)))
+    (should (= 6 (chem-exp-svg-test--count "stroke-dasharray" svg)))))
+
+(ert-deftest chem-exp-svg-naphthalene-circles ()
+  "Fused aromatic rings draw deterministic circles."
+  (let ((svg (chem-exp-svg-test--render
+              "c1ccc2ccccc2c1" '(("svg-aromatic" . circle)))))
+    (should (= 2 (chem-exp-svg-test--count "<circle " svg)))
+    (should (= 11 (chem-exp-svg-test--count "<line " svg)))))
+
+(ert-deftest chem-exp-svg-naphthalene-alternating ()
+  "Fused aromatic rings fall back to dashed inner lines."
+  (let ((svg (chem-exp-svg-test--render
+              "c1ccc2ccccc2c1" '(("svg-aromatic" . alternating)))))
+    (should (= 0 (chem-exp-svg-test--count "<circle " svg)))
+    (should (= 11 (chem-exp-svg-test--count "stroke-dasharray" svg)))))
+
+(ert-deftest chem-exp-svg-ring-double-bond ()
+  "Ring double bonds use a shortened inner stroke on the ring side."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "C1CC=CC1" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (edge (cl-find-if (lambda (edge) (eq :double (chem-edge-order edge)))
+                           (chem-visible-edges drawing)))
+         (ring (chem-exp-svg--edge-ring state edge))
+         (offset (chem-exp-svg--ring-normal-offset state edge ring 1.0)))
+    (should ring)
+    (should offset)
+    (should-not (and (zerop (car offset)) (zerop (cdr offset))))
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (= 0 (chem-exp-svg-test--count "<circle " svg)))
+      (should (= 6 (chem-exp-svg-test--count "<line " svg))))))
+
+(ert-deftest chem-exp-svg-bridged-ring-smoke ()
+  "Bridged rings render without error."
+  (let ((svg (chem-exp-svg-test--render "C1CC2CCC1C2")))
+    (should (chem-exp-svg-test--xml svg))))
 
 (ert-deftest chem-exp-svg-link-bonds ()
   "Link bonds are not drawn."

@@ -510,16 +510,19 @@ and `alternating' draws dashed inner lines."
   "Return STATE's bond color."
   (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state)))
 
-(defun chem-exp-svg--line (state x1 y1 x2 y2)
-  "Return a line element for STATE."
-  (format "<line x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\"/>\n"
+(defun chem-exp-svg--line (state x1 y1 x2 y2 &optional dash)
+  "Return a line element for STATE, optionally with DASH."
+  (format "<line x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\"%s/>\n"
           (chem-exp-svg--number x1)
           (chem-exp-svg--number y1)
           (chem-exp-svg--number x2)
           (chem-exp-svg--number y2)
           (chem-exp-svg--escape (chem-exp-svg--bond-color state))
           (chem-exp-svg--number
-           (chem-exp-svg--option state :svg-bond-thickness))))
+           (chem-exp-svg--option state :svg-bond-thickness))
+          (if dash
+              (format " stroke-dasharray=\"%s\"" dash)
+            "")))
 
 (defun chem-exp-svg--parallel-lines (state point-a point-b offsets)
   "Return parallel lines from POINT-A to POINT-B at OFFSETS."
@@ -555,19 +558,55 @@ and `alternating' draws dashed inner lines."
                                        (chem-atom-x atom-b)
                                        (chem-atom-y atom-b)))
          (spacing (chem-exp-svg--option state :svg-bond-spacing))
+         (short-fraction
+          (chem-exp-svg--option state :svg-short-bond-length))
+         (ring (chem-exp-svg--edge-ring state edge))
          (lines
           (pcase (chem-edge-order edge)
             (:double
-             (let ((offset (/ spacing 2.0)))
-               (chem-exp-svg--parallel-lines state point-a point-b
-                                             (list (- offset) offset))))
+             (let ((offset
+                    (and ring
+                         (chem-exp-svg--ring-normal-offset
+                          state edge ring (/ spacing 2.0)))))
+               (if offset
+                   (concat
+                    (chem-exp-svg--line state
+                                        (car point-a) (cdr point-a)
+                                        (car point-b) (cdr point-b))
+                    (chem-exp-svg--ring-inner-line
+                     state point-a point-b short-fraction offset nil))
+                 (let ((half (/ spacing 2.0)))
+                   (chem-exp-svg--parallel-lines
+                    state point-a point-b (list (- half) half))))))
             (:triple
              (let ((offset (/ spacing 1.5)))
-               (chem-exp-svg--parallel-lines state point-a point-b
-                                             (list (- offset) 0.0 offset))))
+               (chem-exp-svg--parallel-lines
+                state point-a point-b (list (- offset) 0.0 offset))))
+            (:aromatic
+             (if (eq 'alternating
+                     (chem-exp-svg--edge-aromatic-display state edge))
+                 (let ((offset
+                        (and ring
+                             (chem-exp-svg--ring-normal-offset
+                              state edge ring (/ spacing 2.0)))))
+                   (if offset
+                       (concat
+                        (chem-exp-svg--line state
+                                            (car point-a) (cdr point-a)
+                                            (car point-b) (cdr point-b))
+                        (chem-exp-svg--ring-inner-line
+                         state point-a point-b short-fraction offset
+                         (chem-exp-svg--dash-pattern state)))
+                     (chem-exp-svg--line state
+                                         (car point-a) (cdr point-a)
+                                         (car point-b) (cdr point-b))))
+               (chem-exp-svg--line state
+                                   (car point-a) (cdr point-a)
+                                   (car point-b) (cdr point-b))))
             (_
-             (chem-exp-svg--parallel-lines state point-a point-b
-                                           (list 0.0)))))
+             (chem-exp-svg--line state
+                                 (car point-a) (cdr point-a)
+                                 (car point-b) (cdr point-b)))))
          (attributes (chem-exp-svg--marker-attributes
                       (chem-edge-marker edge))))
     (if attributes
@@ -681,6 +720,175 @@ and `alternating' draws dashed inner lines."
      body
      "</svg>\n")))
 
+;;; Rings
+
+(defun chem-exp-svg--ring-center-svg (state ring)
+  "Return RING's center in SVG coordinates."
+  (let ((center (chem-ring-center (chem-exp-svg-state-drawing state) ring)))
+    (chem-exp-svg--point state (nth 0 center) (nth 1 center))))
+
+(defun chem-exp-svg--ring-bridged-p (state ring)
+  "Return non-nil when RING appears bridged."
+  (let ((drawing (chem-exp-svg-state-drawing state)))
+    (cl-some (lambda (edge-id)
+               (> (length (chem-rings-for-edge drawing edge-id)) 2))
+             (chem-ring-bonds ring))))
+
+(defun chem-exp-svg--ring-circle-eligible-p (state ring)
+  "Return non-nil when RING can use an aromatic circle."
+  (let ((drawing (chem-exp-svg-state-drawing state)))
+    (and (chem-ring-aromatic-p ring)
+         (>= (length (chem-ring-atoms ring)) 5)
+         (or (chem-ring-regular-p drawing ring)
+             (chem-ring-symmetric-p drawing ring))
+         (not (chem-exp-svg--ring-bridged-p state ring))
+         (> (chem-ring-apothem drawing ring) 0.0))))
+
+(defun chem-exp-svg--ring-aromatic-display (state ring)
+  "Return RING's aromatic display policy result."
+  (when (chem-ring-aromatic-p ring)
+    (if (and (memq (chem-exp-svg--option state :svg-aromatic)
+                   '(auto circle))
+             (chem-exp-svg--ring-circle-eligible-p state ring))
+        'circle
+      'alternating)))
+
+(defun chem-exp-svg--edge-aromatic-display (state edge)
+  "Return EDGE's aromatic display, or nil."
+  (let ((rings (cl-remove-if-not
+                (lambda (ring) (chem-ring-aromatic-p ring))
+                (chem-rings-for-edge (chem-exp-svg-state-drawing state)
+                                     (chem-edge-id edge)))))
+    (when rings
+      (if (cl-some (lambda (ring)
+                     (eq 'circle
+                         (chem-exp-svg--ring-aromatic-display state ring)))
+                   rings)
+          'circle
+        'alternating))))
+
+(defun chem-exp-svg--ring-distance-squared (drawing ring x y)
+  "Return squared distance from (X, Y) to RING's center."
+  (let ((center (chem-ring-center drawing ring)))
+    (+ (expt (- (nth 0 center) x) 2)
+       (expt (- (nth 1 center) y) 2))))
+
+(defun chem-exp-svg--edge-ring (state edge)
+  "Return the ring used for EDGE's inner stroke.
+For fused edges choose the ring whose center is closest to the edge
+midpoint, breaking ties by ring id."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (rings (chem-rings-for-edge drawing (chem-edge-id edge))))
+    (when rings
+      (if (= 1 (length rings))
+          (car rings)
+        (let* ((atoms (chem-drawing-atoms drawing))
+               (atom-a (gethash (chem-edge-a edge) atoms))
+               (atom-b (gethash (chem-edge-b edge) atoms))
+               (mid-x (/ (+ (chem-atom-x atom-a) (chem-atom-x atom-b))
+                         2.0))
+               (mid-y (/ (+ (chem-atom-y atom-a) (chem-atom-y atom-b))
+                         2.0)))
+          (car (sort (copy-sequence rings)
+                     (lambda (ring-a ring-b)
+                       (let ((distance-a
+                              (chem-exp-svg--ring-distance-squared
+                               drawing ring-a mid-x mid-y))
+                             (distance-b
+                              (chem-exp-svg--ring-distance-squared
+                               drawing ring-b mid-x mid-y)))
+                         (if (= distance-a distance-b)
+                             (< (chem-ring-id ring-a) (chem-ring-id ring-b))
+                           (< distance-a distance-b)))))))))))
+
+(defun chem-exp-svg--ring-normal-offset (state edge ring distance)
+  "Return a normal offset from EDGE toward RING by DISTANCE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (atoms (chem-drawing-atoms drawing))
+         (atom-a (gethash (chem-edge-a edge) atoms))
+         (atom-b (gethash (chem-edge-b edge) atoms))
+         (point-a (chem-exp-svg--point state
+                                       (chem-atom-x atom-a)
+                                       (chem-atom-y atom-a)))
+         (point-b (chem-exp-svg--point state
+                                       (chem-atom-x atom-b)
+                                       (chem-atom-y atom-b)))
+         (center (chem-exp-svg--ring-center-svg state ring))
+         (dx (- (car point-b) (car point-a)))
+         (dy (- (cdr point-b) (cdr point-a)))
+         (length (sqrt (+ (* dx dx) (* dy dy))))
+         (cx (- (car center) (car point-a)))
+         (cy (- (cdr center) (cdr point-a)))
+         (cross (- (* dx cy) (* dy cx))))
+    (when (> length 1e-9)
+      (let* ((normal-x (/ (- dy) length))
+             (normal-y (/ dx length))
+             (sign (if (>= cross 0.0) 1.0 -1.0)))
+        (cons (* sign normal-x distance)
+              (* sign normal-y distance))))))
+
+(defun chem-exp-svg--shortened-line (point-a point-b fraction)
+  "Return POINT-A and POINT-B shortened by FRACTION, centered."
+  (let* ((x1 (car point-a)) (y1 (cdr point-a))
+         (x2 (car point-b)) (y2 (cdr point-b))
+         (dx (- x2 x1)) (dy (- y2 y1))
+         (length (sqrt (+ (* dx dx) (* dy dy)))))
+    (if (< length 1e-9)
+        (list point-a point-b)
+      (let* ((inset (* 0.5 (- 1.0 fraction) length))
+             (ux (/ dx length))
+             (uy (/ dy length)))
+        (list (cons (+ x1 (* ux inset)) (+ y1 (* uy inset)))
+              (cons (- x2 (* ux inset)) (- y2 (* uy inset))))))))
+
+(defun chem-exp-svg--offset-point (point offset)
+  "Return POINT shifted by OFFSET."
+  (cons (+ (car point) (car offset))
+        (+ (cdr point) (cdr offset))))
+
+(defun chem-exp-svg--dash-pattern (state)
+  "Return a deterministic dash pattern for STATE."
+  (let ((thickness (chem-exp-svg--option state :svg-bond-thickness)))
+    (format "%s %s"
+            (chem-exp-svg--number (* 3.0 thickness))
+            (chem-exp-svg--number (* 2.0 thickness)))))
+
+(defun chem-exp-svg--ring-inner-line (state point-a point-b fraction offset dash)
+  "Return a shortened, offset inner line."
+  (let* ((short (chem-exp-svg--shortened-line point-a point-b fraction))
+         (start (chem-exp-svg--offset-point (nth 0 short) offset))
+         (end (chem-exp-svg--offset-point (nth 1 short) offset)))
+    (chem-exp-svg--line state
+                        (car start) (cdr start)
+                        (car end) (cdr end)
+                        dash)))
+
+(defun chem-exp-svg--rings (state)
+  "Return the ring SVG for STATE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (scale (chem-exp-svg--option state :svg-scale))
+         (thickness (chem-exp-svg--option state :svg-bond-thickness))
+         (font-size (chem-exp-svg--option state :svg-font-size)))
+    (mapconcat
+     (lambda (ring)
+       (if (eq 'circle (chem-exp-svg--ring-aromatic-display state ring))
+           (let* ((center (chem-exp-svg--ring-center-svg state ring))
+                  (radius (- (* (chem-ring-apothem drawing ring) scale)
+                             (/ thickness 2.0)
+                             (* 0.1 font-size))))
+             (if (> radius 0.0)
+                 (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"none\" stroke=\"%s\" stroke-width=\"%s\"/>\n"
+                         (chem-exp-svg--number (car center))
+                         (chem-exp-svg--number (cdr center))
+                         (chem-exp-svg--number radius)
+                         (chem-exp-svg--escape
+                          (chem-exp-svg--bond-color state))
+                         (chem-exp-svg--number thickness))
+               ""))
+         ""))
+     (chem-drawing-rings drawing)
+     "")))
+
 ;;; Renderer
 
 (defun chem-exp-svg--background (state)
@@ -694,10 +902,6 @@ and `alternating' draws dashed inner lines."
                   (chem-exp-svg--number (nth 3 viewbox))
                   (chem-exp-svg--escape color)))
       "")))
-
-(defun chem-exp-svg--rings (_state)
-  "Return the ring SVG."
-  "")
 
 (defun chem-exp-svg--stereo-labels (_state)
   "Return the stereochemistry label SVG."

@@ -20,7 +20,10 @@ and ring-record implementation.
   primitives, and exporter tests.
 - Phase 2 is implemented on this branch: basic bonds, cross-bond ordering,
   atom labels, charges, radicals, atom numbers, markers, masks, text
-  direction, and theme backgrounds.  The suite currently has 436 tests.
+  direction, and theme backgrounds.
+- Phase 3 is implemented on this branch: aromatic circles, alternating dashed
+  inner lines, ring-side double bonds, and fused/bridged fallbacks.  The suite
+  currently has 442 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -539,8 +542,8 @@ Shorten the second line on ring sides using the ring geometry and
 `:svg-bond-spacing`.
 Use `chem-ring-side`, `chem-rings-for-edge`, and `chem-ring-center`.
 
-For fused rings, select the ring whose center is closest to the bond midpoint
-or the first deterministic ring in stable ring order.  Document the rule.
+For fused rings, select the ring whose center is closest to the bond midpoint;
+break ties by ring id.
 
 ### Triple bond
 
@@ -972,6 +975,8 @@ Status: complete.
 ### Phase 3 — rings and aromatic display
 
 Commit: `render rings and aromatic bonds in svg`
+
+Status: complete.
 
 - Aromatic circles using ring geometry.
 - Alternating/dashed inner lines.
