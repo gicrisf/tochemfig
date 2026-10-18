@@ -16,6 +16,10 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - =chem-mode.el= and =chem-dispatch.el=: generic commands, minor/global mode,
   and a manually grouped transient with an exporter selector.
 - =tools/validate-corpus.el=: corpus output and graph validation helper.
+- Stereocenter records and pyramid-based wedge direction, with byte-identical
+  chemfig output during the derivation switch.
+- Allene center detection as =chem-allene= records, preserving input wedges
+  without treating allene centers as tetrahedral stereocenters.
 
 ** Changed
 - Indigo ingestion now lives in =chem-indigo.el=; the drawing IR contains no

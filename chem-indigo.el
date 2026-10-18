@@ -28,9 +28,9 @@
 (require 'chem-geometry)
 (require 'chem-exp-chemfig-mappings)
 
-(unless (macrop 'indigo-with-atoms-iterator)
-  (error "chem-mode requires emacs-indigo (>= 0.10.1), but the \
-`indigo-with-atoms-iterator' macro is unavailable.  Install or upgrade \
+(unless (macrop 'indigo-with-allene-centers-iterator)
+  (error "chem-mode requires emacs-indigo (>= 0.13.0), but the \
+`indigo-with-allene-centers-iterator' macro is unavailable.  Install or upgrade \
 emacs-indigo (e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') \
 and rebuild chem-mode"))
 
@@ -154,6 +154,65 @@ complex molecules, leaving their descriptors at `:none'."
                (when wedge
                  (setf (chem-stereocenter-configuration record)
                        (chem-stereocenter-sign atoms idx wedge)))))
+           nil))
+       iter))
+    atoms))
+
+;;; Allene centers
+
+(defun chem--allene-substituents (atoms center terminal)
+  "Return TERMINAL's substituents, excluding CENTER.
+Return two atom indices, using -1 for an implicit hydrogen.  Return
+nil when TERMINAL does not have one or two explicit substituents."
+  (let ((others (cl-remove center
+                           (chem-atom-neighbors (gethash terminal atoms))
+                           :test #'=)))
+    (pcase (length others)
+      (2 others)
+      (1 (append others (list -1)))
+      (_ nil))))
+
+(defun chem--collect-allenes (mol state)
+  "Collect allene centers from MOL into STATE's atoms.
+The recorded data contains atom indices and canonical edge ids, never
+Indigo handles."
+  (let ((atoms (chem-drawing-atoms state)))
+    (indigo-with-allene-centers-iterator (iter mol)
+      (indigo-map
+       (lambda (atom)
+         (let* ((idx (indigo-index atom))
+                (center (gethash idx atoms)))
+           (when center
+             (let* ((terminals
+                     (cl-remove-if-not
+                      (lambda (neighbor)
+                        (let ((edge (chem-get-edge state idx neighbor)))
+                          (and edge (eq :double (chem-edge-order edge)))))
+                      (chem-atom-neighbors center)))
+                    (substituents
+                     (mapcar (lambda (terminal)
+                               (chem--allene-substituents atoms idx terminal))
+                             terminals)))
+               (when (and (= 2 (length terminals))
+                          (cl-every #'identity substituents))
+                 (let ((wedges nil))
+                   (cl-loop for terminal in terminals
+                            for subs in substituents
+                            do (dolist (sub subs)
+                                 (unless (= -1 sub)
+                                   (let ((edge (chem-get-edge
+                                                state terminal sub)))
+                                     (when (and edge
+                                                (memq (chem-edge-stereo edge)
+                                                      '(:up :down)))
+                                       (push (chem-edge-id edge) wedges))))))
+                   (setf (chem-atom-allene center)
+                         (chem-allene-create
+                          :center idx
+                          :terminals terminals
+                          :substituents substituents
+                          :wedge-edges (sort (delete-dups wedges) #'<)
+                          :configuration nil))))))
            nil))
        iter))
     atoms))
@@ -545,6 +604,7 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
                                      (chem-drawing-edge-lookup state)))
            (rotation (or (plist-get options :angle) 0.0)))
       (chem--collect-stereocenters mol atoms (chem-drawing-edges state))
+      (chem--collect-allenes mol state)
       ;; Configuration signs are computed from the original coordinates.
       ;; Apply depiction transforms before deriving label angles.
       (when (plist-get options :flip)

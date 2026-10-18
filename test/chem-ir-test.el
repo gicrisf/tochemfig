@@ -61,6 +61,10 @@
   "Return DRAWING's stereocenter record for atom IDX."
   (chem-atom-stereocenter (gethash idx (chem-drawing-atoms drawing))))
 
+(defun chem-ir-test--allene (drawing idx)
+  "Return DRAWING's allene record for atom IDX."
+  (chem-atom-allene (gethash idx (chem-drawing-atoms drawing))))
+
 (defun chem-ir-test--stereocenter-wedge-up-states (drawing)
   "Return (ATOM . WEDGE-UP) for stereocenters with wedge edges in DRAWING."
   (let ((atoms (chem-drawing-atoms drawing))
@@ -298,6 +302,52 @@
       (chem-rotate drawing 30.0)
       (should (equal before
                      (chem-ir-test--stereocenter-wedge-up-states drawing))))))
+
+(ert-deftest chem-ir-allene-data ()
+  "Allene centers are collected separately from tetrahedral centers."
+  (let* ((drawing (chem-ir-test--drawing-from-file "data/allene.mol" nil))
+         (atom (gethash 1 (chem-drawing-atoms drawing)))
+         (allene (chem-atom-allene atom)))
+    (should allene)
+    (should-not (chem-atom-stereocenter atom))
+    (should (= 1 (chem-allene-center allene)))
+    (should (equal '(0 2)
+                   (sort (copy-sequence (chem-allene-terminals allene)) #'<)))
+    (should (= 2 (length (chem-allene-substituents allene))))
+    (let* ((terminals (chem-allene-terminals allene))
+           (substituents (chem-allene-substituents allene))
+           (pairs (cl-mapcar #'cons terminals substituents)))
+      (dolist (pair pairs)
+        (should (= 2 (length (cdr pair))))
+        (should (memq -1 (cdr pair))))
+      (should (equal '(3 4)
+                     (sort (cl-remove -1 (apply #'append substituents)) #'<))))
+    (should (equal '(1) (chem-allene-wedge-edges allene)))
+    (should-not (chem-allene-configuration allene))))
+
+(ert-deftest chem-ir-allene-negative-controls ()
+  "Molecules without allene centers leave every allene slot empty."
+  (dolist (file '("corpus/ethanol.mol" "corpus/benzene.mol"))
+    (let ((drawing (chem-ir-test--drawing-from-file file nil)))
+      (maphash (lambda (_ atom)
+                 (should-not (chem-atom-allene atom)))
+               (chem-drawing-atoms drawing)))))
+
+(ert-deftest chem-ir-allene-preserves-wedge ()
+  "Allene detection does not change the input wedge rendering."
+  (let* ((drawing (chem-ir-test--drawing-from-file "data/allene.mol" nil))
+         (output (chem-ir-test--render drawing)))
+    (should (string-match-p "<:" output))
+    (should (string-match-p "OH" output))))
+
+(ert-deftest chem-ir-allene-handle-ownership ()
+  "Allene collection leaves no Indigo references behind."
+  (let ((initial (indigo-count-references)))
+    (let* ((drawing (chem-ir-test--drawing-from-file "data/allene.mol" nil))
+           (allene (chem-ir-test--allene drawing 1)))
+      (should (integerp (chem-allene-center allene)))
+      (should (cl-every #'integerp (chem-allene-terminals allene))))
+    (should (= initial (indigo-count-references)))))
 
 (ert-deftest chem-ir-stereocenter-negative-controls ()
   "Molecules without stereocenters leave every atom slot empty."
@@ -580,6 +630,7 @@
       (should-not (memq slot drawing-slots)))
     (should-not (memq 'options atom-slots))
     (should (memq 'stereocenter atom-slots))
+    (should (memq 'allene atom-slots))
     (dolist (slot '(edge-id from to link-p))
       (should (memq slot node-slots)))
     (should-not (memq 'bond node-slots))

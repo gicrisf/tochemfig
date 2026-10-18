@@ -7,7 +7,7 @@
 ;; Version: 0.4.0
 ;; Keywords: chemistry mol smiles convenience languages
 ;; Homepage: https://github.com/gicrisf/tochemfig
-;; Package-Requires: ((emacs "29.1") (indigo "0.10.1") (transient "0.7.0"))
+;; Package-Requires: ((emacs "29.1") (indigo "0.13.0") (transient "0.7.0"))
 
 ;; This file is not part of GNU Emacs.
 

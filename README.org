@@ -14,7 +14,7 @@ into LaTeX or Org.
 * Requirements
 
 - Emacs 29.1+ with dynamic module support
-- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.10.1 or newer (0.11.1 recommended)
+- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.13.0 or newer
 - LaTeX with chemfig and TiKZ packages (for rendering output)
 
 The package generates chemfig code natively in Elisp using =emacs-indigo= for molecular structure handling. No Python or external commands required.

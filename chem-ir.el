@@ -42,6 +42,13 @@
   wedge-edge                     ; Canonical edge id, or nil
   configuration)                 ; +1/-1 wedge sign, or nil
 
+(cl-defstruct (chem-allene (:constructor chem-allene-create))
+  center                         ; Central atom index
+  terminals                      ; Two terminal atom indices
+  substituents                   ; ((SUB SUB) (SUB SUB)); -1 for implicit H
+  wedge-edges                    ; Canonical edge ids carrying wedge/hash
+  configuration)                 ; Reserved for a canonical axial sign
+
 (cl-defstruct (chem-atom (:constructor chem-atom-create))
   idx                            ; Integer index (0-based)
   x y                            ; 2D coordinates
@@ -54,7 +61,8 @@
   label                          ; Display label, or nil for a hidden carbon
   number                         ; 1-based number when numbering is requested
   marker                         ; Marker string
-  stereocenter)                  ; `chem-stereocenter', or nil
+  stereocenter                   ; `chem-stereocenter', or nil
+  allene)                        ; `chem-allene', or nil
 
 (cl-defstruct (chem-node (:constructor chem-node-create))
   edge-id                        ; Canonical edge id, or nil for root/synthetic links
