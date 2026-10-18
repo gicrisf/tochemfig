@@ -661,7 +661,7 @@ and `alternating' draws dashed inner lines."
   (let* ((bounds (chem-exp-svg--bounds state))
          (scale (max (chem-exp-svg--option state :svg-scale) 1e-6))
          (font-size (chem-exp-svg--option state :svg-font-size))
-         (margin (/ (* 2.0 font-size) scale)))
+         (margin (/ (* 3.0 font-size) scale)))
     (list (- (nth 0 bounds) margin)
           (- (nth 1 bounds) margin)
           (+ (nth 2 bounds) margin)
@@ -839,6 +839,59 @@ and `alternating' draws dashed inner lines."
      (chem-exp-svg--line state
                          (car point-a) (cdr point-a)
                          (car point-b) (cdr point-b)))))
+
+(defun chem-exp-svg--stereo-label-text (state center)
+  "Return the stereochemistry label text for CENTER."
+  (let* ((cip (and (chem-exp-svg--option state :svg-show-cip-labels)
+                   (chem-stereocenter-cip center)))
+         (type (chem-stereocenter-type center))
+         (group (or (chem-stereocenter-group center) 0))
+         (cip-text (and (memq cip '(:R :S :r :s))
+                        (substring (symbol-name cip) 1)))
+         (enhanced-text
+          (and (chem-exp-svg--option state :svg-show-enhanced-stereo)
+               (pcase type
+                 (:and (format "&%d" group))
+                 (:or (format "or%d" group))
+                 (:either (format "e%d" group))
+                 (_ nil)))))
+    (cond
+     ((and cip-text enhanced-text)
+      (concat cip-text ", " enhanced-text))
+     (cip-text cip-text)
+     (enhanced-text enhanced-text)
+     (t nil))))
+
+(defun chem-exp-svg--stereo-label-svg (state atom)
+  "Return ATOM's stereochemistry label SVG."
+  (let ((center (chem-atom-stereocenter atom)))
+    (when center
+      (let ((text (chem-exp-svg--stereo-label-text state center)))
+        (when text
+          (let* ((point (chem-exp-svg--point state
+                                            (chem-atom-x atom)
+                                            (chem-atom-y atom)))
+                 (font-size (chem-exp-svg--option state :svg-font-size))
+                 (offset (* 0.75 font-size))
+                 (x (+ (car point) offset))
+                 (y (- (cdr point) offset)))
+            (format "<text class=\"stereo-label\" x=\"%s\" y=\"%s\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"start\" dominant-baseline=\"central\">%s</text>\n"
+                    (chem-exp-svg--number x)
+                    (chem-exp-svg--number y)
+                    (chem-exp-svg--escape
+                     (chem-exp-svg--theme-foreground
+                      (chem-exp-svg-state-theme state)))
+                    (chem-exp-svg--escape
+                     (chem-exp-svg--option state :svg-font-family))
+                    (chem-exp-svg--number font-size)
+                    (chem-exp-svg--escape text))))))))
+
+(defun chem-exp-svg--stereo-labels (state)
+  "Return the stereochemistry label SVG for STATE."
+  (mapconcat (lambda (atom)
+               (or (chem-exp-svg--stereo-label-svg state atom) ""))
+             (chem-exp-svg--sorted-atoms (chem-exp-svg-state-drawing state))
+             ""))
 
 ;;; Rings
 
@@ -1022,10 +1075,6 @@ midpoint, breaking ties by ring id."
                   (chem-exp-svg--number (nth 3 viewbox))
                   (chem-exp-svg--escape color)))
       "")))
-
-(defun chem-exp-svg--stereo-labels (_state)
-  "Return the stereochemistry label SVG."
-  "")
 
 (defun chem-exp-svg--masked-content (state)
   "Return STATE's masked bond and ring content."

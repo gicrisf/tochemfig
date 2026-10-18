@@ -25,7 +25,10 @@ and ring-record implementation.
   inner lines, ring-side double bonds, and fused/bridged fallbacks.
 - Phase 4 is implemented on this branch: filled and hashed wedges, either
   fallback, `:svg-show-stereo`, configuration-derived wedge direction, and
-  allene input-wedge preservation.  The suite currently has 452 tests.
+  allene input-wedge preservation.
+- Phase 5 is implemented on this branch: optional CIP and enhanced-stereo
+  labels with combined formatting and XML escaping.  The suite currently has
+  460 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -1002,6 +1005,8 @@ Status: complete.
 
 Commit: `add stereochemistry labels to svg`
 
+Status: complete.
+
 - CIP labels (`R`, `S`, `r`, `s`) behind `:svg-show-cip-labels`.
 - Enhanced-stereo labels (`&N`, `orN`, `eN`) behind
   `:svg-show-enhanced-stereo`.
@@ -1087,18 +1092,16 @@ Commit: `validate and document svg rendering`
 2. Should small molecules use golden SVG strings, or structural assertions
    only?  Recommended: structural assertions plus a small golden for ethanol
    and benzene.
-3. Should CIP/enhanced-stereo labels be in the first SVG release or a follow-up
-   commit?  Recommended: follow-up within the SVG branch, default off.
-4. Should `chem-insert-image` be part of the first SVG milestone or the Org
+3. Should `chem-insert-image` be part of the first SVG milestone or the Org
    milestone?  Recommended: a minimal version after the renderer works.
-5. Should isotope labels be added when `emacs-indigo` exposes an isotope
+4. Should isotope labels be added when `emacs-indigo` exposes an isotope
    accessor?  Defer until the API exists.
-6. Should multiple SVGs share IDs?  Recommend content-derived prefixes for
+5. Should multiple SVGs share IDs?  Recommend content-derived prefixes for
    inserted images; fixed IDs are acceptable for a single rendered string.
-7. Should `chem-exp-svg-themes` participate in the generic option
+6. Should `chem-exp-svg-themes` participate in the generic option
    describe/save/reload surface, or remain a palette defcustom edited through
    `customize`?  Recommended: customize-only for v1.
-8. Should custom themes be selectable only by name (recommended) or also by an
+7. Should custom themes be selectable only by name (recommended) or also by an
    inline `:svg-themes` override?  Recommend name-only for v1; add inline
    overrides later if needed.
 

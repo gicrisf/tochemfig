@@ -412,6 +412,79 @@
     (should (or (string-match-p "<polygon " svg)
                 (> (chem-exp-svg-test--count "<line " svg) 4)))))
 
+(ert-deftest chem-exp-svg-cip-labels ()
+  "CIP labels render only when enabled."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O" '(("svg-show-cip-labels" . t)))))
+    (should (= 1 (chem-exp-svg-test--count "class=\"stereo-label\"" svg)))
+    (should (string-match-p ">S</text>" svg)))
+  (let ((svg (chem-exp-svg-test--render "N[C@@H](C)C(=O)O")))
+    (should (= 0 (chem-exp-svg-test--count "class=\"stereo-label\"" svg)))))
+
+(ert-deftest chem-exp-svg-cip-case ()
+  "Lowercase CIP descriptors keep their case."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("svg-show-cip-labels" . t))))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options))
+         (center (chem-atom-stereocenter
+                  (gethash 1 (chem-drawing-atoms drawing)))))
+    (setf (chem-stereocenter-cip center) :r)
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (string-match-p ">r</text>" svg)))))
+
+(ert-deftest chem-exp-svg-ez-cip-ignored ()
+  "Bond CIP descriptors are not rendered as stereocenter labels."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options '(("svg-show-cip-labels" . t))))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options))
+         (center (chem-atom-stereocenter
+                  (gethash 1 (chem-drawing-atoms drawing)))))
+    (setf (chem-stereocenter-cip center) :E)
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (= 0 (chem-exp-svg-test--count "class=\"stereo-label\"" svg))))))
+
+(ert-deftest chem-exp-svg-enhanced-and ()
+  "AND enhanced stereo labels are XML-escaped."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O |&1:1|"
+              '(("svg-show-enhanced-stereo" . t)))))
+    (should (string-match-p ">&amp;1</text>" svg))))
+
+(ert-deftest chem-exp-svg-enhanced-or ()
+  "OR enhanced stereo labels are rendered."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O |o1:1|"
+              '(("svg-show-enhanced-stereo" . t)))))
+    (should (string-match-p ">or1</text>" svg))))
+
+(ert-deftest chem-exp-svg-enhanced-either ()
+  "EITHER enhanced stereo labels are rendered."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options
+                   '(("svg-show-enhanced-stereo" . t))))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options))
+         (center (chem-atom-stereocenter
+                  (gethash 1 (chem-drawing-atoms drawing)))))
+    (setf (chem-stereocenter-type center) :either)
+    (setf (chem-stereocenter-group center) 2)
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (string-match-p ">e2</text>" svg)))))
+
+(ert-deftest chem-exp-svg-enhanced-abs ()
+  "ABS enhanced stereo produces no group label."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O |a:1|"
+              '(("svg-show-enhanced-stereo" . t)))))
+    (should (= 0 (chem-exp-svg-test--count "class=\"stereo-label\"" svg)))))
+
+(ert-deftest chem-exp-svg-combined-stereo-labels ()
+  "CIP and enhanced-stereo labels combine deterministically."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O |&1:1|"
+              '(("svg-show-cip-labels" . t)
+                ("svg-show-enhanced-stereo" . t)))))
+    (should (string-match-p ">S, &amp;1</text>" svg))))
+
 (ert-deftest chem-exp-svg-link-bonds ()
   "Link bonds are not drawn."
   (let ((svg (chem-exp-svg-test--render "[Na+].[Cl-]")))
