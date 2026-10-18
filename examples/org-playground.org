@@ -1,0 +1,330 @@
+#+title: chem-mode Org playground
+#+subtitle: SVG exporter and Org Babel tour
+#+startup: inlineimages
+#+options: toc:3
+
+#+begin_quote
+This file exercises the SVG exporter and the Org Babel integration.
+
+*Prerequisites*
+
+- Emacs 29.1+ with SVG image support.
+- `chem-mode` from the `svg` branch on the load path.
+- `emacs-indigo` 0.13.0 or newer, with its dynamic module installed.
+- Org Babel integration loaded in your config:
+  #+begin_example emacs-lisp
+  (after! org
+    (require 'chem-babel)
+    (add-to-list 'org-babel-load-languages '(chem-smiles . t))
+    (add-to-list 'org-babel-load-languages '(chem-mol . t)))
+  #+end_example
+
+*How to use this file*
+
+1. Save this file somewhere you can write (for example `~/org/chem-playground.org`).
+2. Put point in a source block and press =C-c C-c= to execute it.
+3. Toggle inline images with =C-c C-x C-v= if they do not appear automatically.
+4. Re-run everything with =M-x chem-org-regenerate-buffer=.
+5. Remove orphaned images with =M-x chem-org-clean-cache=.
+
+SVG blocks require =:results file=.  The SVG renderer and =:exports results=
+are the defaults.  Chemfig blocks require =:results value= or =:results raw=.
+
+Generated images are written to =.chem-cache/ next to this file and linked
+relative to it.  Add =.chem-cache/= to your project's ignore rules if needed.
+#+end_quote
+
+* Setup check
+
+Run this block once.  It should report =t= for =chem-babel= and =chem-smiles=.
+
+#+begin_src emacs-lisp :results value replace
+(list :chem-babel (featurep 'chem-babel)
+      :chem-smiles (fboundp 'org-babel-execute:chem-smiles)
+      :chem-mol (fboundp 'org-babel-execute:chem-mol)
+      :indigo-version (and (fboundp 'indigo-version)
+                           (ignore-errors (indigo-version))))
+#+end_src
+
+* Basic SVG
+
+** Ethanol
+
+#+begin_src chem-smiles :results file
+CCO
+#+end_src
+
+** Caffeine
+
+#+begin_src chem-smiles :results file :svg-width 640
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+#+end_src
+
+* Canvas and themes
+
+** Dark theme with explicit output size and spacing
+
+#+begin_src chem-smiles :results file :svg-theme dark :svg-width 640 :svg-height 480 :svg-padding 16 :svg-scale 36 :svg-font-size 12 :svg-bond-spacing 6 :svg-bond-thickness 1.2
+c1ccccc1
+#+end_src
+
+** Light theme with a different font
+
+#+begin_src chem-smiles :results file :svg-theme light :svg-font-family "Helvetica" :svg-font-size 14
+CCO
+#+end_src
+
+Notes:
+
+- =:svg-width= and =:svg-height= are output dimensions.
+- =:svg-padding= is in final SVG units.
+- =:svg-scale= maps IR coordinates to SVG units.
+- Background is owned by the theme; there is no =:svg-background= header.
+
+* Aromatic display
+
+** Auto
+
+Regular aromatic rings use circles when eligible.
+
+#+begin_src chem-smiles :results file :aromatic auto
+c1ccccc1
+#+end_src
+
+** Circles
+
+#+begin_src chem-smiles :results file :aromatic circle
+c1ccccc1
+#+end_src
+
+** Alternating dashed inner lines
+
+#+begin_src chem-smiles :results file :aromatic alternating
+c1ccccc1
+#+end_src
+
+** Naphthalene with circles
+
+#+begin_src chem-smiles :results file :aromatic circle
+c1ccc2ccccc2c1
+#+end_src
+
+** Naphthalene with alternating bonds
+
+#+begin_src chem-smiles :results file :aromatic alternating
+c1ccc2ccccc2c1
+#+end_src
+
+* Rings and bond geometry
+
+** Ring double bond on the ring side
+
+#+begin_src chem-smiles :results file :svg-bond-spacing 6 :svg-bond-thickness 1.2 :svg-short-bond-length 0.7
+C1CC=CC1
+#+end_src
+
+** Cross bond, rotation, and flips
+
+#+begin_src chem-smiles :results file :cross-bond 1-2 :angle -30 :flip t :flop t
+c1ccccc1
+#+end_src
+
+** Bond scaling
+
+#+begin_src chem-smiles :results file :bond-scale scale :bond-stretch 1.4
+CCCCCC
+#+end_src
+
+** Explicit hydrogens
+
+#+begin_src chem-smiles :results file :hydrogens add
+CCO
+#+end_src
+
+* Stereochemistry drawing
+
+** Alanine: solid wedge
+
+#+begin_src chem-smiles :results file
+N[C@@H](C)C(=O)O
+#+end_src
+
+** Lactic acid: hashed wedge
+
+#+begin_src chem-smiles :results file
+C[C@H](O)C(=O)O
+#+end_src
+
+** Two stereocenters
+
+#+begin_src chem-smiles :results file
+C[C@H](O)[C@@H](C)O
+#+end_src
+
+** Disable stereo drawing
+
+The wedge edge becomes a plain single bond.
+
+#+begin_src chem-smiles :results file :svg-show-stereo nil
+N[C@@H](C)C(=O)O
+#+end_src
+
+** Allene input wedge from MOL
+
+Allene centers are detected separately.  The input wedge is preserved, but no
+aR/aS label is produced.
+
+#+begin_src chem-mol :results file
+allene1
+  -INDIGO-06131119232D
+
+  5  4  0  0  0  0  0  0  0  0999 V2000
+    0.3204   -3.2539    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1850   -3.2219    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9697   -3.2179    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1398   -2.5210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3655   -3.8955    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  2  0  0  0  0
+  1  4  1  1  0  0  0
+  3  5  1  0  0  0  0
+  1  2  2  0  0  0  0
+M  END
+#+end_src
+
+* Stereochemistry labels
+
+** CIP labels
+
+#+begin_src chem-smiles :results file :svg-show-cip-labels t
+N[C@@H](C)C(=O)O
+#+end_src
+
+** Enhanced stereo: AND
+
+#+begin_src chem-smiles :results file :svg-show-enhanced-stereo t
+N[C@@H](C)C(=O)O |&1:1|
+#+end_src
+
+** Enhanced stereo: OR
+
+#+begin_src chem-smiles :results file :svg-show-enhanced-stereo t
+N[C@@H](C)C(=O)O |o1:1|
+#+end_src
+
+** Combined CIP and enhanced stereo
+
+#+begin_src chem-smiles :results file :svg-show-cip-labels t :svg-show-enhanced-stereo t
+N[C@@H](C)C(=O)O |&1:1|
+#+end_src
+
+Notes:
+
+- CIP labels render only for =:R=, =:S=, =:r=, and =:s=.
+- =:E= and =:Z= bond CIP descriptors are not rendered.
+- The EITHER format (=eN=) is supported by the formatter, but Indigo's SMILES
+  reader reports the fixture above as ABS.  The renderer tests cover =eN=.
+- Labels are placed above-right of the stereocenter in v1; collision avoidance
+  is deferred.
+
+* Atom labels and annotations
+
+** Charged atom
+
+#+begin_src chem-smiles :results file
+[NH4+]
+#+end_src
+
+** Radical
+
+#+begin_src chem-smiles :results file
+[CH3]
+#+end_src
+
+** Atom numbers
+
+#+begin_src chem-smiles :results file :atom-numbers t
+CCO
+#+end_src
+
+** Carbon and methyl labels
+
+#+begin_src chem-smiles :results file :show-carbons t :show-methyls t
+CC(C)C
+#+end_src
+
+** Markers
+
+Markers become stable SVG IDs, including on hidden atoms.  Open the generated
+SVG source to inspect them.
+
+#+begin_src chem-smiles :results file :markers a
+CCO
+#+end_src
+
+* Input modes and chemfig
+
+** MOL input
+
+#+begin_src chem-mol :results file
+ethanol
+  chem-mode
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -0.8660    0.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8660    0.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+#+end_src
+
+** Chemfig source, terse and relative angles
+
+#+begin_src chem-smiles :renderer chemfig :results value :chemfig-terse t :chemfig-relative-angles t
+CCO
+#+end_src
+
+** Chemfig source wrapped for LaTeX
+
+#+begin_src chem-smiles :renderer chemfig :results value :wrap latex :chemfig-wrap t :chemfig-indent 2
+CCO
+#+end_src
+
+** Chemfig fancy bonds
+
+#+begin_src chem-smiles :renderer chemfig :results value :fancy-bonds t :chemfig-indent 2
+CC(=O)O
+#+end_src
+
+** Chemfig sub-molecule
+
+#+begin_src chem-smiles :renderer chemfig :results value :chemfig-submol "mol" :entry-atom 1 :exit-atom 3
+CCO
+#+end_src
+
+** Chemfig legacy Lewis radicals
+
+#+begin_src chem-smiles :renderer chemfig :results value :chemfig-legacy-lewis t
+[CH3]
+#+end_src
+
+* One-off images and cache commands
+
+- =M-x chem-insert-image= (=C-c m i= when =chem-mode= is active) writes a
+  one-off image link using =chem-image-directory=.  It is not the reproducible
+  Org Babel path.
+- =M-x chem-org-regenerate-buffer= re-executes every =chem-smiles= and
+  =chem-mol= block in the buffer.
+- =M-x chem-org-clean-cache= deletes generated SVGs that are not linked from
+  the current buffer.
+- Export this file to HTML with =C-c C-e h h=.  With the default
+  =:exports results=, the SVG links are included as images.
+- For LaTeX, use the chemfig renderer with =:results value :wrap latex=.
+
+Known v1 limits:
+
+- SVG blocks require an explicit =:results file=.
+- No E/Z labels, allene aR/aS labels, or isotope labels.
+- Text metrics are approximate; stereo labels do not avoid collisions yet.
+- SVG IDs are fixed; one rendered SVG per image file is the intended use.
+- Org Babel sessions and asynchronous execution are not supported.

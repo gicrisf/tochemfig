@@ -37,6 +37,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   =chem-org-clean-cache=.
 - =test/chem-babel-test.el=: Org block execution, caching, regeneration,
   cleanup, and HTML export tests.
+- =examples/org-playground.org=: an executable tour of SVG options,
+  stereochemistry, aromatic display, MOL/chemfig input, and Org caching.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected

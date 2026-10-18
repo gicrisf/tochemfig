@@ -12,3 +12,6 @@ build
 
 # Local validation corpora
 /studies
+
+# Generated Org Babel SVG cache
+.chem-cache/

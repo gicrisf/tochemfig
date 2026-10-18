@@ -860,6 +860,8 @@ Transient menu (`chem-dispatch.el`):
 
 Org Babel integration is implemented in `chem-babel.el`; see
 `chem-mode-plans/org.md` for the block contract and cache behavior.
+`examples/org-playground.org` is the executable tour of the finished
+features.
 
 ## Testing
 

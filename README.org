@@ -284,6 +284,9 @@ Useful commands:
 - =chem-org-clean-cache= removes generated SVGs not linked in the current
   buffer.
 
+A complete executable tour is in
+[[file:examples/org-playground.org][examples/org-playground.org]].
+
 ** Migrating from tochemfig
 
 =chem-mode= makes a clean break: the old =tochemfig= commands and variables
