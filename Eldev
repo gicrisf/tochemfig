@@ -21,7 +21,8 @@
         "chem-exp-chemfig-mappings.el"
         "chem-exp-chemfig.el"
         "chem-exp-svg.el"
-        "chem-dispatch.el"))
+        "chem-dispatch.el"
+        "chem-babel.el"))
 
 (setf eldev-test-fileset
       '("test/chem-parity-test.el"
@@ -29,4 +30,5 @@
         "test/chem-mode-test.el"
         "test/chem-mode-ui-test.el"
         "test/chem-graph-test.el"
-        "test/chem-exp-svg-test.el"))
+        "test/chem-exp-svg-test.el"
+        "test/chem-babel-test.el"))

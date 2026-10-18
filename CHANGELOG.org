@@ -29,6 +29,14 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   and an /Insert image/ action.
 - Generic exporter option merging in =chem-options.el=.
 - A 1000-molecule SVG corpus smoke test in =test/chem-exp-svg-test.el=.
+- =chem-babel.el=: optional Org Babel support for =chem-smiles= and
+  =chem-mol=, with deterministic =.chem-cache= SVG results, header
+  validation, and SVG/chemfig result handling.
+- =chem-from-mol-string= for MOL text loaded directly from Org blocks.
+- =chem-babel-cache-directory=, =chem-org-regenerate-buffer=, and
+  =chem-org-clean-cache=.
+- =test/chem-babel-test.el=: Org block execution, caching, regeneration,
+  cleanup, and HTML export tests.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -36,6 +44,12 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - The mode keymap adds =C-c m i= for =chem-insert-image=.
 - =chem-mode--generate= loads the selected exporter before building options,
   so exporter-specific defaults are always available.
+- Org Babel blocks ignore ambient options and use standard defcustom values.
+  They default to the SVG renderer and =:exports results=; SVG blocks require
+  an explicit =:results file=.
+- Image file names use SHA-256 instead of SHA-1.
+- =chem--build-options= accepts an exporter and a standard-values flag, and
+  =chem-from-mol-string= handles MOL text directly.
 - Indigo ingestion now lives in =chem-indigo.el=; the drawing IR contains no
   Indigo handle.
 - Common drawing decisions (labels, numbering, bond decoration, ring display)

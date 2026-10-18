@@ -218,19 +218,21 @@ OVERRIDES is an alist of option overrides."
 
 (defun chem-mode--image-name (svg)
   "Return a deterministic file name for SVG content."
-  (format "chem-%s.svg" (secure-hash 'sha1 svg)))
+  (format "chem-%s.svg" (secure-hash 'sha256 svg)))
 
-(defun chem-mode--image-path (svg)
-  "Return the image path for SVG content."
-  (expand-file-name (chem-mode--image-name svg) chem-image-directory))
+(defun chem-mode--image-path (svg &optional directory)
+  "Return the image path for SVG content in DIRECTORY."
+  (expand-file-name (chem-mode--image-name svg)
+                    (or directory chem-image-directory)))
 
-(defun chem-mode--write-image (svg)
-  "Write SVG to `chem-image-directory' and return the path."
-  (make-directory chem-image-directory t)
-  (let ((path (chem-mode--image-path svg))
-        (coding-system-for-write 'utf-8-unix))
-    (write-region svg nil path nil 'silent)
-    path))
+(defun chem-mode--write-image (svg &optional directory)
+  "Write SVG to DIRECTORY or `chem-image-directory' and return the path."
+  (let ((directory (or directory chem-image-directory)))
+    (make-directory directory t)
+    (let ((path (chem-mode--image-path svg directory))
+          (coding-system-for-write 'utf-8-unix))
+      (write-region svg nil path nil 'silent)
+      path)))
 
 (defun chem-mode--image-link (path)
   "Return a buffer-appropriate link to PATH."

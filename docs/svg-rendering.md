@@ -32,14 +32,17 @@ and ring-record implementation.
   UTF-8 image files, Org/Markdown links, exporter-aware transient groups, and
   the SVG theme selector.
 - Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
-  and documentation updates.  The suite currently has 468 tests.
+  and documentation updates.
+- Org Babel integration is implemented in `chem-babel.el`; see
+  `chem-mode-plans/org.md`.  The suite currently has 485 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
 - The chemfig exporter intentionally does not render CIP or enhanced-stereo
   labels.  SVG is the place where those labels can be rendered.
-- Org Babel integration is a separate plan.  This document covers the SVG
-  renderer and the minimal exporter/UI hooks needed to use it.
+- Org Babel integration lives in the optional `chem-babel.el`; core files do
+  not require Org.  This document covers the SVG renderer and the exporter/UI
+  hooks used by both Org blocks and interactive commands.
 - Do not change chemfig output as part of this work.
 - This revision settles the SVG option shape:
   - per-option defaults are `chem-exp-svg-default-*` variables;
@@ -58,7 +61,8 @@ and ring-record implementation.
 - SVG IDs are fixed, so multiple SVGs on one page may share IDs.
 - `chem-exp-svg-themes` is a palette defcustom; it is not part of the
   `chem-save-options` / `chem-reload-options` surface.
-- Org Babel integration is still a separate phase.
+- Org Babel cache cleanup only considers links in the current buffer; shared
+  `chem-babel-cache-directory` values need care.
 
 ## Goals
 
@@ -86,7 +90,7 @@ and ring-record implementation.
 - No TeX, Node, browser, or external converter at render time.
 - No changes to the chemfig exporter or its goldens.
 - No new SVG-specific fields in the IR.
-- No Org Babel backend in this phase; see the Org plan.
+- Org Babel is implemented separately in `chem-babel.el`; see the Org plan.
 - No best-wedge edge selection.  SVG draws the input wedge edge, but derives
   its up/down direction from the stored stereocenter configuration and current
   geometry.
@@ -252,6 +256,7 @@ per-render results if profiling shows a problem.
 - Byte compilation: `eldev compile`
 - Module-free compile: `tools/check-module-free-compile.sh`
 - SVG exporter tests: `test/chem-exp-svg-test.el`
+- Org Babel tests: `test/chem-babel-test.el`
 - SVG corpus smoke test: included, skips when the studies corpus is absent
 - Studies corpus parity: `tools/validate-corpus.el` compare
 - Studies graph check: `tools/validate-corpus.el` graph
@@ -853,8 +858,8 @@ Transient menu (`chem-dispatch.el`):
 - UI tests cover option resolution, buffer-local defaults, and group
   visibility.
 
-Org Babel is a separate phase.  Do not combine it with the first SVG renderer
-commit.
+Org Babel integration is implemented in `chem-babel.el`; see
+`chem-mode-plans/org.md` for the block contract and cache behavior.
 
 ## Testing
 
@@ -1093,8 +1098,8 @@ Status: complete.
    dashed inner lines.
 9. **Cross bonds:** draw after normal bonds and do not rely on chemfig phantom
    nodes.
-10. **Scope creep:** Org Babel, E/Z labels, allene aR/aS, best-wedge edge
-    selection, and chemfig changes are separate features.
+10. **Scope creep:** Org Babel sessions/sexpr, E/Z labels, allene aR/aS,
+    best-wedge edge selection, and chemfig changes are separate features.
 11. **Font/Unicode support:** test subscripts and superscripts with the default
     font; provide a tspan fallback only if needed.
 12. **Determinism:** hash-table order and raw float printing are common
@@ -1232,6 +1237,8 @@ entry point small.
   stereo behavior; do not copy its tree traversal into SVG.
 - `chem-dispatch.el` — transient menu, including the exporter-aware groups and
   theme selector.
+- `chem-babel.el` — optional Org Babel integration; see
+  `chem-mode-plans/org.md`.
 - `test/chem-exp-chemfig-parser.el` — test helper for the chemfig output; not
   used by SVG.
 - `svg-plans/` — local historical design notes.  Use them for ideas, but verify

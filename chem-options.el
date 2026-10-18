@@ -272,23 +272,36 @@ Without effect when `chem-exp-chemfig-default-terse' is non-nil."
 
 ;;; Option construction
 
-(defun chem--option-specs-for-exporter ()
-  "Return the option specs for the selected exporter."
+(defun chem--option-specs-for-exporter (&optional exporter)
+  "Return the option specs for EXPORTER or the selected exporter."
   (append chem-common-option-specs
           (chem-exporter-option-specs
-           (if (boundp 'chem-default-exporter)
-               chem-default-exporter
-             'chemfig))))
+           (or exporter
+               (if (boundp 'chem-default-exporter)
+                   chem-default-exporter
+                 'chemfig)))))
 
-(defun chem--build-options (overrides)
+(defun chem--standard-option-value (variable)
+  "Return VARIABLE's standard defcustom value."
+  (let ((standard (get variable 'standard-value)))
+    (if standard
+        (eval (car standard) t)
+      (default-value variable))))
+
+(defun chem--build-options (overrides &optional exporter standard)
   "Build the option plist from defaults and OVERRIDES alist.
-OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t))."
+OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t)).
+EXPORTER selects the option specs.  When STANDARD is non-nil, use each
+option's standard value instead of its current value."
   (let ((opts (list :angle-round 1 :bond-round 3 :quadrant-tolerance 0.1)))
-    (dolist (spec (chem--option-specs-for-exporter))
+    (dolist (spec (chem--option-specs-for-exporter exporter))
       (let ((key (plist-get spec :key))
             (variable (plist-get spec :variable)))
         (when (and key variable)
-          (setq opts (plist-put opts key (symbol-value variable))))))
+          (setq opts (plist-put opts key
+                                (if standard
+                                    (chem--standard-option-value variable)
+                                  (symbol-value variable)))))))
     (dolist (override overrides)
       (let ((key (intern (concat ":" (car override))))
             (val (cdr override)))

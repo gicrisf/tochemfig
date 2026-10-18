@@ -230,6 +230,60 @@ and the selected theme.  Themes are centralized in =chem-exp-svg-themes=
 (=light= and =dark= by default); add or customize an entry there and select it
 with =chem-exp-svg-default-theme=.
 
+** Org Babel
+
+Org support is optional; the core library does not require Org.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org
+  (require 'chem-babel))
+#+end_src
+
+Write a SMILES in a =chem-smiles= block and request a file result:
+
+#+begin_example
+#+begin_src chem-smiles :results file
+CCO
+#+end_src
+#+end_example
+
+Evaluate with =C-c C-c=.  The result is a deterministic file link:
+
+#+begin_example
+#+RESULTS:
+[[file:.chem-cache/chem-<sha256>.svg]]
+#+end_example
+
+The SVG renderer is the default, and =:exports results= is the default, so
+HTML export includes the image.  Toggle inline preview with
+=org-toggle-inline-images= (=C-c C-x C-v=).
+
+SVG blocks require =:results file=.  Header options can be added directly:
+
+#+begin_example
+#+begin_src chem-smiles :results file :svg-theme dark :svg-width 640 :aromatic circle
+c1ccccc1
+#+end_src
+#+end_example
+
+Use =chem-mol= for MOL text.  For chemfig source:
+
+#+begin_example
+#+begin_src chem-smiles :renderer chemfig :results value :wrap latex
+CCO
+#+end_src
+#+end_example
+
+Generated images live in =.chem-cache/= next to the Org file by default.
+Customize =chem-babel-cache-directory= to change that; add =.chem-cache/= to
+your project's ignore file if appropriate.
+
+Useful commands:
+
+- =chem-org-regenerate-buffer= re-executes every chem block in the buffer.
+- =chem-org-clean-cache= removes generated SVGs not linked in the current
+  buffer.
+
 ** Migrating from tochemfig
 
 =chem-mode= makes a clean break: the old =tochemfig= commands and variables
@@ -300,6 +354,9 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 - [X] *Generate chemfig code from MOL files*
 - [X] *Render standalone SVG* with deterministic output
 - [X] *Insert SVG images* with Org/Markdown links
+- [X] *Org Babel blocks* (=chem-smiles=, =chem-mol=) with deterministic SVG
+  file results
+- [X] Org cache regeneration and cleanup commands
 - [X] Aromatic circles or alternating bonds, ring-side double bonds, and
   fused-ring fallbacks in SVG
 - [X] Wedges, hashes, either fallback, and optional CIP/enhanced-stereo labels
@@ -334,7 +391,7 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 * Testing
 
 The chemfig generator is a native port of the reference =mol2chemfig=
-implementation, and the SVG exporter shares the same IR. Four layers of tests
+implementation, and the SVG exporter shares the same IR. Five layers of tests
 guard against regressions:
 
 1. *Parity*: ~330 ERT tests compare output against golden files produced by
@@ -357,8 +414,11 @@ guard against regressions:
 
 4. *SVG exporter*: =test/chem-exp-svg-test.el= covers options/themes, bonds,
    rings, stereochemistry, labels, UI integration, and a 1000-molecule corpus
-   smoke test (skipped when the studies corpus is absent).  The full ERT suite
-   currently has 468 tests.
+   smoke test (skipped when the studies corpus is absent).
+
+5. *Org Babel*: =test/chem-babel-test.el= covers block execution, deterministic
+   caching, header validation, regeneration, cache cleanup, and HTML export.
+   The full ERT suite currently has 485 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

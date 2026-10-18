@@ -683,6 +683,13 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
   (indigo-with-molecule (mol smiles)
     (chem-from-molecule mol options)))
 
+(defun chem-from-mol-string (mol-string options)
+  "Build a drawing from MOL text with OPTIONS."
+  (when (or (null mol-string) (string-empty-p (string-trim mol-string)))
+    (user-error "Empty MOL input"))
+  (indigo-with-molecule (molecule mol-string)
+    (chem-from-molecule molecule options)))
+
 (defun chem-from-file (path options)
   "Build a drawing from the molecule file at PATH with OPTIONS."
   (indigo-with-mol-file (mol path)
