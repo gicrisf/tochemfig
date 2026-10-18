@@ -22,8 +22,10 @@ and ring-record implementation.
   atom labels, charges, radicals, atom numbers, markers, masks, text
   direction, and theme backgrounds.
 - Phase 3 is implemented on this branch: aromatic circles, alternating dashed
-  inner lines, ring-side double bonds, and fused/bridged fallbacks.  The suite
-  currently has 442 tests.
+  inner lines, ring-side double bonds, and fused/bridged fallbacks.
+- Phase 4 is implemented on this branch: filled and hashed wedges, either
+  fallback, `:svg-show-stereo`, configuration-derived wedge direction, and
+  allene input-wedge preservation.  The suite currently has 452 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -987,6 +989,8 @@ Status: complete.
 ### Phase 4 — stereochemistry drawing
 
 Commit: `render stereochemistry in svg`
+
+Status: complete.
 
 - Filled wedges, hashed wedges, and either fallback.
 - `:svg-show-stereo` option.

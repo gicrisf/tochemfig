@@ -18,6 +18,7 @@
 
 (require 'cl-lib)
 (require 'chem-ir)
+(require 'chem-geometry)
 (require 'chem-export)
 (require 'chem-options)
 
@@ -561,52 +562,56 @@ and `alternating' draws dashed inner lines."
          (short-fraction
           (chem-exp-svg--option state :svg-short-bond-length))
          (ring (chem-exp-svg--edge-ring state edge))
+         (stereo (chem-edge-stereo edge))
+         (show-stereo (chem-exp-svg--option state :svg-show-stereo))
          (lines
-          (pcase (chem-edge-order edge)
-            (:double
-             (let ((offset
-                    (and ring
-                         (chem-exp-svg--ring-normal-offset
-                          state edge ring (/ spacing 2.0)))))
-               (if offset
-                   (concat
-                    (chem-exp-svg--line state
-                                        (car point-a) (cdr point-a)
-                                        (car point-b) (cdr point-b))
-                    (chem-exp-svg--ring-inner-line
-                     state point-a point-b short-fraction offset nil))
-                 (let ((half (/ spacing 2.0)))
-                   (chem-exp-svg--parallel-lines
-                    state point-a point-b (list (- half) half))))))
-            (:triple
-             (let ((offset (/ spacing 1.5)))
-               (chem-exp-svg--parallel-lines
-                state point-a point-b (list (- offset) 0.0 offset))))
-            (:aromatic
-             (if (eq 'alternating
-                     (chem-exp-svg--edge-aromatic-display state edge))
-                 (let ((offset
-                        (and ring
-                             (chem-exp-svg--ring-normal-offset
-                              state edge ring (/ spacing 2.0)))))
-                   (if offset
-                       (concat
-                        (chem-exp-svg--line state
-                                            (car point-a) (cdr point-a)
-                                            (car point-b) (cdr point-b))
-                        (chem-exp-svg--ring-inner-line
-                         state point-a point-b short-fraction offset
-                         (chem-exp-svg--dash-pattern state)))
-                     (chem-exp-svg--line state
-                                         (car point-a) (cdr point-a)
-                                         (car point-b) (cdr point-b))))
+          (if (and show-stereo (memq stereo '(:up :down :either)))
+              (chem-exp-svg--stereo-edge-svg state edge point-a point-b)
+            (pcase (chem-edge-order edge)
+              (:double
+               (let ((offset
+                      (and ring
+                           (chem-exp-svg--ring-normal-offset
+                            state edge ring (/ spacing 2.0)))))
+                 (if offset
+                     (concat
+                      (chem-exp-svg--line state
+                                          (car point-a) (cdr point-a)
+                                          (car point-b) (cdr point-b))
+                      (chem-exp-svg--ring-inner-line
+                       state point-a point-b short-fraction offset nil))
+                   (let ((half (/ spacing 2.0)))
+                     (chem-exp-svg--parallel-lines
+                      state point-a point-b (list (- half) half))))))
+              (:triple
+               (let ((offset (/ spacing 1.5)))
+                 (chem-exp-svg--parallel-lines
+                  state point-a point-b (list (- offset) 0.0 offset))))
+              (:aromatic
+               (if (eq 'alternating
+                       (chem-exp-svg--edge-aromatic-display state edge))
+                   (let ((offset
+                          (and ring
+                               (chem-exp-svg--ring-normal-offset
+                                state edge ring (/ spacing 2.0)))))
+                     (if offset
+                         (concat
+                          (chem-exp-svg--line state
+                                              (car point-a) (cdr point-a)
+                                              (car point-b) (cdr point-b))
+                          (chem-exp-svg--ring-inner-line
+                           state point-a point-b short-fraction offset
+                           (chem-exp-svg--dash-pattern state)))
+                       (chem-exp-svg--line state
+                                           (car point-a) (cdr point-a)
+                                           (car point-b) (cdr point-b))))
+                 (chem-exp-svg--line state
+                                     (car point-a) (cdr point-a)
+                                     (car point-b) (cdr point-b))))
+              (_
                (chem-exp-svg--line state
                                    (car point-a) (cdr point-a)
-                                   (car point-b) (cdr point-b))))
-            (_
-             (chem-exp-svg--line state
-                                 (car point-a) (cdr point-a)
-                                 (car point-b) (cdr point-b)))))
+                                   (car point-b) (cdr point-b))))))
          (attributes (chem-exp-svg--marker-attributes
                       (chem-edge-marker edge))))
     (if attributes
@@ -719,6 +724,121 @@ and `alternating' draws dashed inner lines."
      ">\n"
      body
      "</svg>\n")))
+
+;;; Stereochemistry
+
+(defun chem-exp-svg--wedge-half-width (state)
+  "Return the wide half-width for wedges in STATE."
+  (* 0.5 (chem-exp-svg--option state :svg-font-size)))
+
+(defun chem-exp-svg--wedge-points (state point-narrow point-wide)
+  "Return the four polygon points for a wedge."
+  (let* ((dx (- (car point-wide) (car point-narrow)))
+         (dy (- (cdr point-wide) (cdr point-narrow)))
+         (length (sqrt (+ (* dx dx) (* dy dy)))))
+    (when (> length 1e-9)
+      (let* ((ux (/ dx length))
+             (uy (/ dy length))
+             (nx (- uy))
+             (ny ux)
+             (narrow-half (/ (chem-exp-svg--option
+                              state :svg-bond-thickness)
+                             2.0))
+             (wide-half (chem-exp-svg--wedge-half-width state)))
+        (list
+         (cons (+ (car point-narrow) (* nx narrow-half))
+               (+ (cdr point-narrow) (* ny narrow-half)))
+         (cons (- (car point-narrow) (* nx narrow-half))
+               (- (cdr point-narrow) (* ny narrow-half)))
+         (cons (- (car point-wide) (* nx wide-half))
+               (- (cdr point-wide) (* ny wide-half)))
+         (cons (+ (car point-wide) (* nx wide-half))
+               (+ (cdr point-wide) (* ny wide-half))))))))
+
+(defun chem-exp-svg--solid-wedge-svg (state point-narrow point-wide)
+  "Return a filled wedge from POINT-NARROW to POINT-WIDE."
+  (let ((points (chem-exp-svg--wedge-points state point-narrow point-wide)))
+    (if points
+        (format "<polygon points=\"%s\" fill=\"%s\"/>\n"
+                (mapconcat
+                 (lambda (point)
+                   (format "%s,%s"
+                           (chem-exp-svg--number (car point))
+                           (chem-exp-svg--number (cdr point))))
+                 points " ")
+                (chem-exp-svg--escape (chem-exp-svg--bond-color state)))
+      (chem-exp-svg--line state
+                          (car point-narrow) (cdr point-narrow)
+                          (car point-wide) (cdr point-wide)))))
+
+(defun chem-exp-svg--hashed-wedge-svg (state point-narrow point-wide)
+  "Return a hashed wedge from POINT-NARROW to POINT-WIDE."
+  (let* ((dx (- (car point-wide) (car point-narrow)))
+         (dy (- (cdr point-wide) (cdr point-narrow)))
+         (length (sqrt (+ (* dx dx) (* dy dy)))))
+    (if (< length 1e-9)
+        (chem-exp-svg--line state
+                            (car point-narrow) (cdr point-narrow)
+                            (car point-wide) (cdr point-wide))
+      (let* ((ux (/ dx length))
+             (uy (/ dy length))
+             (nx (- uy))
+             (ny ux)
+             (narrow-half (/ (chem-exp-svg--option
+                              state :svg-bond-thickness)
+                             2.0))
+             (wide-half (chem-exp-svg--wedge-half-width state))
+             (steps (max 5 (min 12 (round (/ length 4.0))))))
+        (mapconcat
+         (lambda (index)
+           (let* ((ratio (/ (float index) (1+ steps)))
+                  (base-x (+ (car point-narrow) (* dx ratio)))
+                  (base-y (+ (cdr point-narrow) (* dy ratio)))
+                  (half (+ narrow-half
+                           (* (- wide-half narrow-half) ratio))))
+             (chem-exp-svg--line state
+                                 (- base-x (* nx half))
+                                 (- base-y (* ny half))
+                                 (+ base-x (* nx half))
+                                 (+ base-y (* ny half)))))
+         (number-sequence 1 steps)
+         "")))))
+
+(defun chem-exp-svg--stereo-wedge-up-p (state edge center)
+  "Return non-nil when EDGE is solid at CENTER in STATE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (atoms (chem-drawing-atoms drawing))
+         (atom (gethash center atoms))
+         (stereocenter (and atom (chem-atom-stereocenter atom)))
+         (configuration (and stereocenter
+                             (chem-stereocenter-configuration stereocenter))))
+    (if configuration
+        (chem-stereocenter-wedge-up-p atoms center edge configuration)
+      (eq :up (chem-edge-stereo-directed edge center)))))
+
+(defun chem-exp-svg--stereo-edge-svg (state edge point-a point-b)
+  "Return EDGE's stereochemical SVG."
+  (pcase (chem-edge-stereo edge)
+    (:either
+     (chem-exp-svg--line state
+                         (car point-a) (cdr point-a)
+                         (car point-b) (cdr point-b)
+                         (chem-exp-svg--dash-pattern state)))
+    ((or :up :down)
+     (let ((center (chem-edge-stereo-center edge)))
+       (if (null center)
+           (chem-exp-svg--line state
+                               (car point-a) (cdr point-a)
+                               (car point-b) (cdr point-b))
+         (let* ((wide (if (= center (chem-edge-a edge)) point-a point-b))
+                (narrow (if (= center (chem-edge-a edge)) point-b point-a)))
+           (if (chem-exp-svg--stereo-wedge-up-p state edge center)
+               (chem-exp-svg--solid-wedge-svg state narrow wide)
+             (chem-exp-svg--hashed-wedge-svg state narrow wide))))))
+    (_
+     (chem-exp-svg--line state
+                         (car point-a) (cdr point-a)
+                         (car point-b) (cdr point-b)))))
 
 ;;; Rings
 

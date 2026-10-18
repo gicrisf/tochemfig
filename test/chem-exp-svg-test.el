@@ -30,11 +30,29 @@
 (require 'chem-exp-chemfig)
 (require 'chem-exp-svg)
 
+(defconst chem-exp-svg-test--root
+  (file-name-directory (or load-file-name buffer-file-name))
+  "Directory containing the test files.")
+
+(defun chem-exp-svg-test--distance (point-a point-b)
+  "Return the distance between POINT-A and POINT-B."
+  (sqrt (+ (expt (- (car point-a) (car point-b)) 2)
+           (expt (- (cdr point-a) (cdr point-b)) 2))))
+
 (defun chem-exp-svg-test--render (smiles &optional overrides)
   "Render SMILES to SVG with OVERRIDES."
   (let* ((chem-default-exporter 'svg)
          (options (chem--build-options overrides))
          (drawing (chem-from-string smiles options)))
+    (chem-render drawing 'svg options)))
+
+(defun chem-exp-svg-test--render-file (relative &optional overrides)
+  "Render the molecule file RELATIVE to SVG with OVERRIDES."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options overrides))
+         (drawing (chem-from-file
+                   (expand-file-name relative chem-exp-svg-test--root)
+                   options)))
     (chem-render drawing 'svg options)))
 
 (defun chem-exp-svg-test--xml (string)
@@ -285,6 +303,114 @@
   "Bridged rings render without error."
   (let ((svg (chem-exp-svg-test--render "C1CC2CCC1C2")))
     (should (chem-exp-svg-test--xml svg))))
+
+(ert-deftest chem-exp-svg-solid-wedge ()
+  "Alanine renders a filled wedge."
+  (let ((svg (chem-exp-svg-test--render "N[C@@H](C)C(=O)O")))
+    (should (string-match-p "<polygon " svg))))
+
+(ert-deftest chem-exp-svg-wedge-wide-end ()
+  "The wedge widens at stereo-center."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (atoms (chem-drawing-atoms drawing))
+         (edge (cl-find-if #'chem-edge-stereo-center
+                           (chem-visible-edges drawing)))
+         (center (chem-edge-stereo-center edge))
+         (atom-a (gethash (chem-edge-a edge) atoms))
+         (atom-b (gethash (chem-edge-b edge) atoms))
+         (point-a (chem-exp-svg--point state
+                                       (chem-atom-x atom-a)
+                                       (chem-atom-y atom-a)))
+         (point-b (chem-exp-svg--point state
+                                       (chem-atom-x atom-b)
+                                       (chem-atom-y atom-b)))
+         (wide (if (= center (chem-edge-a edge)) point-a point-b))
+         (narrow (if (= center (chem-edge-a edge)) point-b point-a))
+         (points (chem-exp-svg--wedge-points state narrow wide)))
+    (should points)
+    (should (> (chem-exp-svg-test--distance (nth 2 points) wide)
+               (chem-exp-svg-test--distance (nth 0 points) narrow)))))
+
+(ert-deftest chem-exp-svg-lactic-acid-wedge ()
+  "Lactic acid renders a hashed wedge."
+  (let ((svg (chem-exp-svg-test--render "C[C@H](O)C(=O)O")))
+    (should (> (chem-exp-svg-test--count "<line " svg) 6))))
+
+(ert-deftest chem-exp-svg-hashed-wedge ()
+  "Mirroring alanine produces a hashed wedge."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options)))
+    (chem-flip-horizontal drawing)
+    (let ((svg (chem-render drawing 'svg options)))
+      (should-not (string-match-p "<polygon " svg))
+      (should (> (chem-exp-svg-test--count "<line " svg) 6)))))
+
+(ert-deftest chem-exp-svg-stereo-flip ()
+  "Configuration-derived wedge direction flips with the coordinates."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "N[C@@H](C)C(=O)O" options))
+         (edge (cl-find-if #'chem-edge-stereo-center
+                           (chem-visible-edges drawing)))
+         (center (chem-edge-stereo-center edge))
+         (before (chem-exp-svg--stereo-wedge-up-p
+                  (chem-exp-svg--make-state drawing options)
+                  edge center)))
+    (chem-flip-horizontal drawing)
+    (let ((after (chem-exp-svg--stereo-wedge-up-p
+                  (chem-exp-svg--make-state drawing options)
+                  edge center)))
+      (should (not (eq before after))))))
+
+(ert-deftest chem-exp-svg-no-stereo ()
+  "Disabling stereo draws a plain single bond."
+  (let ((svg (chem-exp-svg-test--render
+              "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil)))))
+    (should-not (string-match-p "<polygon " svg))
+    (should (= 6 (chem-exp-svg-test--count "<line " svg)))))
+
+(ert-deftest chem-exp-svg-either-stereo ()
+  "Either stereochemistry falls back to a dashed bond."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "CCO" options))
+         (edge (car (chem-visible-edges drawing))))
+    (setf (chem-edge-stereo edge) :either)
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (string-match-p "stroke-dasharray" svg)))))
+
+(ert-deftest chem-exp-svg-allene-wedge ()
+  "Allene input wedges are preserved."
+  (let ((svg (chem-exp-svg-test--render-file "data/allene.mol")))
+    (should (string-match-p ">OH</text>" svg))
+    (should (string-match-p "<polygon " svg))))
+
+(ert-deftest chem-exp-svg-two-stereocenters ()
+  "Molecules with two stereocenters render both wedges."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "C[C@H](O)[C@@H](C)O" options))
+         (centers 0))
+    (maphash (lambda (_ atom)
+               (when (chem-atom-stereocenter atom)
+                 (setq centers (1+ centers))))
+             (chem-drawing-atoms drawing))
+    (should (= 2 centers))
+    (let ((svg (chem-render drawing 'svg options)))
+      (should (chem-exp-svg-test--xml svg))
+      (should (> (chem-exp-svg-test--count "<line " svg) 10)))))
+
+(ert-deftest chem-exp-svg-bromochloromethane ()
+  "The bromochloromethane fixture renders a wedge."
+  (let ((svg (chem-exp-svg-test--render-file
+              "corpus/bromochloromethane_stereo.mol")))
+    (should (chem-exp-svg-test--xml svg))
+    (should (or (string-match-p "<polygon " svg)
+                (> (chem-exp-svg-test--count "<line " svg) 4)))))
 
 (ert-deftest chem-exp-svg-link-bonds ()
   "Link bonds are not drawn."
