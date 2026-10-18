@@ -36,41 +36,50 @@ and rebuild chem-mode"))
 
 ;;; Parsing
 
+(defun chem--bond-endpoints (bond)
+  "Return the (SOURCE . DESTINATION) atom indices of BOND."
+  (let ((source (indigo-source bond))
+        (destination (indigo-destination bond)))
+    (unwind-protect
+        (cons (indigo-index source) (indigo-index destination))
+      (when source (indigo-free source))
+      (when destination (indigo-free destination)))))
+
 (defun chem--parse-atoms (options mol)
   "Extract atoms from Indigo molecule MOL into a hash table."
   (let ((atoms (make-hash-table :test 'equal))
         (strict (plist-get options :strict)))
     (indigo-with-atoms-iterator (iter mol)
-      (let ((atom (indigo-next iter)))
-        (while atom
-          (let* ((idx (indigo-index atom))
-                 (element (indigo-symbol atom))
-                 (hydrogens (condition-case nil
-                                (indigo-count-implicit-hydrogens atom)
-                              (error -1)))
-                 (hydrogens (if (or (null hydrogens) (< hydrogens 0))
-                                (if strict
-                                    (error "Cannot calculate implicit hydrogens for atom %d" idx)
-                                  0)
-                              hydrogens))
-                 (charge (or (indigo-charge atom) 0))
-                 (radical (condition-case nil (indigo-radical-electrons atom) (error 0)))
-                 (xyz (indigo-xyz atom))
-                 (marker-opt (plist-get options :markers))
-                 (neighbors nil))
-            (indigo-with-neighbors-iterator (nit atom)
-              (let ((n (indigo-next nit)))
-                (while n (push (indigo-index n) neighbors) (setq n (indigo-next nit)))))
-            (puthash idx
-                     (chem-atom-create
-                      :idx idx
-                      :x (nth 0 xyz) :y (nth 1 xyz)
-                      :element element :hydrogens hydrogens :charge charge
-                      :radical radical :neighbors (nreverse neighbors)
-                      :marker (when marker-opt (format "%s%d" marker-opt (1+ idx)))
-                      :bond-angles nil)
-                     atoms))
-          (setq atom (indigo-next iter)))))
+      (indigo-map
+       (lambda (atom)
+         (let* ((idx (indigo-index atom))
+                (element (indigo-symbol atom))
+                (hydrogens (condition-case nil
+                               (indigo-count-implicit-hydrogens atom)
+                             (error -1)))
+                (hydrogens (if (or (null hydrogens) (< hydrogens 0))
+                               (if strict
+                                   (error "Cannot calculate implicit hydrogens for atom %d" idx)
+                                 0)
+                             hydrogens))
+                (charge (or (indigo-charge atom) 0))
+                (radical (condition-case nil (indigo-radical-electrons atom) (error 0)))
+                (xyz (indigo-xyz atom))
+                (marker-opt (plist-get options :markers))
+                (neighbors
+                 (indigo-with-neighbors-iterator (nit atom)
+                   (indigo-map #'indigo-index nit))))
+           (puthash idx
+                    (chem-atom-create
+                     :idx idx
+                     :x (nth 0 xyz) :y (nth 1 xyz)
+                     :element element :hydrogens hydrogens :charge charge
+                     :radical radical :neighbors neighbors
+                     :marker (when marker-opt (format "%s%d" marker-opt (1+ idx)))
+                     :bond-angles nil)
+                    atoms)
+           nil))
+       iter))
     atoms))
 
 (defun chem--parse-bonds (options mol atoms edges edge-lookup)
@@ -79,35 +88,37 @@ OPTIONS supplies marker settings; ATOMS is used for stereo configuration.
 Returns atom-index pairs in input order."
   (let ((pairs nil))
     (indigo-with-bonds-iterator (iter mol)
-      (let ((bond (indigo-next iter)))
-        (while bond
-          (let* ((start (indigo-index (indigo-source bond)))
-                 (end (indigo-index (indigo-destination bond)))
-                 (order (or (indigo-bond-order bond) :query))
-                 (stereo (or (indigo-bond-stereo bond) :none))
-                 (a (min start end))
-                 (b-index (max start end))
-                 (id (hash-table-count edges))
-                 (marker-opt (plist-get options :markers))
-                 (edge (chem-edge-create
-                        :id id :a a :b b-index
-                        :order order
-                        :stereo (chem--canonical-stereo stereo start end)
-                        :stereo-center (when (memq stereo '(:up :down)) start)
-                        :configuration nil
-                        :link-p nil :cross-p nil
-                        :marker (if marker-opt
-                                    (format "%s%d-%d" marker-opt
-                                            (1+ a) (1+ b-index))
-                                  "")
-                        :decoration 'plain)))
-            (when (chem-edge-stereo-center edge)
-              (setf (chem-edge-configuration edge)
-                    (chem-stereo-sign atoms edge)))
-            (puthash id edge edges)
-            (puthash (cons a b-index) edge edge-lookup)
-            (push (cons start end) pairs))
-          (setq bond (indigo-next iter)))))
+      (indigo-map
+       (lambda (bond)
+         (let* ((endpoints (chem--bond-endpoints bond))
+                (start (car endpoints))
+                (end (cdr endpoints))
+                (order (or (indigo-bond-order bond) :query))
+                (stereo (or (indigo-bond-stereo bond) :none))
+                (a (min start end))
+                (b-index (max start end))
+                (id (hash-table-count edges))
+                (marker-opt (plist-get options :markers))
+                (edge (chem-edge-create
+                       :id id :a a :b b-index
+                       :order order
+                       :stereo (chem--canonical-stereo stereo start end)
+                       :stereo-center (when (memq stereo '(:up :down)) start)
+                       :configuration nil
+                       :link-p nil :cross-p nil
+                       :marker (if marker-opt
+                                   (format "%s%d-%d" marker-opt
+                                           (1+ a) (1+ b-index))
+                                 "")
+                       :decoration 'plain)))
+           (when (chem-edge-stereo-center edge)
+             (setf (chem-edge-configuration edge)
+                   (chem-stereo-sign atoms edge)))
+           (puthash id edge edges)
+           (puthash (cons a b-index) edge edge-lookup)
+           (push (cons start end) pairs)
+           nil))
+       iter))
     (nreverse pairs)))
 
 ;;; Fragment handling
@@ -394,19 +405,21 @@ AROMATIC-P is the Indigo aromatization result; SEQUENCE is the SSSR index."
         (anchor nil)
         (adjacency (make-hash-table :test 'eql)))
     (indigo-with-bonds-iterator (bit ring)
-      (let ((tk-bond (indigo-next bit)))
-        (while tk-bond
-          (let* ((start (indigo-index (indigo-source tk-bond)))
-                 (end (indigo-index (indigo-destination tk-bond)))
-                 (edge (chem-get-edge mol start end)))
-            (when edge
-              (let ((id (chem-edge-id edge)))
-                (setq anchor id)
-                (cl-pushnew start atoms)
-                (cl-pushnew end atoms)
-                (push (cons end id) (gethash start adjacency))
-                (push (cons start id) (gethash end adjacency)))))
-          (setq tk-bond (indigo-next bit)))))
+      (indigo-map
+       (lambda (tk-bond)
+         (let* ((endpoints (chem--bond-endpoints tk-bond))
+                (start (car endpoints))
+                (end (cdr endpoints))
+                (edge (chem-get-edge mol start end)))
+           (when edge
+             (let ((id (chem-edge-id edge)))
+               (setq anchor id)
+               (cl-pushnew start atoms)
+               (cl-pushnew end atoms)
+               (push (cons end id) (gethash start adjacency))
+               (push (cons start id) (gethash end adjacency)))))
+         nil)
+       bit))
     (setq atoms (sort atoms #'<))
     (let* ((start (car atoms))
            (ordered-atoms (list start))
@@ -455,18 +468,20 @@ AROMATIC-P is the Indigo aromatization result; SEQUENCE is the SSSR index."
   (let ((records nil)
         (sequence 0))
     (indigo-with-sssr-iterator (it toolkit)
-      (let ((ring (indigo-next it)))
-        (while ring
-          (let ((is-aromatic t))
-            (indigo-with-bonds-iterator (bit ring)
-              (let ((tk-bond (indigo-next bit)))
-                (while tk-bond
-                  (unless (eq (indigo-bond-order tk-bond) :aromatic)
-                    (setq is-aromatic nil))
-                  (setq tk-bond (indigo-next bit)))))
-            (push (chem--ring-record mol ring is-aromatic sequence) records)
-            (setq sequence (1+ sequence)))
-          (setq ring (indigo-next it)))))
+      (indigo-map
+       (lambda (ring)
+         (let ((is-aromatic t))
+           (indigo-with-bonds-iterator (bit ring)
+             (indigo-map
+              (lambda (tk-bond)
+                (unless (eq (indigo-bond-order tk-bond) :aromatic)
+                  (setq is-aromatic nil))
+                nil)
+              bit))
+           (push (chem--ring-record mol ring is-aromatic sequence) records)
+           (setq sequence (1+ sequence))
+           nil))
+       it))
     (setq records (nreverse records))
     (let ((ordered (sort (copy-sequence records) #'chem--ring-record-less-p)))
       (let ((id 0))
