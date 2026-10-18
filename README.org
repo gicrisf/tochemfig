@@ -149,6 +149,28 @@ nix build
 
 The built package will be available in =./result=. Add the result path to your Emacs load-path, or integrate it with your Nix-based Emacs configuration.
 
+** Local development with Doom
+
+For development, point Doom at the local checkouts and disable byte/native
+compilation so source edits are loaded on the next restart:
+
+#+begin_src emacs-lisp
+(package! chem-mode
+  :recipe (:local-repo "~/Projects/tochemfig"
+           :branch "svg"
+           :build (:not compile native-compile)))
+
+(package! indigo
+  :recipe (:local-repo "~/Projects/tochemfig/emacs-indigo"
+           :files ("*.el"
+                   ("build/indigo-module.so" . "build/indigo-module.so"))
+           :build (:not compile native-compile)))
+#+end_src
+
+Run =doom sync -U= once, then restart Emacs.  Existing =.el= files are read
+from the local checkouts on every restart.  Adding or removing files, or
+changing autoload cookies, still requires another =doom sync=.
+
 * Usage
 
 The transient menu is the primary interface.  The minor mode adds buffer-aware
@@ -421,7 +443,7 @@ guard against regressions:
 
 5. *Org Babel*: =test/chem-babel-test.el= covers block execution, deterministic
    caching, header validation, regeneration, cache cleanup, and HTML export.
-   The full ERT suite currently has 485 tests.
+   The full ERT suite currently has 488 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.
@@ -434,8 +456,8 @@ byte-reproducible.
 The project provides a Nix flake with the required Python reference toolchain:
 
 #+begin_src bash
-nix develop          # development shell (Emacs, eldev, reference Python)
-eldev test           # run the test suite
+nix develop          # development shell (Emacs, reference Python, build tools)
+eldev test           # run the test suite (eldev must be on PATH)
 tools/gen-goldens.sh # regenerate the corpus and golden files
 #+end_src
 

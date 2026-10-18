@@ -1,5 +1,5 @@
 {
-  description = "tochemfig - generate chemfig LaTeX code from molecules in Emacs";
+  description = "chem-mode - generate chemfig and SVG chemical structures in Emacs";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -32,7 +32,7 @@
 
         # Indigo is statically linked into emacs-indigo's dynamic module, but
         # the module still needs these at runtime.
-        indigo-runtime = with pkgs; [ tinyxml inchi zlib ];
+        indigo-runtime = with pkgs; [ tinyxml inchi zlib freetype fontconfig ];
 
       in {
         packages.epam-indigo = epam-indigo;
@@ -44,6 +44,8 @@
             pkgs.gcc
             pkgs.gnumake
             pkgs.pkg-config
+            pkgs.freetype
+            pkgs.fontconfig
             reference-python
           ] ++ indigo-runtime;
 
@@ -51,11 +53,11 @@
             export PATH="$HOME/.local/bin:$PATH"
             export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath indigo-runtime}:$LD_LIBRARY_PATH"
 
-            echo "tochemfig development shell"
+            echo "chem-mode development shell"
             echo ""
             echo "  Reference python : ${reference-python}/bin/python"
             echo "  Regenerate goldens: tools/gen-goldens.sh"
-            echo "  Run tests          : eldev test"
+            echo "  Run tests          : eldev test (requires eldev on PATH)"
             echo ""
           '';
         };
