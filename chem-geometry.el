@@ -67,6 +67,67 @@ implicit hydrogen is synthesized when only two explicit neighbors remain."
   (- (* (- (car p1) (car p0)) (- (cdr p2) (cdr p0)))
      (* (- (car p2) (car p0)) (- (cdr p1) (cdr p0)))))
 
+(defun chem--stereocenter-atom-position (atoms idx)
+  "Return the (X . Y) position of atom IDX in ATOMS."
+  (let ((atom (gethash idx atoms)))
+    (cons (chem-atom-x atom) (chem-atom-y atom))))
+
+(defun chem-stereocenter-other-positions (atoms center wedge-neighbor)
+  "Return three positions in CENTER's pyramid order.
+Exclude WEDGE-NEIGHBOR.  Preserve the pyramid order and substitute a
+synthesized position for an implicit-hydrogen slot (`-1')."
+  (let* ((atom (gethash center atoms))
+         (stereocenter (chem-atom-stereocenter atom))
+         (pyramid (chem-stereocenter-pyramid stereocenter))
+         (indices (cl-remove wedge-neighbor pyramid :test #'=)))
+    (when (= 3 (length indices))
+      (let* ((explicit (cl-remove -1 indices :test #'=))
+             (positions (mapcar (lambda (idx)
+                                  (chem--stereocenter-atom-position atoms idx))
+                                explicit)))
+        (pcase (length explicit)
+          (3 positions)
+          (2
+           (let* ((wedge-atom (gethash wedge-neighbor atoms))
+                  (p0 (nth 0 positions))
+                  (p1 (nth 1 positions))
+                  (cx (/ (+ (chem-atom-x wedge-atom) (car p0) (car p1)) 3.0))
+                  (cy (/ (+ (chem-atom-y wedge-atom) (cdr p0) (cdr p1)) 3.0))
+                  (h (cons (- (* 2.0 (chem-atom-x atom)) cx)
+                           (- (* 2.0 (chem-atom-y atom)) cy))))
+             (mapcar (lambda (idx)
+                       (if (= idx -1)
+                           h
+                         (chem--stereocenter-atom-position atoms idx)))
+                     indices)))
+          (_ nil))))))
+
+(defun chem-stereocenter-sign (atoms center edge)
+  "Return the configuration sign for stereocenter CENTER using EDGE."
+  (let* ((wedge-neighbor (chem-edge-other-atom edge center))
+         (direction (chem-edge-stereo-directed edge center))
+         (positions (chem-stereocenter-other-positions
+                     atoms center wedge-neighbor)))
+    (when (and positions (memq direction '(:up :down)))
+      (let ((sa (chem-signed-area (nth 0 positions)
+                                  (nth 1 positions)
+                                  (nth 2 positions))))
+        (unless (zerop sa)
+          (* (if (eq direction :up) 1 -1)
+             (if (> sa 0) 1 -1)))))))
+
+(defun chem-stereocenter-wedge-up-p (atoms center edge sign)
+  "Return non-nil when EDGE renders up for CENTER given configuration SIGN."
+  (when (and sign (/= sign 0))
+    (let* ((wedge-neighbor (chem-edge-other-atom edge center))
+           (positions (chem-stereocenter-other-positions
+                       atoms center wedge-neighbor)))
+      (when positions
+        (let ((sa (chem-signed-area (nth 0 positions)
+                                    (nth 1 positions)
+                                    (nth 2 positions))))
+          (> (* sign (if (> sa 0) 1 -1)) 0))))))
+
 (defun chem-stereo-sign (atoms edge)
   "Return the configuration sign for wedge EDGE, or nil."
   (let* ((center (chem-edge-stereo-center edge))

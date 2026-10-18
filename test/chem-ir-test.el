@@ -211,7 +211,7 @@
     (should (equal '(2 3 0 -1) (chem-stereocenter-pyramid center)))
     (should (eq :S (chem-stereocenter-cip center)))
     (should (= 0 (chem-stereocenter-wedge-edge center)))
-    (should-not (chem-stereocenter-configuration center))
+    (should (memq (chem-stereocenter-configuration center) '(-1 1)))
     (should edge)
     (should (eq :down (chem-edge-stereo edge)))
     (should (= 1 (chem-edge-stereo-center edge)))))
@@ -251,8 +251,43 @@
     (should (eq :R (chem-stereocenter-cip second)))
     (should (= 0 (chem-stereocenter-wedge-edge first)))
     (should (= 3 (chem-stereocenter-wedge-edge second)))
-    (should-not (chem-stereocenter-configuration first))
-    (should-not (chem-stereocenter-configuration second))))
+    (should (memq (chem-stereocenter-configuration first) '(-1 1)))
+    (should (memq (chem-stereocenter-configuration second) '(-1 1)))))
+
+(ert-deftest chem-ir-stereocenter-pyramid-parity ()
+  "Pyramid-derived wedge direction matches the old derivation."
+  (dolist (smiles '("N[C@@H](C)C(=O)O"
+                    "C[C@H](O)C(=O)O"
+                    "C[C@H](Cl)Br"
+                    "F[C@](Cl)(Br)I"
+                    "C[C@H](O)[C@@H](C)O"))
+    (let* ((drawing (chem-ir-test--drawing smiles nil))
+           (atoms (chem-drawing-atoms drawing)))
+      (cl-labels
+          ((check ()
+             (maphash
+              (lambda (idx atom)
+                (when-let ((center (chem-atom-stereocenter atom)))
+                  (let ((edge (chem-edge-at
+                               drawing
+                               (chem-stereocenter-wedge-edge center))))
+                    (when edge
+                      (let ((old-up
+                             (chem-stereo-wedge-up-p
+                              atoms edge (chem-edge-configuration edge)))
+                            (new-up
+                             (chem-stereocenter-wedge-up-p
+                              atoms idx edge
+                              (chem-stereocenter-configuration center))))
+                        (should (eq old-up new-up)))))))
+              atoms)))
+        (check)
+        (chem-flip-horizontal drawing)
+        (check)
+        (chem-rotate drawing 30.0)
+        (check)
+        (chem-flip-vertical drawing)
+        (check)))))
 
 (ert-deftest chem-ir-stereocenter-negative-controls ()
   "Molecules without stereocenters leave every atom slot empty."

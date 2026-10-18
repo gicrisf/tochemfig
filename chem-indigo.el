@@ -147,14 +147,18 @@ complex molecules, leaving their descriptors at `:none'."
                 (center (gethash idx atoms))
                 (wedge (gethash idx wedges)))
            (when center
-             (setf (chem-atom-stereocenter center)
-                   (chem-stereocenter-create
-                    :type (indigo-stereocenter-type atom)
-                    :group (indigo-stereocenter-group atom)
-                    :pyramid (indigo-stereocenter-pyramid atom)
-                    :cip (indigo-stereocenter-cip-descriptor atom)
-                    :wedge-edge (when wedge (chem-edge-id wedge))
-                    :configuration nil)))
+             (let ((record
+                    (chem-stereocenter-create
+                     :type (indigo-stereocenter-type atom)
+                     :group (indigo-stereocenter-group atom)
+                     :pyramid (indigo-stereocenter-pyramid atom)
+                     :cip (indigo-stereocenter-cip-descriptor atom)
+                     :wedge-edge (when wedge (chem-edge-id wedge))
+                     :configuration nil)))
+               (setf (chem-atom-stereocenter center) record)
+               (when wedge
+                 (setf (chem-stereocenter-configuration record)
+                       (chem-stereocenter-sign atoms idx wedge)))))
            nil))
        iter))
     atoms))
