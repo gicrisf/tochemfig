@@ -18,6 +18,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'chem-export)
 
 (defgroup chem-mode nil
   "Generate chemical drawings from molecular structures."
@@ -271,33 +272,23 @@ Without effect when `chem-exp-chemfig-default-terse' is non-nil."
 
 ;;; Option construction
 
+(defun chem--option-specs-for-exporter ()
+  "Return the option specs for the selected exporter."
+  (append chem-common-option-specs
+          (chem-exporter-option-specs
+           (if (boundp 'chem-default-exporter)
+               chem-default-exporter
+             'chemfig))))
+
 (defun chem--build-options (overrides)
   "Build the option plist from defaults and OVERRIDES alist.
 OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t))."
-  (let ((opts (list :angle chem-default-angle
-                    :relative-angles chem-exp-chemfig-default-relative-angles
-                    :flip chem-default-flip
-                    :flop chem-default-flop
-                    :show-carbons chem-default-show-carbons
-                    :show-methyls chem-default-show-methyls
-                    :hydrogens chem-default-hydrogens
-                    :aromatic-circles chem-default-aromatic-circles
-                    :fancy-bonds chem-default-fancy-bonds
-                    :atom-numbers chem-default-atom-numbers
-                    :bond-scale chem-default-bond-scale
-                    :bond-stretch chem-default-bond-stretch
-                    :markers chem-default-markers
-                    :cross-bond chem-default-cross-bond
-                    :legacy-lewis chem-exp-chemfig-default-legacy-lewis
-                    :wrap-chemfig chem-exp-chemfig-default-wrap-chemfig
-                    :submol-name chem-exp-chemfig-default-submol-name
-                    :entry-atom chem-default-entry-atom
-                    :exit-atom chem-default-exit-atom
-                    :terse chem-exp-chemfig-default-terse
-                    :indent chem-exp-chemfig-default-indent
-                    :strict chem-default-strict
-                    :recalculate-coordinates chem-default-recalculate-coordinates
-                    :angle-round 1 :bond-round 3 :quadrant-tolerance 0.1)))
+  (let ((opts (list :angle-round 1 :bond-round 3 :quadrant-tolerance 0.1)))
+    (dolist (spec (chem--option-specs-for-exporter))
+      (let ((key (plist-get spec :key))
+            (variable (plist-get spec :variable)))
+        (when (and key variable)
+          (setq opts (plist-put opts key (symbol-value variable))))))
     (dolist (override overrides)
       (let ((key (intern (concat ":" (car override))))
             (val (cdr override)))

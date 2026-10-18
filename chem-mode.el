@@ -142,9 +142,17 @@ Return (KIND . STRING), where KIND is either `direct' or `file'."
       (cons 'file (read-file-name "Molecule file: "))
     (cons 'direct (read-string "Enter SMILES: "))))
 
+(defun chem-mode--ensure-exporter ()
+  "Load the selected exporter when needed."
+  (unless (chem-exporter chem-default-exporter)
+    (require (intern (concat "chem-exp-" (symbol-name chem-default-exporter))) nil t)
+    (unless (chem-exporter chem-default-exporter)
+      (user-error "Exporter not available: %s" chem-default-exporter))))
+
 (defun chem-mode--generate (kind text &optional overrides)
   "Generate output for TEXT, read according to KIND.
 OVERRIDES is an alist of option overrides."
+  (chem-mode--ensure-exporter)
   (condition-case err
       (let* ((options (chem--build-options overrides))
              (drawing (if (eq kind 'file)
@@ -182,13 +190,6 @@ OVERRIDES is an alist of option overrides."
       (and (bound-and-true-p chem-mode)
            chem-mode-auto-wrap
            (chem-mode--wrap-context-p))))
-
-(defun chem-mode--ensure-exporter ()
-  "Load the selected exporter when needed."
-  (unless (chem-exporter chem-default-exporter)
-    (require (intern (concat "chem-exp-" (symbol-name chem-default-exporter))) nil t)
-    (unless (chem-exporter chem-default-exporter)
-      (user-error "Exporter not available: %s" chem-default-exporter))))
 
 (defun chem-mode--produce (copy &optional source overrides)
   "Generate output and either insert it or COPY it to the kill ring."

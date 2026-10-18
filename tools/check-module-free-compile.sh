@@ -32,14 +32,15 @@ printf "(provide 'indigo)\n" > "$tmp/shim/indigo.el"
 cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el \
    "$ROOT"/chem-exp-chemfig-mappings.el "$ROOT"/chem-export.el \
    "$ROOT"/chem-exp-chemfig.el "$ROOT"/chem-options.el \
-   "$ROOT"/chem-indigo.el "$ROOT"/chem-mode.el "$tmp/src/"
+   "$ROOT"/chem-exp-svg.el "$ROOT"/chem-indigo.el "$ROOT"/chem-mode.el "$tmp/src/"
 
 cd "$tmp/src"
 "$EMACS" -Q --batch \
   --eval "(setq load-path (append (list \"$tmp/shim\" \"$INDIGO_EL\" \"$tmp/src\") load-path))" \
   -f batch-byte-compile \
   chem-ir.el chem-geometry.el chem-exp-chemfig-mappings.el chem-export.el \
-  chem-exp-chemfig.el chem-options.el chem-indigo.el chem-mode.el \
+  chem-exp-chemfig.el chem-options.el chem-exp-svg.el chem-indigo.el \
+  chem-mode.el \
   2>"$tmp/stderr" || true
 
 status=0
@@ -55,7 +56,8 @@ check_present() {
 }
 
 if [ ! -f chem-ir.elc ] || [ ! -f chem-indigo.elc ] \
-   || [ ! -f chem-exp-chemfig.elc ] || [ ! -f chem-mode.elc ]; then
+   || [ ! -f chem-exp-chemfig.elc ] || [ ! -f chem-exp-svg.elc ] \
+   || [ ! -f chem-mode.elc ]; then
   echo "FAIL: byte-compilation did not produce .elc files" >&2
   status=1
 else

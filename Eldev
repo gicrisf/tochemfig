@@ -15,11 +15,12 @@
       '("chem-mode.el"
         "chem-ir.el"
         "chem-geometry.el"
-        "chem-indigo.el"
-        "chem-options.el"
-        "chem-exp-chemfig-mappings.el"
         "chem-export.el"
+        "chem-options.el"
+        "chem-indigo.el"
+        "chem-exp-chemfig-mappings.el"
         "chem-exp-chemfig.el"
+        "chem-exp-svg.el"
         "chem-dispatch.el"))
 
 (setf eldev-test-fileset
@@ -27,4 +28,5 @@
         "test/chem-ir-test.el"
         "test/chem-mode-test.el"
         "test/chem-mode-ui-test.el"
-        "test/chem-graph-test.el"))
+        "test/chem-graph-test.el"
+        "test/chem-exp-svg-test.el"))
