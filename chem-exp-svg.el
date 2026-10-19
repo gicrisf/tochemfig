@@ -200,6 +200,7 @@ and `alternating' draws dashed inner lines."
   drawing
   options
   theme
+  id-prefix
   bounds
   hidden
   pseudo
@@ -278,9 +279,11 @@ and `alternating' draws dashed inner lines."
     (setq formatted (replace-regexp-in-string "\\.?0+\\'" "" formatted))
     (if (equal formatted "-0") "0" formatted)))
 
-(defun chem-exp-svg--id (name)
-  "Return a deterministic SVG ID for NAME."
-  (format "chem-exp-svg-%s"
+(defun chem-exp-svg--id (name &optional prefix)
+  "Return a deterministic SVG ID for NAME.
+When PREFIX is non-nil, namespace the ID with it."
+  (format "chem-exp-svg-%s%s"
+          (if prefix (concat prefix "-") "")
           (if (symbolp name) (symbol-name name) name)))
 
 ;;; Atom labels
@@ -797,13 +800,15 @@ atom and uses the mask to keep bonds clear."
         sanitized
       (concat "marker-" sanitized))))
 
-(defun chem-exp-svg--marker-attributes (marker)
-  "Return SVG attributes for MARKER, or nil."
+(defun chem-exp-svg--marker-attributes (state marker)
+  "Return SVG attributes for MARKER in STATE, or nil."
   (when (chem-exp-svg--marker-present-p marker)
-    (let ((id (chem-exp-svg--sanitize-id marker)))
+    (let* ((prefix (chem-exp-svg-state-id-prefix state))
+           (base (chem-exp-svg--sanitize-id marker))
+           (id (if prefix (concat prefix "-" base) base)))
       (concat
        (format " id=\"%s\"" (chem-exp-svg--escape id))
-       (unless (equal id marker)
+       (unless (equal base marker)
          (format " data-marker=\"%s\"" (chem-exp-svg--escape marker)))))))
 
 (defun chem-exp-svg--sorted-atoms (drawing)
@@ -820,7 +825,7 @@ atom and uses the mask to keep bonds clear."
     (let* ((layout (chem-exp-svg--text-layout state atom))
            (parts (plist-get layout :parts))
            (attributes (chem-exp-svg--marker-attributes
-                        (chem-atom-marker atom))))
+                        state (chem-atom-marker atom))))
       (if parts
           (let* ((direction (plist-get layout :direction))
                  (x (plist-get layout :x))
@@ -972,12 +977,12 @@ atom and uses the mask to keep bonds clear."
                   (chem-exp-svg--number (cadr center))
                   (chem-exp-svg--number radius)))))))
 
-(defun chem-exp-svg--mask-id ()
-  "Return the deterministic label mask ID."
-  (chem-exp-svg--id 'label-mask))
+(defun chem-exp-svg--mask-id (state)
+  "Return STATE's deterministic label mask ID."
+  (chem-exp-svg--id 'label-mask (chem-exp-svg-state-id-prefix state)))
 
-(defun chem-exp-svg--defs (state)
-  "Return the SVG defs block with STATE's label mask."
+(defun chem-exp-svg--defs-content (state)
+  "Return STATE's gradients and label mask without the DEFS wrapper."
   (let* ((viewbox (chem-exp-svg--viewbox state))
          (width (chem-exp-svg--number (nth 2 viewbox)))
          (height (chem-exp-svg--number (nth 3 viewbox)))
@@ -988,11 +993,11 @@ atom and uses the mask to keep bonds clear."
                       (chem-exp-svg-state-drawing state))
                      ""))
           (points (chem-exp-svg--point-mask-circles state)))
-    (format "<defs>\n%s\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
+    (format "%s\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n"
             (mapconcat #'identity
                        (nreverse (chem-exp-svg-state-gradients state))
                        "")
-            (chem-exp-svg--escape (chem-exp-svg--mask-id))
+            (chem-exp-svg--escape (chem-exp-svg--mask-id state))
             (chem-exp-svg--number (nth 0 viewbox))
             (chem-exp-svg--number (nth 1 viewbox))
             width height
@@ -1000,6 +1005,18 @@ atom and uses the mask to keep bonds clear."
             (chem-exp-svg--number (nth 1 viewbox))
             width height
             (concat circles points))))
+
+(defun chem-exp-svg--defs (state)
+  "Return the SVG defs block with STATE's label mask."
+  (format "<defs>\n%s</defs>\n" (chem-exp-svg--defs-content state)))
+
+(defun chem-exp-svg--content (state)
+  "Return (DEFS . BODY) for STATE without the document or background."
+  (cons (chem-exp-svg--defs-content state)
+        (concat (chem-exp-svg--masked-content state)
+                (chem-exp-svg--points state)
+                (chem-exp-svg--atoms state)
+                (chem-exp-svg--stereo-labels state))))
 
 ;;; Bonds
 
@@ -1034,7 +1051,9 @@ atom and uses the mask to keep bonds clear."
              (point-b (chem-exp-svg--point state
                                             (chem-atom-x atom-b)
                                             (chem-atom-y atom-b)))
-             (id (format "chem-exp-svg-bond-%s" (chem-edge-id edge)))
+             (id (chem-exp-svg--id
+                  (format "bond-%s" (chem-edge-id edge))
+                  (chem-exp-svg-state-id-prefix state)))
              (url (format "url(#%s)" id)))
         (cond
          ((equal color-a color-b)
@@ -1312,7 +1331,7 @@ and center-double-bond cases."
                                    (car point-b) (cdr point-b)
                                    nil color)))))
          (attributes (chem-exp-svg--marker-attributes
-                      (chem-edge-marker edge))))
+                      state (chem-edge-marker edge))))
     (if attributes
         (format "<g%s>%s</g>\n" attributes lines)
       lines)))
@@ -1393,13 +1412,12 @@ and center-double-bond cases."
             min-y
             height height))))
 
-(defun chem-exp-svg--size-attributes (state)
-  "Return the width and height attributes for STATE."
-  (let* ((viewbox (chem-exp-svg--viewbox state))
-         (viewbox-width (nth 2 viewbox))
-         (viewbox-height (nth 3 viewbox))
-         (width (chem-exp-svg--option state :svg-width))
-         (height (chem-exp-svg--option state :svg-height)))
+(defun chem-exp-svg--size-attributes-for (options viewbox)
+  "Return width and height attributes for OPTIONS and VIEWBOX."
+  (let ((viewbox-width (nth 2 viewbox))
+        (viewbox-height (nth 3 viewbox))
+        (width (plist-get options :svg-width))
+        (height (plist-get options :svg-height)))
     (cond
      ((and width height)
       (format " width=\"%s\" height=\"%s\" preserveAspectRatio=\"xMidYMid meet\""
@@ -1415,20 +1433,58 @@ and center-double-bond cases."
               (chem-exp-svg--number height)))
      (t ""))))
 
-(defun chem-exp-svg--document (state body)
-  "Return an SVG document for STATE with BODY."
-  (let ((viewbox (chem-exp-svg--viewbox state)))
-    (concat
-     "<svg xmlns=\"http://www.w3.org/2000/svg\""
-     (format " viewBox=\"%s %s %s %s\""
-             (chem-exp-svg--number (nth 0 viewbox))
-             (chem-exp-svg--number (nth 1 viewbox))
-             (chem-exp-svg--number (nth 2 viewbox))
-             (chem-exp-svg--number (nth 3 viewbox)))
-     (chem-exp-svg--size-attributes state)
-     ">\n"
-     body
-     "</svg>\n")))
+(defun chem-exp-svg--size-attributes (state &optional viewbox)
+  "Return width and height attributes for STATE and optional VIEWBOX."
+  (chem-exp-svg--size-attributes-for
+   (chem-exp-svg-state-options state)
+   (or viewbox (chem-exp-svg--viewbox state))))
+
+(defun chem-exp-svg--document-for (options viewbox body)
+  "Return an SVG document for OPTIONS, VIEWBOX, and BODY."
+  (concat
+   "<svg xmlns=\"http://www.w3.org/2000/svg\""
+   (format " viewBox=\"%s %s %s %s\""
+           (chem-exp-svg--number (nth 0 viewbox))
+           (chem-exp-svg--number (nth 1 viewbox))
+           (chem-exp-svg--number (nth 2 viewbox))
+           (chem-exp-svg--number (nth 3 viewbox)))
+   (chem-exp-svg--size-attributes-for options viewbox)
+   ">\n"
+   body
+   "</svg>\n"))
+
+(defun chem-exp-svg--document (state body &optional viewbox)
+  "Return an SVG document for STATE with BODY and optional VIEWBOX."
+  (chem-exp-svg--document-for
+   (chem-exp-svg-state-options state)
+   (or viewbox (chem-exp-svg--viewbox state))
+   body))
+
+(defun chem-exp-svg--reaction-size-attributes (options viewbox)
+  "Return dimensions for a reaction SVG."
+  (let ((width (plist-get options :svg-width))
+        (height (plist-get options :svg-height)))
+    (if (and (equal width chem-exp-svg-default-width)
+             (equal height chem-exp-svg-default-height))
+        (format " width=\"%s\" height=\"%s\" preserveAspectRatio=\"xMidYMid meet\""
+                (chem-exp-svg--number width)
+                (chem-exp-svg--number
+                 (* width (/ (nth 3 viewbox) (nth 2 viewbox)))))
+      (chem-exp-svg--size-attributes-for options viewbox))))
+
+(defun chem-exp-svg--reaction-document (options viewbox body)
+  "Return a reaction SVG document for OPTIONS, VIEWBOX, and BODY."
+  (concat
+   "<svg xmlns=\"http://www.w3.org/2000/svg\""
+   (format " viewBox=\"%s %s %s %s\""
+           (chem-exp-svg--number (nth 0 viewbox))
+           (chem-exp-svg--number (nth 1 viewbox))
+           (chem-exp-svg--number (nth 2 viewbox))
+           (chem-exp-svg--number (nth 3 viewbox)))
+   (chem-exp-svg--reaction-size-attributes options viewbox)
+   ">\n"
+   body
+   "</svg>\n"))
 
 ;;; Stereochemistry
 
@@ -1804,12 +1860,12 @@ ring's side."
 
 ;;; Renderer
 
-(defun chem-exp-svg--background (state)
-  "Return the background SVG."
+(defun chem-exp-svg--background (state &optional viewbox)
+  "Return the background SVG for STATE and optional VIEWBOX."
   (let ((color (chem-exp-svg--theme-background
                 (chem-exp-svg-state-theme state))))
     (if color
-        (let ((viewbox (chem-exp-svg--viewbox state)))
+        (let ((viewbox (or viewbox (chem-exp-svg--viewbox state))))
           (format "<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"%s\"/>\n"
                   (chem-exp-svg--number (nth 0 viewbox))
                   (chem-exp-svg--number (nth 1 viewbox))
@@ -1821,7 +1877,7 @@ ring's side."
 (defun chem-exp-svg--masked-content (state)
   "Return STATE's masked bond and ring content."
   (format "<g mask=\"url(#%s)\">\n%s%s%s</g>\n"
-          (chem-exp-svg--escape (chem-exp-svg--mask-id))
+          (chem-exp-svg--escape (chem-exp-svg--mask-id state))
           (chem-exp-svg--bonds state)
           (chem-exp-svg--rings state)
           (chem-exp-svg--cross-bonds state)))
@@ -1908,14 +1964,16 @@ ring's side."
   (chem-exp-svg--text-bounds state
                              (chem-exp-svg--initial-bounds state)))
 
-(defun chem-exp-svg--make-state (drawing options)
-  "Create an SVG renderer state for DRAWING and OPTIONS."
+(defun chem-exp-svg--make-state (drawing options &optional id-prefix)
+  "Create an SVG renderer state for DRAWING and OPTIONS.
+ID-PREFIX namespaces generated SVG IDs when non-nil."
   (let* ((pseudo (chem-exp-svg--pseudo-elements drawing))
          (hidden (car pseudo))
          (groups (cdr pseudo))
          (state (chem-exp-svg-state-create
                  :drawing drawing
                  :options options
+                 :id-prefix id-prefix
                  :hidden hidden
                  :pseudo groups
                  :bounds nil
@@ -1927,21 +1985,292 @@ ring's side."
           (chem-exp-svg--compute-bounds state))
     state))
 
-(defun chem-exp-svg-render (drawing options)
-  "Render DRAWING to an SVG string using OPTIONS."
-  (let* ((state (chem-exp-svg--make-state drawing options))
-         (_ (chem-exp-svg--prepare-gradients state))
-         (body (concat (chem-exp-svg--defs state)
-                       (chem-exp-svg--background state)
-                       (chem-exp-svg--masked-content state)
-                       (chem-exp-svg--points state)
-                       (chem-exp-svg--atoms state)
-                       (chem-exp-svg--stereo-labels state))))
-    (chem-exp-svg--document state body)))
+;;; Reactions
+
+(defun chem-exp-svg--reaction-agent-text (label)
+  "Return normalized agent LABEL as SVG text."
+  (let ((formula label)
+        (charge nil))
+    (when (string-match "\\([0-9]*\\)\\([+-]\\)\\'" label)
+      (setq formula (substring label 0 (match-beginning 0)))
+      (let ((magnitude (match-string 1 label))
+            (sign (match-string 2 label)))
+        (setq charge (* (if (equal sign "+") 1 -1)
+                        (if (string-empty-p magnitude)
+                            1
+                          (string-to-number magnitude))))))
+    (concat
+     (replace-regexp-in-string
+      "[0-9]+"
+      (lambda (digits)
+        (chem-exp-svg--subscript (string-to-number digits)))
+      formula)
+     (if charge (chem-exp-svg--charge-text charge) ""))))
+
+(defun chem-exp-svg--reaction-above-text (reaction)
+  "Return REACTION's above-arrow text."
+  (let* ((agents
+          (mapcar (lambda (agent)
+                    (chem-exp-svg--reaction-agent-text
+                     (chem-reaction-agent-label agent)))
+                  (chem-reaction-agents reaction)))
+         (agent-text (mapconcat #'identity agents ", "))
+         (above (plist-get (chem-reaction-conditions reaction) :above)))
+    (mapconcat #'identity
+               (delq nil
+                     (list (unless (string-empty-p agent-text) agent-text)
+                           (unless (string-empty-p above) above)))
+               ", ")))
+
+(defun chem-exp-svg--reaction-below-text (reaction)
+  "Return REACTION's below-arrow text."
+  (plist-get (chem-reaction-conditions reaction) :below))
+
+(defun chem-exp-svg--reaction-text-for-role (reaction role)
+  "Return REACTION's text for layout ROLE."
+  (pcase role
+    ((or :agent-label :above)
+     (chem-exp-svg--reaction-above-text reaction))
+    (:below
+     (chem-exp-svg--reaction-below-text reaction))
+    (_ "")))
+
+(defun chem-exp-svg--reaction-text-info (state part reaction scale)
+  "Return text layout information for PART in REACTION."
+  (let* ((text (chem-exp-svg--reaction-text-for-role
+                reaction (chem-reaction-part-role part))))
+    (unless (string-empty-p text)
+      (let* ((size (chem-exp-svg--text-size state text))
+             (width (* 0.8 (car size)))
+             (height (* 0.8 (cdr size)))
+             (center-x (* (+ (chem-reaction-part-x part)
+                             (/ (chem-reaction-part-width part) 2.0))
+                          scale))
+             (center-y (* (- (+ (chem-reaction-part-y part)
+                                 (/ (chem-reaction-part-height part) 2.0)))
+                         scale)))
+        (list :text text
+              :center-x center-x
+              :center-y center-y
+              :width width
+              :height height
+              :min-x (- center-x (/ width 2.0))
+              :max-x (+ center-x (/ width 2.0))
+              :min-y (- center-y (/ height 2.0))
+              :max-y (+ center-y (/ height 2.0)))))))
+
+(defun chem-exp-svg--reaction-part-box (part scale)
+  "Return PART's SVG box as (MIN-X MIN-Y MAX-X MAX-Y)."
+  (let ((x (chem-reaction-part-x part))
+        (y (chem-reaction-part-y part))
+        (width (chem-reaction-part-width part))
+        (height (chem-reaction-part-height part)))
+    (list (* x scale)
+          (* (- (+ y height)) scale)
+          (* (+ x width) scale)
+          (* (- y) scale))))
+
+(defun chem-exp-svg--reaction-plus-svg (state part scale)
+  "Return PART's plus sign in STATE."
+  (let* ((box (chem-exp-svg--reaction-part-box part scale))
+         (x1 (nth 0 box))
+         (y1 (nth 1 box))
+         (x2 (nth 2 box))
+         (y2 (nth 3 box))
+         (cx (/ (+ x1 x2) 2.0))
+         (cy (/ (+ y1 y2) 2.0))
+         (color (chem-exp-svg--theme-foreground
+                 (chem-exp-svg-state-theme state))))
+    (format "<g data-reaction-part=\"plus\">\n%s%s</g>\n"
+            (chem-exp-svg--line state x1 cy x2 cy nil color)
+            (chem-exp-svg--line state cx y1 cx y2 nil color))))
+
+(defun chem-exp-svg--reaction-arrow-head (x y direction font-size color)
+  "Return an arrowhead at X and Y pointing in DIRECTION."
+  (let* ((length (* 0.5 font-size))
+         (half (* 0.25 font-size))
+         (points
+          (if (eq direction :right)
+              (list (list x y)
+                    (list (- x length) (- y half))
+                    (list (- x length) (+ y half)))
+            (list (list x y)
+                  (list (+ x length) (- y half))
+                  (list (+ x length) (+ y half))))))
+    (format "<polygon points=\"%s\" fill=\"%s\"/>\n"
+            (mapconcat (lambda (point)
+                         (format "%s,%s"
+                                 (chem-exp-svg--number (car point))
+                                 (chem-exp-svg--number (cadr point))))
+                       points " ")
+            (chem-exp-svg--escape color))))
+
+(defun chem-exp-svg--reaction-arrow-svg (state part scale reaction)
+  "Return PART's arrow in STATE for REACTION."
+  (let* ((box (chem-exp-svg--reaction-part-box part scale))
+         (x1 (nth 0 box))
+         (y1 (nth 1 box))
+         (x2 (nth 2 box))
+         (y2 (nth 3 box))
+         (y (/ (+ y1 y2) 2.0))
+         (style (plist-get (chem-reaction-arrow reaction) :style))
+         (font-size (chem-exp-svg--option state :svg-font-size))
+         (color (chem-exp-svg--theme-foreground
+                 (chem-exp-svg-state-theme state)))
+         (line (chem-exp-svg--line state x1 y x2 y nil color)))
+    (format "<g data-reaction-part=\"arrow\">\n%s%s</g>\n"
+            line
+            (pcase style
+       (:forward
+        (chem-exp-svg--reaction-arrow-head x2 y :right font-size color))
+       (:reverse
+        (chem-exp-svg--reaction-arrow-head x1 y :left font-size color))
+       (:equilibrium
+        (concat
+         (chem-exp-svg--reaction-arrow-head x1 y :left font-size color)
+         (chem-exp-svg--reaction-arrow-head x2 y :right font-size color)))
+       (_ line)))))
+
+(defun chem-exp-svg--reaction-text-svg (state info)
+  "Return text SVG for INFO in STATE."
+  (format "<text data-reaction-part=\"text\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"middle\" dominant-baseline=\"central\" x=\"%s\" y=\"%s\">%s</text>\n"
+          (chem-exp-svg--escape
+           (chem-exp-svg--theme-foreground
+            (chem-exp-svg-state-theme state)))
+          (chem-exp-svg--escape
+           (chem-exp-svg--option state :svg-font-family))
+          (chem-exp-svg--number
+           (* 0.8 (chem-exp-svg--option state :svg-font-size)))
+          (chem-exp-svg--number (plist-get info :center-x))
+          (chem-exp-svg--number (plist-get info :center-y))
+          (chem-exp-svg--escape (plist-get info :text))))
+
+(defun chem-exp-svg--reaction-include-box (box min-x min-y max-x max-y)
+  "Return (MIN-X MIN-Y MAX-X MAX-Y) expanded by BOX."
+  (list (if min-x (min min-x (nth 0 box)) (nth 0 box))
+        (if min-y (min min-y (nth 1 box)) (nth 1 box))
+        (if max-x (max max-x (nth 2 box)) (nth 2 box))
+        (if max-y (max max-y (nth 3 box)) (nth 3 box))))
+
+(defun chem-exp-svg-reaction-render (reaction options)
+  "Render REACTION to an SVG string using OPTIONS."
+  (let* ((scale (or (plist-get options :svg-scale)
+                    chem-exp-svg-default-scale))
+         (padding (or (plist-get options :svg-padding)
+                      chem-exp-svg-default-padding))
+         (layout (chem-reaction-layout reaction))
+         (molecule-index 0)
+         (first-state nil)
+         (defs nil)
+         (bodies nil)
+         (min-x nil)
+         (min-y nil)
+         (max-x nil)
+         (max-y nil))
+    (dolist (part layout)
+      (pcase (chem-reaction-part-kind part)
+        ((or :reactant :product)
+         (let* ((drawing (chem-reaction-part-drawing part))
+                (prefix (format "r%d" molecule-index))
+                (state (chem-exp-svg--make-state drawing options prefix))
+                (_ (chem-exp-svg--prepare-gradients state))
+                (content (chem-exp-svg--content state))
+                (local (chem-drawing-bounds drawing))
+                (dx (- (chem-reaction-part-x part) (nth 0 local)))
+                (dy (- (chem-reaction-part-y part) (nth 1 local)))
+                (dx-svg (* dx scale))
+                (dy-svg (* (- dy) scale))
+                (viewbox (chem-exp-svg--viewbox state))
+                (box (list (+ dx-svg (nth 0 viewbox))
+                           (+ dy-svg (nth 1 viewbox))
+                           (+ dx-svg (nth 0 viewbox) (nth 2 viewbox))
+                           (+ dy-svg (nth 1 viewbox) (nth 3 viewbox)))))
+           (unless first-state (setq first-state state))
+           (push (car content) defs)
+           (push (format "<g data-reaction-part=\"molecule\" transform=\"translate(%s,%s)\">\n%s</g>\n"
+                         (chem-exp-svg--number dx-svg)
+                         (chem-exp-svg--number dy-svg)
+                         (cdr content))
+                 bodies)
+           (setq molecule-index (1+ molecule-index))
+           (let ((included (chem-exp-svg--reaction-include-box
+                            box min-x min-y max-x max-y)))
+             (setq min-x (nth 0 included)
+                   min-y (nth 1 included)
+                   max-x (nth 2 included)
+                   max-y (nth 3 included)))))
+        (:plus
+         (let ((box (chem-exp-svg--reaction-part-box part scale))
+               (included nil))
+           (push (chem-exp-svg--reaction-plus-svg first-state part scale)
+                 bodies)
+           (setq included (chem-exp-svg--reaction-include-box
+                           box min-x min-y max-x max-y))
+           (setq min-x (nth 0 included)
+                 min-y (nth 1 included)
+                 max-x (nth 2 included)
+                 max-y (nth 3 included))))
+        (:arrow
+         (let ((box (chem-exp-svg--reaction-part-box part scale))
+               (included nil))
+           (push (chem-exp-svg--reaction-arrow-svg
+                  first-state part scale reaction)
+                 bodies)
+           (setq included (chem-exp-svg--reaction-include-box
+                           box min-x min-y max-x max-y))
+           (setq min-x (nth 0 included)
+                 min-y (nth 1 included)
+                 max-x (nth 2 included)
+                 max-y (nth 3 included))))
+        (:text
+         (let ((info (chem-exp-svg--reaction-text-info
+                      first-state part reaction scale)))
+           (when info
+             (push (chem-exp-svg--reaction-text-svg first-state info)
+                   bodies)
+             (let ((included
+                    (chem-exp-svg--reaction-include-box
+                     (list (plist-get info :min-x)
+                           (plist-get info :min-y)
+                           (plist-get info :max-x)
+                           (plist-get info :max-y))
+                     min-x min-y max-x max-y)))
+               (setq min-x (nth 0 included)
+                     min-y (nth 1 included)
+                     max-x (nth 2 included)
+                     max-y (nth 3 included))))))))
+    (unless (and first-state min-x)
+      (user-error "Cannot render an empty reaction"))
+    (let* ((min-x (- min-x padding))
+           (min-y (- min-y padding))
+           (max-x (+ max-x padding))
+           (max-y (+ max-y padding))
+           (viewbox (list min-x min-y
+                          (- max-x min-x)
+                          (- max-y min-y)))
+           (body (concat "<defs>\n"
+                         (mapconcat #'identity (nreverse defs) "")
+                         "</defs>\n"
+                         (chem-exp-svg--background first-state viewbox)
+                         (mapconcat #'identity (nreverse bodies) ""))))
+      (chem-exp-svg--reaction-document options viewbox body))))
+
+(defun chem-exp-svg-render (object options)
+  "Render OBJECT to an SVG string using OPTIONS."
+  (if (chem-reaction-p object)
+      (chem-exp-svg-reaction-render object options)
+    (let* ((state (chem-exp-svg--make-state object options))
+           (_ (chem-exp-svg--prepare-gradients state))
+           (content (chem-exp-svg--content state))
+           (body (concat "<defs>\n" (car content) "</defs>\n"
+                         (chem-exp-svg--background state)
+                         (cdr content))))
+      (chem-exp-svg--document state body))))
 
 (chem-register-exporter 'svg #'chem-exp-svg-render
                         (list :label "SVG"
-                              :options chem-exp-svg-option-specs
+                              :options (append chem-exp-svg-option-specs
+                                               chem-reaction-option-specs)
                               :target 'image))
 
 (provide 'chem-exp-svg)

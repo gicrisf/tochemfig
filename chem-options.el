@@ -160,17 +160,17 @@ One of `forward', `reverse', or `equilibrium'."
   :group 'chem-mode
   :type 'string)
 
-(defcustom chem-default-reaction-spacing 10.0
+(defcustom chem-default-reaction-spacing 0.3333
   "Default spacing between reaction layout parts."
   :group 'chem-mode
   :type 'number)
 
-(defcustom chem-default-reaction-arrow-length 40.0
+(defcustom chem-default-reaction-arrow-length 4.0
   "Default reaction arrow length."
   :group 'chem-mode
   :type 'number)
 
-(defcustom chem-default-reaction-plus-size 9.0
+(defcustom chem-default-reaction-plus-size 0.3
   "Default reaction plus-sign box size."
   :group 'chem-mode
   :type 'number)

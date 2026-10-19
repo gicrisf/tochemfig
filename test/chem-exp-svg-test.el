@@ -55,6 +55,53 @@
                    options)))
     (chem-render drawing 'svg options)))
 
+(defun chem-exp-svg-test--render-reaction (smiles &optional overrides)
+  "Render reaction SMILES to SVG with OVERRIDES."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-reaction-options overrides 'svg))
+         (reaction (chem-from-reaction-string smiles options)))
+    (chem-render reaction 'svg options)))
+
+(defun chem-exp-svg-test--ids (svg)
+  "Return all id attribute values in SVG."
+  (let ((start 0)
+        (ids nil))
+    (while (string-match " id=\"\\([^\"]+\\)\"" svg start)
+      (push (match-string 1 svg) ids)
+      (setq start (match-end 0)))
+    (nreverse ids)))
+
+(defun chem-exp-svg-test--viewbox (svg)
+  "Return SVG's viewBox as a list of numbers."
+  (when (string-match "viewBox=\"\\([^\"]+\\)\"" svg)
+    (mapcar #'string-to-number
+            (split-string (match-string 1 svg) " " t))))
+
+(defun chem-exp-svg-test--reaction-part-count (svg kind)
+  "Return the number of reaction parts of KIND in SVG."
+  (chem-exp-svg-test--count
+   (concat "data-reaction-part=\"" kind "\"") svg))
+
+(defun chem-exp-svg-test--molecule-xs (svg)
+  "Return reaction molecule group x translations in SVG."
+  (let ((start 0)
+        (xs nil))
+    (while (string-match
+            "<g data-reaction-part=\"molecule\" transform=\"translate(\\([^,]+\\),"
+            svg start)
+      (push (string-to-number (match-string 1 svg)) xs)
+      (setq start (match-end 0)))
+    (nreverse xs)))
+
+(defun chem-exp-svg-test--plain-text (svg)
+  "Return plain reaction text elements from SVG."
+  (let ((start 0)
+        (texts nil))
+    (while (string-match "<text[^>]*>\\([^<]*\\)</text>" svg start)
+      (push (match-string 1 svg) texts)
+      (setq start (match-end 0)))
+    (nreverse texts)))
+
 (defun chem-exp-svg-test--xml (string)
   "Parse STRING as XML and return the parsed tree."
   (with-temp-buffer
@@ -104,7 +151,8 @@
     (should entry)
     (let ((metadata (plist-get entry :metadata)))
       (should (eq 'image (plist-get metadata :target)))
-      (should (equal chem-exp-svg-option-specs
+      (should (equal (append chem-exp-svg-option-specs
+                             chem-reaction-option-specs)
                      (plist-get metadata :options))))))
 
 (ert-deftest chem-exp-svg-option-keys-match-variables ()
@@ -768,6 +816,112 @@
                count (length failures))
       (should (= 0 (length failures)))
       (should (> count 0)))))
+
+(ert-deftest chem-exp-svg-reaction-structure ()
+  "Reaction SVG has one document, unique IDs, and ordered parts."
+  (let* ((svg (chem-exp-svg-test--render-reaction
+               "CC(=O)O.OCC>[H+]>CC(=O)OCC.O"
+               '(("reaction-above" . "heat")
+                 ("reaction-below" . "cat."))))
+         (ids (chem-exp-svg-test--ids svg))
+         (viewbox (chem-exp-svg-test--viewbox svg))
+         (xs (chem-exp-svg-test--molecule-xs svg))
+         (texts (chem-exp-svg-test--plain-text svg)))
+    (should (chem-exp-svg-test--xml svg))
+    (should (= 1 (chem-exp-svg-test--count "<svg " svg)))
+    (should (= 1 (chem-exp-svg-test--count
+                  "<rect[^>]+fill=\"#ffffff\"" svg)))
+    (should (= 4 (chem-exp-svg-test--count "<mask " svg)))
+    (should (= (length ids) (length (delete-dups (copy-sequence ids)))))
+    (should (= 4 (chem-exp-svg-test--reaction-part-count svg "molecule")))
+    (should (= 2 (chem-exp-svg-test--reaction-part-count svg "plus")))
+    (should (= 1 (chem-exp-svg-test--reaction-part-count svg "arrow")))
+    (should (= 2 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (= 4 (length xs)))
+    (should (equal xs (sort (copy-sequence xs) #'<)))
+    (should (> (nth 2 viewbox) (nth 3 viewbox)))
+    (should (= 1 (chem-exp-svg-test--count "<polygon " svg)))
+    (should (string-match-p "H⁺, heat" (mapconcat #'identity texts "|")))
+    (should (string-match-p "cat\." (mapconcat #'identity texts "|")))))
+
+(ert-deftest chem-exp-svg-reaction-arrow-styles ()
+  "Reaction arrow styles draw the expected arrowheads."
+  (should (= 1 (chem-exp-svg-test--count
+                "<polygon "
+                (chem-exp-svg-test--render-reaction
+                 "CCO>>CC=O" '(("reaction-arrow" . "forward"))))))
+  (should (= 1 (chem-exp-svg-test--count
+                "<polygon "
+                (chem-exp-svg-test--render-reaction
+                 "CCO>>CC=O" '(("reaction-arrow" . "reverse"))))))
+  (should (= 2 (chem-exp-svg-test--count
+                "<polygon "
+                (chem-exp-svg-test--render-reaction
+                 "CCO>>CC=O" '(("reaction-arrow" . "equilibrium")))))))
+
+(ert-deftest chem-exp-svg-reaction-agent-text ()
+  "Agent labels use subscripts and charges."
+  (let ((text (mapconcat
+               #'identity
+               (chem-exp-svg-test--plain-text
+                (chem-exp-svg-test--render-reaction "CC>O.CCO>CC"))
+               "|")))
+    (should (string-match-p "H₂O" text))
+    (should (string-match-p "C₂H₆O" text)))
+  (let ((text (mapconcat
+               #'identity
+               (chem-exp-svg-test--plain-text
+                (chem-exp-svg-test--render-reaction "CC>[H+]>CC"))
+               "|")))
+    (should (string-match-p "H⁺" text))))
+
+(ert-deftest chem-exp-svg-reaction-text-escaping ()
+  "Reaction condition text is XML-escaped."
+  (let ((svg (chem-exp-svg-test--render-reaction
+              "CCO>>CC=O"
+              '(("reaction-above" . "a&b")
+                ("reaction-below" . "<c>")))))
+    (should (string-match-p "a&amp;b" svg))
+    (should (string-match-p "&lt;c&gt;" svg))))
+
+(ert-deftest chem-exp-svg-reaction-theme-and-font ()
+  "Reaction SVG honors theme and font options."
+  (let ((svg (chem-exp-svg-test--render-reaction
+              "CCO>>CC=O"
+              '(("svg-theme" . "dark")
+                ("svg-font-size" . 16)))))
+    (should (string-match-p "fill=\"#141414\"" svg))
+    (should (string-match-p "font-size=\"16\"" svg))
+    (should (string-match-p "fill=\"#ffffff\"" svg))))
+
+(ert-deftest chem-exp-svg-reaction-determinism ()
+  "Repeated reaction rendering is deterministic."
+  (let* ((overrides '(("reaction-above" . "heat")))
+         (first (chem-exp-svg-test--render-reaction
+                 "CC(=O)O.OCC>>CC(=O)OCC.O" overrides))
+         (second (chem-exp-svg-test--render-reaction
+                  "CC(=O)O.OCC>>CC(=O)OCC.O" overrides)))
+    (should (equal first second))))
+
+(ert-deftest chem-exp-svg-reaction-unique-marker-ids ()
+  "Marker IDs are namespaced per reaction component."
+  (let* ((svg (chem-exp-svg-test--render-reaction
+               "CC(=O)O.OCC>>CC(=O)OCC.O"
+               '(("markers" . "a"))))
+         (ids (chem-exp-svg-test--ids svg)))
+    (should (= (length ids) (length (delete-dups (copy-sequence ids)))))
+    (should (cl-some (lambda (id) (string-prefix-p "r0-" id)) ids))))
+
+(ert-deftest chem-exp-svg-molecule-golden ()
+  "Molecule SVG output matches the ethanol golden."
+  (let ((output (chem-exp-svg-test--render "CCO"))
+        (golden
+         (with-temp-buffer
+           (insert-file-contents
+            (expand-file-name "golden/svg/ethanol.svg"
+                              chem-exp-svg-test--root))
+           (buffer-string))))
+    (should (equal golden output))))
 
 (provide 'chem-exp-svg-test)
 ;;; chem-exp-svg-test.el ends here

@@ -15,28 +15,28 @@
 (require 'chem-ir)
 (require 'chem-geometry)
 
-(defconst chem-reaction--default-spacing 10.0
+(defconst chem-reaction--default-spacing 0.3333
   "Default spacing between reaction layout parts.")
 
-(defconst chem-reaction--default-arrow-length 40.0
+(defconst chem-reaction--default-arrow-length 4.0
   "Default arrow length in reaction coordinates.")
 
-(defconst chem-reaction--default-plus-size 9.0
+(defconst chem-reaction--default-plus-size 0.3
   "Default plus-sign box size in reaction coordinates.")
 
-(defconst chem-reaction--arrow-height 1.0
+(defconst chem-reaction--arrow-height 0.3
   "Arrow layout box height in reaction coordinates.")
 
-(defconst chem-reaction--text-height 1.0
+(defconst chem-reaction--text-height 0.3
   "Approximate text height in reaction coordinates.")
 
-(defconst chem-reaction--text-char-width 0.6
+(defconst chem-reaction--text-char-width 0.18
   "Approximate text width per character in reaction coordinates.")
 
-(defconst chem-reaction--text-above-y 0.5
+(defconst chem-reaction--text-above-y 0.15
   "Lower-left y coordinate for text above the arrow.")
 
-(defconst chem-reaction--text-below-y -1.5
+(defconst chem-reaction--text-below-y -0.45
   "Lower-left y coordinate for text below the arrow.")
 
 (defun chem-reaction--number (options key default)
