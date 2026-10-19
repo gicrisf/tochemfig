@@ -1,0 +1,151 @@
+;;; svg-raster-report.el --- Advisory SVG raster parity report -*- lexical-binding: t; -*-
+
+;; This is a development-only tool.  It renders each SmilesDrawer reference
+;; fixture and the shared-coordinate native SVG, rasterizes both with
+;; Inkscape, and prints an advisory image difference.  It is not part of
+;; `eldev test'.
+
+;;; Code:
+
+(require 'chem-svg-parity-test)
+
+(defvar svg-raster-report--directory
+  (expand-file-name "chem-svg-raster" temporary-file-directory))
+
+(defun svg-raster-report--write (path content)
+  "Write CONTENT to PATH."
+  (make-directory (file-name-directory path) t)
+  (let ((coding-system-for-write 'utf-8-unix))
+    (with-temp-file path
+      (insert content))))
+
+(defun svg-raster-report--png (svg png)
+  "Rasterize SVG to PNG with Inkscape."
+  (unless (executable-find "inkscape")
+    (user-error "Inkscape is not available"))
+  (unless (zerop (call-process "inkscape" nil nil nil
+                               "--export-type=png"
+                               (format "--export-filename=%s" png)
+                               "--export-width=500"
+                               svg))
+    (user-error "Inkscape failed for %s" svg)))
+
+(defun svg-raster-report--compare (reference native output)
+  "Compare REFERENCE and NATIVE PNG, writing OUTPUT."
+  (let ((python (or (executable-find "python3")
+                    (user-error "python3 is not available")))
+        (script (expand-file-name "tools/compare-png.py"
+                                  (file-name-directory
+                                   (directory-file-name
+                                    (file-name-directory
+                                     (or load-file-name buffer-file-name)))))))
+    (with-temp-buffer
+      (unless (zerop (call-process python nil t nil script
+                                   reference native output))
+        (user-error "PNG comparison failed"))
+      (string-trim (buffer-string)))))
+
+(defun svg-raster-report--bond-cv (drawing)
+  "Return the coefficient of variation of DRAWING's bond lengths."
+  (let* ((lengths
+          (mapcar (lambda (edge)
+                    (chem-edge-length drawing edge))
+                  (chem-visible-edges drawing)))
+         (mean (/ (apply #'+ lengths) (float (length lengths))))
+         (variance (/ (apply #'+ (mapcar (lambda (length)
+                                           (expt (- length mean) 2))
+                                         lengths))
+                      (float (length lengths)))))
+    (if (zerop mean) 0.0 (/ (sqrt variance) mean))))
+
+(defun svg-raster-report--reference-cv (fixture)
+  "Return the coefficient of variation of FIXTURE's bond lengths."
+  (let* ((atoms (chem-svg-parity-test--list
+                 (chem-svg-parity-test--get fixture "atoms")))
+         (edges (chem-svg-parity-test--list
+                 (chem-svg-parity-test--get fixture "edges")))
+         (by-id (make-hash-table :test 'eql))
+         (lengths
+          (progn
+            (dolist (atom atoms)
+              (puthash (chem-svg-parity-test--number
+                        (chem-svg-parity-test--get atom "id"))
+                       atom by-id))
+            (mapcar
+             (lambda (edge)
+               (let* ((a (gethash (chem-svg-parity-test--number
+                                   (chem-svg-parity-test--get edge "a"))
+                                  by-id))
+                      (b (gethash (chem-svg-parity-test--number
+                                   (chem-svg-parity-test--get edge "b"))
+                                  by-id)))
+                 (sqrt (+ (expt (- (chem-svg-parity-test--number
+                                    (chem-svg-parity-test--get a "x"))
+                                   (chem-svg-parity-test--number
+                                    (chem-svg-parity-test--get b "x")))
+                                 2)
+                          (expt (- (chem-svg-parity-test--number
+                                    (chem-svg-parity-test--get a "y"))
+                                   (chem-svg-parity-test--number
+                                    (chem-svg-parity-test--get b "y")))
+                                 2)))))
+             edges)))
+         (mean (/ (apply #'+ lengths) (float (length lengths))))
+         (variance (/ (apply #'+ (mapcar (lambda (length)
+                                           (expt (- length mean) 2))
+                                         lengths))
+                      (float (length lengths)))))
+    (if (zerop mean) 0.0 (/ (sqrt variance) mean))))
+
+(defun svg-raster-report--run ()
+  "Run the advisory raster and layout report."
+  (interactive)
+  (make-directory svg-raster-report--directory t)
+  (dolist (entry (chem-svg-parity-test--strict-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (options (chem-svg-parity-test--viewbox-options))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (native-svg (chem-render drawing 'svg options))
+           (reference-svg (chem-svg-parity-test--get fixture "svg"))
+           (reference-png (expand-file-name (concat name "-reference.png")
+                                            svg-raster-report--directory))
+           (native-png (expand-file-name (concat name "-native.png")
+                                          svg-raster-report--directory))
+           (comparison-png (expand-file-name (concat name "-comparison.png")
+                                              svg-raster-report--directory))
+           (reference-cv (svg-raster-report--reference-cv fixture))
+           (native-cv
+            (condition-case nil
+                (let ((layout-drawing
+                       (chem-from-string
+                        (chem-svg-parity-test--get fixture "smiles")
+                        options)))
+                  (svg-raster-report--bond-cv layout-drawing))
+              (error nil))))
+      (svg-raster-report--write
+       (expand-file-name (concat name "-reference.svg")
+                         svg-raster-report--directory)
+       reference-svg)
+      (svg-raster-report--write
+       (expand-file-name (concat name "-native.svg")
+                         svg-raster-report--directory)
+       native-svg)
+      (svg-raster-report--png
+       (expand-file-name (concat name "-reference.svg")
+                         svg-raster-report--directory)
+       reference-png)
+      (svg-raster-report--png
+       (expand-file-name (concat name "-native.svg")
+                         svg-raster-report--directory)
+       native-png)
+      (princ (format "%s: %s; bond-cv reference=%.3f native=%s\n"
+                     name
+                     (svg-raster-report--compare reference-png native-png
+                                                 comparison-png)
+                     reference-cv
+                     (if native-cv (format "%.3f" native-cv) "n/a"))))))
+
+(svg-raster-report--run)
+
+;;; svg-raster-report.el ends here

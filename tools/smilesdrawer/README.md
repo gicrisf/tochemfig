@@ -26,6 +26,20 @@ JSON file per fixture next to it.  Fixtures contain SmilesDrawer coordinates,
 the molecular graph, ring membership, and the normalized SVG primitives emitted
 while drawing.
 
+## Raster and layout report
+
+From the repository root, with Inkscape and Pillow available:
+
+```sh
+nix develop --command emacs -Q --batch -L . -L emacs-indigo -L test \
+  -l tools/svg-raster-report.el
+```
+
+This rasterizes each reference and native shared-coordinate SVG with Inkscape,
+prints advisory pixel/edge metrics and bond-length variation, and writes
+side-by-side images under `/tmp/chem-svg-raster/`.  It is not part of
+`eldev test` and has no hard visual gates yet.
+
 ## Compare
 
 From the repository root:

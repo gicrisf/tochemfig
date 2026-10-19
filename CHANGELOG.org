@@ -54,6 +54,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   parts; the default SVG output is 500x500 with a square viewBox.
 - Shared-coordinate parity tests for gradients, per-part text colors, and
   carbon dots.
+- =tools/svg-raster-report.el= and =tools/compare-png.py=: advisory Inkscape
+  raster comparison and native-vs-reference bond-length variation report.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -101,6 +103,7 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - SVG bond strokes now use SmilesDrawer-compatible radial and linear
   gradients, and labels use per-element tspan colors.
 - Linear carbon atoms now render as carbon dots with matching mask circles.
+- Added an advisory raster and layout report using Inkscape and Pillow.
 - The full ERT suite is now 502 tests.
 
 ** Migration

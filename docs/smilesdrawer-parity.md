@@ -49,8 +49,11 @@ Phase 1 is in progress:
   labels use per-part tspan colors with the same theme palette.
 - Linear carbon atoms now render as SmilesDrawer-style carbon dots, including
   mask circles.
-- Known gap: the allene carbon label.  Next parity target is layout metrics
-  and raster comparison.
+- An advisory raster and layout report (`tools/svg-raster-report.el`) renders
+  reference and native SVGs with Inkscape, compares PNGs, and reports
+  bond-length variation.  Raster metrics remain advisory.
+- Known gap: the allene carbon label.  Next parity target is stricter layout
+  metrics and optional raster gates for stable fixtures.
 
 ## Reference version
 

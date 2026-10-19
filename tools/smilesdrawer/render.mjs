@@ -265,6 +265,7 @@ function renderReference(entry) {
     height: number(svg.getAttribute("height")),
     minX: number(drawer.svgWrapper.minX),
     minY: number(drawer.svgWrapper.minY),
+    svg: svg.outerHTML,
   };
 }
 

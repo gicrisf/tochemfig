@@ -28,7 +28,7 @@
 
         # Python environment used to run the reference mol2chemfigPy3
         # implementation and (re)generate the golden test files.
-        reference-python = pkgs.python3.withPackages (_: [ epam-indigo ]);
+        reference-python = pkgs.python3.withPackages (_: [ epam-indigo pkgs.python3Packages.pillow ]);
 
         # Indigo is statically linked into emacs-indigo's dynamic module, but
         # the module still needs these at runtime.
