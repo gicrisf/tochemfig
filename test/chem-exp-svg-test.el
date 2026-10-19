@@ -384,7 +384,7 @@
   (let ((svg (chem-exp-svg-test--render
               "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil)))))
     (should-not (string-match-p "<polygon " svg))
-    (should (= 6 (chem-exp-svg-test--count "<line " svg)))))
+    (should (= 3 (chem-exp-svg-test--count "<line " svg)))))
 
 (ert-deftest chem-exp-svg-either-stereo ()
   "Either stereochemistry falls back to a dashed bond."
@@ -585,6 +585,19 @@
             (should (< (abs (- (car center) (car point))) 1e-6))
             (should (< (abs (- (cadr center) (cdr point))) 1e-6))))))
     (should (> checked 0))))
+
+(ert-deftest chem-exp-svg-pseudo-elements ()
+  "Terminal pseudo-element groups are combined into one label."
+  (let ((alanine (chem-exp-svg-test--render
+                  "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil)))))
+    (should (string-match-p ">\\(COOH\\|HOOC\\)</text>" alanine))
+    (should (string-match-p ">\\(NH₂\\|H₂N\\)</text>" alanine))
+    (should-not (string-match-p ">O</text>" alanine))
+    (should (= 3 (chem-exp-svg-test--count "<line " alanine))))
+  (let ((nitro (chem-exp-svg-test--render "O=[N+]([O-])c1ccccc1")))
+    (should (string-match-p ">\\(N⁺O₂\\|O₂N⁺\\)</text>" nitro))
+    (should-not (string-match-p ">O</text>" nitro))
+    (should (= 7 (chem-exp-svg-test--count "<line " nitro)))))
 
 (ert-deftest chem-exp-svg-atom-numbers ()
   "Atom numbers replace hydrogen and charge annotations."

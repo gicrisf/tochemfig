@@ -37,8 +37,10 @@ Phase 1 is in progress:
   now match the butene fixtures.
 - Heteroatom label text, left-direction ordering, and atom-centered placement
   now match the shared-coordinate fixtures.
-- Known next gaps: attached pseudo-element labels (alanine and nitrobenzene)
-  and the allene carbon label.
+- Attached pseudo-element groups (COOH, NO2, and related terminal heteroatom
+  groups) are detected, hidden atoms and edges are omitted, and the group text
+  is rendered on the center atom.
+- Known next gap: the allene carbon label.
 
 ## Reference version
 

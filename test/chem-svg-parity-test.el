@@ -449,9 +449,8 @@ Orient each line along the canonical lower-to-higher atom direction."
                    line-geometry-mismatches max-line-distance))))
 
 (defconst chem-svg-parity-test--known-gaps
-  '("alanine" "nitrobenzene")
-  "Fixtures with known SmilesDrawer features not yet supported.
-Alanine and nitrobenzene use attached pseudo-element labels.")
+  '()
+  "Fixtures with known unsupported SmilesDrawer features.")
 
 (defun chem-svg-parity-test--strict-fixtures ()
   "Return fixtures that should match the renderer exactly."
@@ -496,19 +495,20 @@ Alanine and nitrobenzene use attached pseudo-element labels.")
            (state (chem-exp-svg--make-state
                    drawing (chem-svg-parity-test--options))))
       (dolist (edge (chem-edges drawing))
-        (let* ((reference
-                (chem-svg-parity-test--sort-vectors
-                 (chem-svg-parity-test--reference-lines
-                  fixture (chem-edge-id edge))))
-               (native
-                (chem-svg-parity-test--sort-vectors
-                 (chem-svg-parity-test--line-elements
-                  (chem-exp-svg--edge-svg state edge)))))
-          (should (equal (length reference) (length native)))
-          (dolist (pair (cl-mapcar #'cons reference native))
-            (should (< (chem-svg-parity-test--vector-distance
-                        (car pair) (cdr pair))
-                       0.01))))))))
+        (when (chem-exp-svg--edge-visible-p state edge)
+          (let* ((reference
+                  (chem-svg-parity-test--sort-vectors
+                   (chem-svg-parity-test--reference-lines
+                    fixture (chem-edge-id edge))))
+                 (native
+                  (chem-svg-parity-test--sort-vectors
+                   (chem-svg-parity-test--line-elements
+                    (chem-exp-svg--edge-svg state edge)))))
+            (should (equal (length reference) (length native)))
+            (dolist (pair (cl-mapcar #'cons reference native))
+              (should (< (chem-svg-parity-test--vector-distance
+                          (car pair) (cdr pair))
+                         0.01)))))))))
 
 (defun chem-svg-parity-test--point-distance (a b)
   "Return the distance between points A and B."
@@ -529,6 +529,7 @@ Alanine and nitrobenzene use attached pseudo-element labels.")
            (fixture-edges (chem-svg-parity-test--list
                            (chem-svg-parity-test--get fixture "edges"))))
       (dolist (edge (chem-edges drawing))
+        (when (chem-exp-svg--edge-visible-p state edge)
         (let* ((edge-id (chem-edge-id edge))
                (edge-json (cl-find-if
                            (lambda (candidate)
@@ -569,7 +570,7 @@ Alanine and nitrobenzene use attached pseudo-element labels.")
                                            (cdr line-pair)))
               (should (< (chem-svg-parity-test--point-distance
                           (car point-pair) (cdr point-pair))
-                         0.01)))))))))
+                         0.01))))))))))
 
 (defconst chem-svg-parity-test--label-known-gaps
   '("allene")
@@ -591,24 +592,26 @@ heteroatom labels covered here.")
     (let* ((name (chem-svg-parity-test--get entry "name"))
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
            (atoms (chem-drawing-atoms drawing))
            (labels (chem-svg-parity-test--list
                     (chem-svg-parity-test--get fixture "labels"))))
       (should (= (length labels)
                  (cl-count-if
-                  (lambda (atom)
-                    (chem-exp-svg--atom-text atom))
-                  (mapcar (lambda (idx) (gethash idx atoms))
-                          (mapcar (lambda (label)
-                                    (chem-svg-parity-test--number
-                                     (chem-svg-parity-test--get label "atom")))
-                                  labels)))))
+                  (lambda (label)
+                    (let* ((idx (chem-svg-parity-test--number
+                                 (chem-svg-parity-test--get label "atom")))
+                           (atom (gethash idx atoms)))
+                      (and (not (chem-exp-svg--hidden-atom-p state idx))
+                           (chem-exp-svg--atom-text-for-state state atom))))
+                  labels)))
       (dolist (label labels)
         (let* ((idx (chem-svg-parity-test--number
                      (chem-svg-parity-test--get label "atom")))
                (atom (gethash idx atoms))
                (reference (chem-svg-parity-test--get label "text"))
-               (native (chem-exp-svg--atom-text atom)))
+               (native (chem-exp-svg--atom-text-for-state state atom)))
           (should atom)
           (should (equal reference native)))))))
 
@@ -626,14 +629,15 @@ heteroatom labels covered here.")
       (dolist (label labels)
         (let* ((idx (chem-svg-parity-test--number
                      (chem-svg-parity-test--get label "atom")))
-               (atom (gethash idx atoms))
-               (text (chem-exp-svg--atom-text atom))
-               (point (chem-exp-svg--point state
-                                            (chem-atom-x atom)
-                                            (chem-atom-y atom)))
-               (center (chem-exp-svg--label-center state atom text)))
-          (should (< (abs (- (car center) (car point))) 1e-6))
-          (should (< (abs (- (cadr center) (cdr point))) 1e-6)))))))
+               (atom (gethash idx atoms)))
+          (unless (chem-exp-svg--hidden-atom-p state idx)
+            (let* ((text (chem-exp-svg--atom-text-for-state state atom))
+                   (point (chem-exp-svg--point state
+                                                (chem-atom-x atom)
+                                                (chem-atom-y atom)))
+                   (center (chem-exp-svg--label-center state atom text)))
+              (should (< (abs (- (car center) (car point))) 1e-6))
+              (should (< (abs (- (cadr center) (cdr point))) 1e-6)))))))))
 
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."

@@ -200,7 +200,9 @@ and `alternating' draws dashed inner lines."
   drawing
   options
   theme
-  bounds)
+  bounds
+  hidden
+  pseudo)
 
 ;;; Option and theme helpers
 
@@ -357,6 +359,157 @@ reads outward from the atom, matching SmilesDrawer."
                                  (chem-atom-element atom))
     (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state))))
 
+(defun chem-exp-svg--hidden-atom-p (state idx)
+  "Return non-nil when atom IDX is hidden by pseudo-element grouping."
+  (and (chem-exp-svg-state-hidden state)
+       (gethash idx (chem-exp-svg-state-hidden state))))
+
+(defun chem-exp-svg--edge-visible-p (state edge)
+  "Return non-nil when EDGE has no hidden endpoint in STATE."
+  (not (or (chem-exp-svg--hidden-atom-p state (chem-edge-a edge))
+           (chem-exp-svg--hidden-atom-p state (chem-edge-b edge)))))
+
+(defun chem-exp-svg--attach-pseudo (table center element hydrogens charge)
+  "Attach a pseudo ELEMENT to CENTER in TABLE."
+  (let* ((key (format "%s%s%s" hydrogens element charge))
+         (groups (gethash center table))
+         (existing (cl-find key groups
+                            :key (lambda (group) (plist-get group :key))
+                            :test #'equal)))
+    (if existing
+        (plist-put existing :count (1+ (plist-get existing :count)))
+      (puthash center
+               (cons (list :key key
+                           :element element
+                           :count 1
+                           :hydrogens hydrogens
+                           :charge charge)
+                     groups)
+               table))))
+
+(defun chem-exp-svg--pseudo-elements (drawing)
+  "Return (HIDDEN . PSEUDO) for DRAWING.
+HIDDEN is a hash of atom indices hidden behind pseudo-element labels.
+PSEUDO maps a center atom index to a sorted list of pseudo groups."
+  (let ((hidden (make-hash-table :test 'eql))
+        (pseudo (make-hash-table :test 'eql))
+        (atoms (chem-drawing-atoms drawing)))
+    (maphash
+     (lambda (idx atom)
+       (let* ((neighbors (mapcar (lambda (neighbor)
+                                   (gethash neighbor atoms))
+                                 (chem-atom-neighbors atom)))
+              (element (chem-atom-element atom))
+              (count (length neighbors)))
+         (when (and (>= count 3)
+                    (null (chem-rings-for-atom drawing idx))
+                    (not (equal element "P"))
+                    (not (and (equal element "C")
+                              (= count 3)
+                              (cl-every (lambda (neighbor)
+                                          (equal "N" (chem-atom-element neighbor)))
+                                        neighbors))))
+           (let* ((terminal
+                   (cl-remove-if-not
+                    (lambda (neighbor)
+                      (and (not (member (chem-atom-element neighbor) '("C" "H")))
+                           (= 1 (length (chem-atom-neighbors neighbor)))))
+                    neighbors))
+                  (ctn (cl-count-if
+                        (lambda (neighbor)
+                          (> (length (chem-atom-neighbors neighbor)) 1))
+                        neighbors)))
+             (when (and (>= (length terminal) 2) (<= ctn 1))
+               (dolist (neighbor terminal)
+                 (puthash (chem-atom-idx neighbor) t hidden)
+                 (chem-exp-svg--attach-pseudo
+                  pseudo idx
+                  (chem-atom-element neighbor)
+                  (or (chem-atom-hydrogens neighbor) 0)
+                  (or (chem-atom-charge neighbor) 0))))))))
+     atoms)
+    (maphash
+     (lambda (idx groups)
+       (puthash idx
+                (sort groups
+                      (lambda (a b)
+                        (string< (plist-get a :key) (plist-get b :key))))
+                pseudo))
+     pseudo)
+    (cons hidden pseudo)))
+
+(defun chem-exp-svg--pseudo-group-text (group)
+  "Return GROUP's display text without hydrogens."
+  (let ((text (plist-get group :element))
+        (count (plist-get group :count))
+        (charge (plist-get group :charge)))
+    (when (> count 1)
+      (setq text (concat text (chem-exp-svg--subscript count))))
+    (when (/= charge 0)
+      (setq text (concat text (chem-exp-svg--charge-text charge))))
+    text))
+
+(defun chem-exp-svg--pseudo-groups-for-atom (atom groups)
+  "Return GROUPS normalized for ATOM's display.
+This implements SmilesDrawer's nitro rendering: N+ with neutral and
+negative terminal oxygens is drawn as N+O2."
+  (if (and (equal (chem-atom-element atom) "N")
+           (= 1 (or (chem-atom-charge atom) 0)))
+      (let ((oxygens (cl-remove-if-not
+                      (lambda (group)
+                        (equal (plist-get group :element) "O"))
+                      groups)))
+        (if (and (= 2 (length oxygens))
+                 (cl-some (lambda (group)
+                            (= -1 (plist-get group :charge)))
+                          oxygens)
+                 (cl-some (lambda (group)
+                            (= 0 (plist-get group :charge)))
+                          oxygens)
+                 (cl-every (lambda (group)
+                             (zerop (plist-get group :hydrogens)))
+                           oxygens))
+            (list (list :key "nitro"
+                        :element "O"
+                        :count 2
+                        :hydrogens 0
+                        :charge 0))
+          groups))
+    groups))
+
+(defun chem-exp-svg--pseudo-atom-text (atom groups direction)
+  "Return ATOM's text with pseudo GROUPS in DIRECTION."
+  (let* ((groups (chem-exp-svg--pseudo-groups-for-atom atom groups))
+         (label (or (chem-atom-label atom)
+                    (chem-atom-element atom)))
+         (center (concat label
+                         (chem-exp-svg--charge-text
+                          (or (chem-atom-charge atom) 0))))
+         (parts (list center))
+         (hydrogens (chem-exp-svg--hydrogen-text
+                     (chem-atom-hydrogens atom))))
+    (unless (string-empty-p hydrogens)
+      (push hydrogens parts))
+    (dolist (group groups)
+      (push (chem-exp-svg--pseudo-group-text group) parts)
+      (let ((hcount (* (plist-get group :count)
+                       (plist-get group :hydrogens))))
+        (unless (zerop hcount)
+          (push (chem-exp-svg--hydrogen-text hcount) parts))))
+    (if (eq direction 'left)
+        (mapconcat #'identity parts "")
+      (mapconcat #'identity (nreverse parts) ""))))
+
+(defun chem-exp-svg--atom-text-for-state (state atom)
+  "Return ATOM's displayed text in STATE, including pseudo groups."
+  (let* ((idx (chem-atom-idx atom))
+         (groups (and (chem-exp-svg-state-pseudo state)
+                      (gethash idx (chem-exp-svg-state-pseudo state))))
+         (direction (chem-exp-svg--text-direction-for-state state atom)))
+    (if groups
+        (chem-exp-svg--pseudo-atom-text atom groups direction)
+      (chem-exp-svg--atom-text atom direction))))
+
 (defun chem-exp-svg--direction-from-svg-angle (angle)
   "Map an SVG text ANGLE in degrees to right, down, left, or up."
   (let ((angle (mod angle 360.0)))
@@ -366,18 +519,18 @@ reads outward from the atom, matching SmilesDrawer."
      ((< angle 225.0) 'left)
      (t 'up))))
 
-(defun chem-exp-svg--text-direction (atom)
-  "Return ATOM's preferred text direction.
-This follows SmilesDrawer: use the mean direction from the neighbours
-to the atom, then round terminal labels to horizontal and other labels
-to a cardinal direction."
+(defun chem-exp-svg--text-direction-from-angles (angles &optional only-horizontal)
+  "Return a text direction from IR bond ANGLES.
+ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
   (let ((angles (mapcar (lambda (angle)
                           (mod (- 180.0 angle) 360.0))
-                        (chem-atom-bond-angles atom))))
+                        angles)))
     (cond
      ((null angles) 'right)
-     ((null (cdr angles))
-      (let* ((angle (car angles))
+     ((or only-horizontal (null (cdr angles)))
+      (let* ((angle (if only-horizontal
+                        (car angles)
+                      (car angles)))
              (angle (if (< (abs (- angle 90.0)) 0.5)
                         (- angle 11.4591559026)
                       angle))
@@ -394,6 +547,32 @@ to a cardinal direction."
                      (* (atan y x) (/ 180.0 float-pi))))
              (rounded (* 90.0 (round (/ mean 90.0)))))
         (chem-exp-svg--direction-from-svg-angle rounded))))))
+
+(defun chem-exp-svg--text-direction (atom)
+  "Return ATOM's preferred text direction from its bond angles."
+  (chem-exp-svg--text-direction-from-angles
+   (chem-atom-bond-angles atom)))
+
+(defun chem-exp-svg--text-direction-for-state (state atom)
+  "Return ATOM's text direction using only visible neighbours."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (atoms (chem-drawing-atoms drawing))
+         (visible-neighbors
+          (cl-remove-if
+           (lambda (idx) (chem-exp-svg--hidden-atom-p state idx))
+           (chem-atom-neighbors atom)))
+         (angles
+          (mapcar
+           (lambda (neighbor)
+             (let ((other (gethash neighbor atoms)))
+               (mod (* (atan (- (chem-atom-y other) (chem-atom-y atom))
+                             (- (chem-atom-x other) (chem-atom-x atom)))
+                       (/ 180.0 float-pi))
+                    360.0)))
+           visible-neighbors))
+         (pseudo (gethash (chem-atom-idx atom)
+                          (chem-exp-svg-state-pseudo state))))
+    (chem-exp-svg--text-direction-from-angles angles (and pseudo t))))
 
 (defun chem-exp-svg--text-position (state atom _direction &optional _text)
   "Return (X Y ANCHOR) for ATOM's text, centered on the atom.
@@ -457,13 +636,15 @@ atom and uses the mask to keep bonds clear."
 
 (defun chem-exp-svg--atom-svg (state atom)
   "Return ATOM's label SVG for STATE."
-  (let* ((text (chem-exp-svg--atom-text atom))
-         (attributes (chem-exp-svg--marker-attributes
-                      (chem-atom-marker atom))))
-    (cond
-     (text
-      (let* ((direction (chem-exp-svg--text-direction atom))
-             (position (chem-exp-svg--text-position state atom direction text))
+  (if (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom))
+      ""
+    (let* ((text (chem-exp-svg--atom-text-for-state state atom))
+           (attributes (chem-exp-svg--marker-attributes
+                        (chem-atom-marker atom))))
+      (cond
+       (text
+        (let* ((direction (chem-exp-svg--text-direction-for-state state atom))
+               (position (chem-exp-svg--text-position state atom direction text))
              (text-svg
               (format "<text x=\"%s\" y=\"%s\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"%s\" dominant-baseline=\"central\">%s</text>\n"
                       (chem-exp-svg--number (nth 0 position))
@@ -479,32 +660,36 @@ atom and uses the mask to keep bonds clear."
         (if attributes
             (format "<g%s>%s</g>\n" attributes text-svg)
           text-svg)))
-     (attributes
-      (let ((point (chem-exp-svg--point state
-                                        (chem-atom-x atom)
-                                        (chem-atom-y atom))))
-        (format "<g%s transform=\"translate(%s %s)\"></g>\n"
-                attributes
-                (chem-exp-svg--number (car point))
-                (chem-exp-svg--number (cdr point)))))
-     (t ""))))
+       (attributes
+        (let ((point (chem-exp-svg--point state
+                                          (chem-atom-x atom)
+                                          (chem-atom-y atom))))
+          (format "<g%s transform=\"translate(%s %s)\"></g>\n"
+                  attributes
+                  (chem-exp-svg--number (car point))
+                  (chem-exp-svg--number (cdr point)))))
+       (t "")))))
 
 (defun chem-exp-svg--atoms (state)
   "Return the atom label SVG for STATE."
-  (mapconcat (lambda (atom) (chem-exp-svg--atom-svg state atom))
-             (chem-exp-svg--sorted-atoms (chem-exp-svg-state-drawing state))
-             ""))
+  (mapconcat
+   (lambda (atom)
+     (unless (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom))
+       (chem-exp-svg--atom-svg state atom)))
+   (chem-exp-svg--sorted-atoms (chem-exp-svg-state-drawing state))
+   ""))
 
 (defun chem-exp-svg--label-mask-circle (state atom)
   "Return a label mask circle for ATOM in STATE."
-  (let ((text (chem-exp-svg--atom-text atom)))
-    (when text
-      (let ((center (chem-exp-svg--label-center state atom text))
-            (radius (chem-exp-svg--label-radius state text)))
-        (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"black\"/>\n"
-                (chem-exp-svg--number (car center))
-                (chem-exp-svg--number (cadr center))
-                (chem-exp-svg--number radius))))))
+  (unless (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom))
+    (let ((text (chem-exp-svg--atom-text-for-state state atom)))
+      (when text
+        (let ((center (chem-exp-svg--label-center state atom text))
+              (radius (chem-exp-svg--label-radius state text)))
+          (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"black\"/>\n"
+                  (chem-exp-svg--number (car center))
+                  (chem-exp-svg--number (cadr center))
+                  (chem-exp-svg--number radius)))))))
 
 (defun chem-exp-svg--mask-id ()
   "Return the deterministic label mask ID."
@@ -764,28 +949,35 @@ and center-double-bond cases."
 (defun chem-exp-svg--bonds (state)
   "Return the normal bond SVG for STATE."
   (mapconcat (lambda (edge) (chem-exp-svg--edge-svg state edge))
-             (cl-remove-if #'chem-edge-cross-p
-                           (chem-exp-svg--visible-edges state))
+             (cl-remove-if-not
+              (lambda (edge)
+                (and (not (chem-edge-cross-p edge))
+                     (chem-exp-svg--edge-visible-p state edge)))
+              (chem-exp-svg--visible-edges state))
              ""))
 
 (defun chem-exp-svg--cross-bonds (state)
   "Return the cross bond SVG for STATE."
   (mapconcat (lambda (edge) (chem-exp-svg--edge-svg state edge))
-             (cl-remove-if-not #'chem-edge-cross-p
-                               (chem-exp-svg--visible-edges state))
+             (cl-remove-if-not
+              (lambda (edge)
+                (and (chem-edge-cross-p edge)
+                     (chem-exp-svg--edge-visible-p state edge)))
+              (chem-exp-svg--visible-edges state))
              ""))
 
-(defun chem-exp-svg--atom-bounds (drawing)
-  "Return (MIN-X MIN-Y MAX-X MAX-Y) for DRAWING's atoms."
+(defun chem-exp-svg--atom-bounds (drawing &optional hidden)
+  "Return (MIN-X MIN-Y MAX-X MAX-Y) for DRAWING's visible atoms."
   (let (min-x min-y max-x max-y)
     (maphash
-     (lambda (_ atom)
-       (let ((x (chem-atom-x atom))
-             (y (chem-atom-y atom)))
-         (setq min-x (if min-x (min min-x x) x))
-         (setq min-y (if min-y (min min-y y) y))
-         (setq max-x (if max-x (max max-x x) x))
-         (setq max-y (if max-y (max max-y y) y))))
+     (lambda (idx atom)
+       (unless (and hidden (gethash idx hidden))
+         (let ((x (chem-atom-x atom))
+               (y (chem-atom-y atom)))
+           (setq min-x (if min-x (min min-x x) x))
+           (setq min-y (if min-y (min min-y y) y))
+           (setq max-x (if max-x (max max-x x) x))
+           (setq max-y (if max-y (max max-y y) y)))))
      (chem-drawing-atoms drawing))
     (if min-x
         (list min-x min-y max-x max-y)
@@ -1246,10 +1438,15 @@ ring's side."
 
 (defun chem-exp-svg--make-state (drawing options)
   "Create an SVG renderer state for DRAWING and OPTIONS."
-  (let ((state (chem-exp-svg-state-create
-                :drawing drawing
-                :options options
-                :bounds (chem-exp-svg--atom-bounds drawing))))
+  (let* ((pseudo (chem-exp-svg--pseudo-elements drawing))
+         (hidden (car pseudo))
+         (groups (cdr pseudo))
+         (state (chem-exp-svg-state-create
+                 :drawing drawing
+                 :options options
+                 :hidden hidden
+                 :pseudo groups
+                 :bounds (chem-exp-svg--atom-bounds drawing hidden))))
     (setf (chem-exp-svg-state-theme state)
           (chem-exp-svg--theme state))
     (setf (chem-exp-svg-state-bounds state)
