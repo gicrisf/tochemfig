@@ -199,6 +199,8 @@ commands and automatic wrapping on top of it.
    | =A=   | Rotate the next generation only                    |
    | =E=   | Select the exporter (chemfig or SVG)               |
    | =M=   | Insert an SVG image link                           |
+   | =G=   | Generate a reaction                                |
+   | =K=   | Copy a reaction                                    |
    | =?=   | Show the =C-c m= key bindings                      |
 
    Options are buffer-local, and are only localized the first time you edit
@@ -224,6 +226,7 @@ commands and automatic wrapping on top of it.
    | =C-c m g= | =chem-export=           | Generate for region / point / prompt |
    | =C-c m o= | =chem-dispatch=         | Transient options menu               |
    | =C-c m c= | =chem-copy=             | Copy to the kill ring                |
+   | =C-c m r= | =chem-export-reaction=  | Generate a reaction                  |
    | =C-c m i= | =chem-insert-image=     | Insert an SVG image link             |
    | =C-c m d= | =chem-describe-options= | Describe effective options           |
 
@@ -239,6 +242,24 @@ commands and automatic wrapping on top of it.
    #+begin_src emacs-lisp
    (chem-global-mode 1)
    #+end_src
+
+** Reactions
+
+Single-step reactions are supported from reaction SMILES and one-block RXN
+files.  Use =M-x chem-export-reaction= (=C-c m r=) to insert a scheme or
+=M-x chem-copy-reaction= to copy one.  The commands prompt for reaction SMILES;
+with a prefix argument they read an RXN file instead.
+
+The transient menu has a dedicated /Reaction/ group for the arrow style, text
+above and below the arrow, plus spacing and arrow length, and the chemfig
+reaction wrapper.  The chemfig exporter wraps schemes in
+=\schemestart...\schemestop=; the SVG exporter writes a non-square standalone
+document.
+
+Agents are rendered as text formulas, and conditions are plain text.  Current
+scope is one reaction step with forward, reverse, or equilibrium arrows.
+Multi-step schemes, atom mapping, stoichiometric coefficients, and structured
+agent drawings are not supported.
 
 ** SVG output and images
 
@@ -298,7 +319,19 @@ c1ccccc1
 #+end_src
 #+end_example
 
-Use =chem-mol= for MOL text.  For chemfig source:
+Use =chem-mol= for MOL text.  Use =chem-rxn= for reactions:
+
+#+begin_example
+#+begin_src chem-rxn :results file
+CC(=O)O.OCC>>CC(=O)OCC.O
+#+end_src
+#+end_example
+
+Reaction blocks accept =:reaction-arrow=, =:reaction-above=, and
+=:reaction-below= with both renderers.  SVG also accepts
+=:reaction-spacing=, =:reaction-arrow-length=, and =:reaction-plus-size=;
+chemfig accepts =:reaction-wrap= and =:reaction-arrow-chemfig=.  For chemfig
+source:
 
 #+begin_example
 #+begin_src chem-smiles :renderer chemfig :results value :wrap latex
@@ -389,8 +422,11 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 - [X] *Generate chemfig code from MOL files*
 - [X] *Render standalone SVG* with deterministic output
 - [X] *Insert SVG images* with Org/Markdown links
-- [X] *Org Babel blocks* (=chem-smiles=, =chem-mol=) with deterministic SVG
-  file results
+- [X] *Org Babel blocks* (=chem-smiles=, =chem-mol=, =chem-rxn=) with
+  deterministic SVG file results
+- [X] *Single-step reactions* from reaction SMILES or RXN files in chemfig and
+  SVG, with agents, conditions, plus signs, and forward/reverse/equilibrium
+  arrows
 - [X] Org cache regeneration and cleanup commands
 - [X] Aromatic circles or alternating bonds, ring-side double bonds, and
   fused-ring fallbacks in SVG
@@ -462,7 +498,7 @@ guard against regressions:
    =tools/svg-raster-report.el= adds an advisory Inkscape raster and
    bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 551 tests.
+The full ERT suite currently has 563 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

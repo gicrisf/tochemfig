@@ -96,12 +96,14 @@
                 (mapcar #'string-to-number (split-string fragment "-")))
               (split-string value "," t)))))
 
-(defmacro chem-dispatch--define-toggle (name key variable label)
+(defmacro chem-dispatch--define-toggle (name key variable label &optional guard)
   "Define a transient suffix NAME toggling boolean VARIABLE.
-KEY is the transient key and LABEL the menu entry description."
+KEY is the transient key, LABEL the menu entry description, and GUARD an
+optional form controlling visibility."
   `(transient-define-suffix ,name ()
      :transient t
      :key ,key
+     ,@(when guard (list :if guard))
      :description (lambda ()
                     (format "%s [%s]" ,label
                             (if (chem-dispatch--value ',variable) "on" "off")))
@@ -244,6 +246,35 @@ function used to read a new value, and GUARD an optional form."
 (chem-dispatch--define-toggle chem-dispatch-toggle-svg-show-enhanced-stereo
   "U" chem-exp-svg-default-show-enhanced-stereo "SVG enhanced stereo")
 
+(chem-dispatch--define-option chem-dispatch-option-reaction-arrow
+  "1" chem-default-reaction-arrow "Reaction arrow"
+  (chem-dispatch--choice-reader '("forward" "reverse" "equilibrium")))
+(chem-dispatch--define-option chem-dispatch-option-reaction-above
+  "2" chem-default-reaction-above "Text above arrow"
+  #'chem-dispatch--string-reader)
+(chem-dispatch--define-option chem-dispatch-option-reaction-below
+  "3" chem-default-reaction-below "Text below arrow"
+  #'chem-dispatch--string-reader)
+(chem-dispatch--define-option chem-dispatch-option-reaction-spacing
+  "4" chem-default-reaction-spacing "Reaction spacing"
+  #'chem-dispatch--number-reader
+  (lambda () (chem-dispatch--svg-exporter-p)))
+(chem-dispatch--define-option chem-dispatch-option-reaction-arrow-length
+  "5" chem-default-reaction-arrow-length "Reaction arrow length"
+  #'chem-dispatch--number-reader
+  (lambda () (chem-dispatch--svg-exporter-p)))
+(chem-dispatch--define-option chem-dispatch-option-reaction-plus-size
+  "6" chem-default-reaction-plus-size "Reaction plus size"
+  #'chem-dispatch--number-reader
+  (lambda () (chem-dispatch--svg-exporter-p)))
+(chem-dispatch--define-toggle chem-dispatch-toggle-reaction-wrap
+  "7" chem-exp-chemfig-default-reaction-wrap "Wrap reaction in scheme"
+  (lambda () (chem-dispatch--chemfig-exporter-p)))
+(chem-dispatch--define-option chem-dispatch-option-reaction-arrow-chemfig
+  "8" chem-exp-chemfig-default-reaction-arrow-chemfig "Reaction arrow chemfig"
+  #'chem-dispatch--string-reader
+  (lambda () (chem-dispatch--chemfig-exporter-p)))
+
 (defun chem-dispatch--consume-overrides ()
   "Return and clear the pending one-off option overrides."
   (prog1 chem-dispatch--pending-overrides
@@ -300,6 +331,30 @@ function used to read a new value, and GUARD an optional form."
     (with-current-buffer (or (and (buffer-live-p buffer) buffer)
                              (current-buffer))
       (chem-mode--insert-image source overrides))))
+
+(transient-define-suffix chem-dispatch-reaction-generate ()
+  "Generate a reaction using the current options."
+  :key "G"
+  :description "Generate reaction"
+  (interactive)
+  (let ((buffer chem-dispatch--edit-buffer)
+        (overrides (chem-dispatch--consume-overrides))
+        (file current-prefix-arg))
+    (with-current-buffer (or (and (buffer-live-p buffer) buffer)
+                             (current-buffer))
+      (chem-mode--produce-reaction nil file overrides))))
+
+(transient-define-suffix chem-dispatch-reaction-copy ()
+  "Copy a reaction using the current options."
+  :key "K"
+  :description "Copy reaction"
+  (interactive)
+  (let ((buffer chem-dispatch--edit-buffer)
+        (overrides (chem-dispatch--consume-overrides))
+        (file current-prefix-arg))
+    (with-current-buffer (or (and (buffer-live-p buffer) buffer)
+                             (current-buffer))
+      (chem-mode--produce-reaction t file overrides))))
 
 (transient-define-suffix chem-dispatch-rotate ()
   "Rotate the next generated structure without changing the default angle."
@@ -387,6 +442,17 @@ function used to read a new value, and GUARD an optional form."
    (chem-dispatch-toggle-svg-show-stereo)
    (chem-dispatch-toggle-svg-show-cip-labels)
    (chem-dispatch-toggle-svg-show-enhanced-stereo)]
+  ["Reaction"
+   (chem-dispatch-option-reaction-arrow)
+   (chem-dispatch-option-reaction-above)
+   (chem-dispatch-option-reaction-below)
+   (chem-dispatch-option-reaction-spacing)
+   (chem-dispatch-option-reaction-arrow-length)
+   (chem-dispatch-option-reaction-plus-size)
+   (chem-dispatch-toggle-reaction-wrap)
+   (chem-dispatch-option-reaction-arrow-chemfig)
+   (chem-dispatch-reaction-generate)
+   (chem-dispatch-reaction-copy)]
   ["Actions"
    (chem-dispatch-generate)
    (chem-dispatch-copy)

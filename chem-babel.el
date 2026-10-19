@@ -36,6 +36,22 @@ directory for unsaved buffers."
 (defconst chem-babel-profile-version 1
   "Version of the Org Babel default option profile.")
 
+(defconst chem-babel--reaction-shared-keys
+  '(:reaction-arrow :reaction-above :reaction-below)
+  "Reaction options accepted by both exporters.")
+
+(defconst chem-babel--reaction-svg-keys
+  '(:reaction-spacing :reaction-arrow-length :reaction-plus-size)
+  "Reaction layout options accepted only by the SVG exporter.")
+
+(defconst chem-babel--reaction-chemfig-keys
+  '(:reaction-wrap :reaction-arrow-chemfig)
+  "Reaction options accepted only by the chemfig exporter.")
+
+(defconst chem-babel--reaction-forbidden-keys
+  '(:wrap-chemfig :chemfig-wrap :submol-name :chemfig-submol)
+  "Molecule wrapper options rejected in reaction blocks.")
+
 (defconst chem-babel--chemfig-aliases
   '((:chemfig-terse . "terse")
     (:chemfig-indent . "indent")
@@ -49,7 +65,7 @@ directory for unsaved buffers."
 
 (defun chem-babel--install-default-header-args ()
   "Install default Babel header arguments for chem languages."
-  (dolist (language '(chem-smiles chem-mol))
+  (dolist (language '(chem-smiles chem-mol chem-rxn))
     (let ((variable (intern (format "org-babel-default-header-args:%s"
                                     language))))
       (unless (and (boundp variable) (symbol-value variable))
@@ -86,6 +102,7 @@ directory for unsaved buffers."
   "Return all header keys accepted by chem Babel blocks."
   (delete-dups
    (append (chem-babel--spec-keys chem-common-option-specs)
+           (chem-babel--spec-keys chem-reaction-option-specs)
            (chem-babel--svg-keys)
            (chem-babel--chemfig-keys)
            (chem-babel--org-keys)
@@ -191,7 +208,8 @@ directory for unsaved buffers."
   "Return the option spec for KEY."
   (or (cl-find key (append chem-common-option-specs
                            chem-exp-svg-option-specs
-                           chem-exp-chemfig-option-specs)
+                           chem-exp-chemfig-option-specs
+                           chem-reaction-option-specs)
                :key (lambda (spec) (plist-get spec :key))
                :test #'eq)
       (user-error "Unknown chem header option: %s" key)))
@@ -237,8 +255,9 @@ directory for unsaved buffers."
         (and (stringp results)
              (string-match-p "\\<file\\>" results)))))
 
-(defun chem-babel--overrides (params renderer)
-  "Return option overrides for PARAMS and RENDERER."
+(defun chem-babel--overrides (params renderer &optional reaction)
+  "Return option overrides for PARAMS and RENDERER.
+When REACTION is non-nil, accept and validate reaction-specific options."
   (let ((overrides nil)
         (seen nil))
     (dolist (pair params)
@@ -246,6 +265,33 @@ directory for unsaved buffers."
             (value (cdr pair)))
         (cond
          ((memq key '(:renderer :aromatic)) nil)
+         ((and (not reaction)
+               (memq key (append chem-babel--reaction-shared-keys
+                                 chem-babel--reaction-svg-keys
+                                 chem-babel--reaction-chemfig-keys)))
+          (user-error "%s is reaction-only" key))
+         ((and reaction (memq key chem-babel--reaction-forbidden-keys))
+          (user-error "%s is not supported for reactions" key))
+         ((and reaction (memq key chem-babel--reaction-shared-keys))
+          (let ((target (chem-babel--target-key key)))
+            (push target seen)
+            (push (cons target (chem-babel--parse-option key value))
+                  overrides)))
+         ((and reaction (memq key chem-babel--reaction-svg-keys))
+          (when (eq renderer 'chemfig)
+            (user-error "%s is SVG-only for reactions" key))
+          (let ((target (chem-babel--target-key key)))
+            (push target seen)
+            (push (cons target (chem-babel--parse-option key value))
+                  overrides)))
+         ((and reaction (memq key chem-babel--reaction-chemfig-keys))
+          (when (eq renderer 'svg)
+            (user-error "%s is chemfig-only for reactions" key))
+          (let* ((target (chem-babel--target-key key))
+                 (spec-key (intern (concat ":" target))))
+            (push target seen)
+            (push (cons target (chem-babel--parse-option spec-key value))
+                  overrides)))
          ((eq key :aromatic-circles)
           (when (eq renderer 'svg)
             (user-error ":aromatic-circles is chemfig-only; use :aromatic or :svg-aromatic"))
@@ -299,9 +345,13 @@ directory for unsaved buffers."
         (user-error ":svg-font-family must not be empty"))
       overrides)))
 
-(defun chem-babel--options (params renderer)
-  "Build drawing options from PARAMS for RENDERER."
-  (chem--build-options (chem-babel--overrides params renderer) renderer t))
+(defun chem-babel--options (params renderer &optional reaction)
+  "Build drawing options from PARAMS for RENDERER.
+When REACTION is non-nil, build reaction options."
+  (if reaction
+      (chem--build-reaction-options
+       (chem-babel--overrides params renderer t) renderer t)
+    (chem--build-options (chem-babel--overrides params renderer) renderer t)))
 
 ;;; Cache
 
@@ -335,13 +385,15 @@ directory for unsaved buffers."
       (user-error "SVG blocks require :results file"))
     (when (and (eq renderer 'chemfig) file-result)
       (user-error "Chemfig blocks require :results value or raw"))
-    (let* ((options (chem-babel--options params renderer))
-           (drawing
+    (let* ((reaction (eq language 'rxn))
+           (options (chem-babel--options params renderer reaction))
+           (object
             (pcase language
               ('smiles (chem-from-string body options))
               ('mol (chem-from-mol-string body options))
+              ('rxn (chem-from-reaction-string body options))
               (_ (user-error "Unsupported chem Babel language: %s" language))))
-           (output (chem-render drawing renderer options)))
+           (output (chem-render object renderer options)))
       (if (eq renderer 'svg)
           (chem-babel--relative-path (chem-babel--write-svg output))
         output))))
@@ -354,10 +406,14 @@ directory for unsaved buffers."
   "Execute a chem-mol BODY with PARAMS."
   (chem-babel--execute body params 'mol))
 
+(defun org-babel-execute:chem-rxn (body params)
+  "Execute a chem-rxn reaction BODY with PARAMS."
+  (chem-babel--execute body params 'rxn))
+
 ;;; Commands
 
 (defun chem-org-regenerate-buffer ()
-  "Execute all chem-smiles and chem-mol blocks in the current Org buffer."
+  "Execute all chem-smiles, chem-mol, and chem-rxn blocks."
   (interactive)
   (unless (derived-mode-p 'org-mode)
     (user-error "Not an Org buffer"))
@@ -366,7 +422,7 @@ directory for unsaved buffers."
         (failures nil))
     (save-excursion
       (org-babel-map-src-blocks nil
-        (when (member lang '("chem-smiles" "chem-mol"))
+        (when (member lang '("chem-smiles" "chem-mol" "chem-rxn"))
           (condition-case err
               (progn
                 (org-babel-execute-src-block)

@@ -214,6 +214,55 @@ OVERRIDES is an alist of option overrides."
              (code (chem-mode--generate (car input) (cdr input) options)))
         (if copy (kill-new code) (insert code))))))
 
+;;; Reactions
+
+(defun chem-mode--read-reaction-input (file)
+  "Read a reaction input.
+When FILE is non-nil, read an RXN file path; otherwise prompt for reaction
+SMILES.  Return (KIND . STRING), where KIND is `direct' or `file'."
+  (if file
+      (cons 'file (read-file-name "Reaction RXN file: "))
+    (cons 'direct (read-string "Enter reaction SMILES: "))))
+
+(defun chem-mode--generate-reaction (kind text &optional overrides)
+  "Generate reaction output for TEXT, read according to KIND.
+OVERRIDES is an alist of option overrides."
+  (chem-mode--ensure-exporter)
+  (condition-case err
+      (let* ((options (chem--build-reaction-options
+                       overrides chem-default-exporter))
+             (reaction (if (eq kind 'file)
+                           (chem-from-reaction-file text options)
+                         (chem-from-reaction-string text options))))
+        (chem-render reaction chem-default-exporter options))
+    (error (user-error "chem-mode: %s" (error-message-string err)))))
+
+(defun chem-mode--produce-reaction (copy &optional file overrides)
+  "Generate reaction output and either insert it or COPY it.
+When FILE is non-nil, read an RXN file; otherwise prompt for reaction SMILES."
+  (chem-mode--ensure-exporter)
+  (let* ((input (chem-mode--read-reaction-input file))
+         (code (chem-mode--generate-reaction (car input) (cdr input) overrides)))
+    (if copy
+        (progn (kill-new code) (deactivate-mark t))
+      (insert code))))
+
+;;;###autoload
+(defun chem-export-reaction (&optional file)
+  "Generate a chemical reaction drawing at point.
+With prefix argument FILE, read an RXN file instead of prompting for
+reaction SMILES.  The selected exporter is `chem-default-exporter'."
+  (interactive "P")
+  (chem-mode--produce-reaction nil file))
+
+;;;###autoload
+(defun chem-copy-reaction (&optional file)
+  "Copy a chemical reaction drawing to the kill ring.
+With prefix argument FILE, read an RXN file instead of prompting for
+reaction SMILES."
+  (interactive "P")
+  (chem-mode--produce-reaction t file))
+
 ;;; Images
 
 (defun chem-mode--image-name (svg)
@@ -300,7 +349,9 @@ With prefix ARG, prompt for the molecule instead of using point."
            (mapcar (lambda (spec) (plist-get spec :variable))
                    chem-common-option-specs)
            (mapcar (lambda (spec) (plist-get spec :variable))
-                   (chem-exporter-option-specs chem-default-exporter)))))
+                   (chem-exporter-option-specs chem-default-exporter))
+           (mapcar (lambda (spec) (plist-get spec :variable))
+                   chem-reaction-option-specs))))
 
 (defun chem-mode--display (value)
   "Format VALUE for display in the options buffer."
@@ -395,6 +446,7 @@ With prefix ARG, prompt for the molecule instead of using point."
     (define-key map (kbd "C-c m g") #'chem-export)
     (define-key map (kbd "C-c m o") #'chem-dispatch)
     (define-key map (kbd "C-c m c") #'chem-copy)
+    (define-key map (kbd "C-c m r") #'chem-export-reaction)
     (define-key map (kbd "C-c m i") #'chem-insert-image)
     (define-key map (kbd "C-c m d") #'chem-describe-options)
     map)

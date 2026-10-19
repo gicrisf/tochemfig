@@ -63,6 +63,11 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   placement, plus signs, arrows, text, and viewBox coverage.
 - Reaction raster reporting and curated hard gates for esterification,
   Diels-Alder, and stereo fixtures; agent/condition fixtures remain advisory.
+- =chem-export-reaction= and =chem-copy-reaction=, with reaction SMILES by
+  default and RXN file input with a prefix argument.
+- A Reaction group in the transient menu and =C-c m r= for reaction export.
+- =chem-rxn= Org Babel blocks with deterministic SVG file results, chemfig
+  value/raw results, reaction option validation, and regeneration support.
 - SVG text bounds now measure every label part, so wide charged or subscripted
   labels such as `[NH4+]` are not clipped.  Native viewBoxes intentionally
   exceed SmilesDrawer's where the oracle clips; viewBox parity checks

@@ -52,7 +52,8 @@ content, and viewBox coverage.
 The advisory raster report also covers all reaction fixtures.  Three curated
 fixtures are hard raster gates: esterification, Diels-Alder, and stereo.
 Agent/condition fixtures remain advisory until text rendering is stable enough
-for raster thresholds.
+for raster thresholds.  The reaction fixtures are also used by the =chem-rxn=
+Babel tests.
 
 ## Coverage report
 

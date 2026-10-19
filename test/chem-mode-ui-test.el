@@ -18,6 +18,10 @@
 (require 'chem-mode)
 (require 'chem-dispatch)
 
+(defconst chem-mode-ui-test--root
+  (file-name-directory (or load-file-name buffer-file-name))
+  "Directory containing the test files.")
+
 (defun chem-mode-ui-test--generate-string (smiles &optional overrides)
   "Generate chemfig output for SMILES with OVERRIDES."
   (chem-mode--generate 'direct smiles overrides))
@@ -150,6 +154,8 @@
   (should (eq (lookup-key chem-mode-map (kbd "C-c m g")) #'chem-export))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m o")) #'chem-dispatch))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m c")) #'chem-copy))
+  (should (eq (lookup-key chem-mode-map (kbd "C-c m r"))
+              #'chem-export-reaction))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m i")) #'chem-insert-image))
   (should (eq (lookup-key chem-mode-map (kbd "C-c m d"))
               #'chem-describe-options))
@@ -157,7 +163,6 @@
   (should-not (lookup-key chem-mode-map (kbd "C-c m f")))
   (should-not (lookup-key chem-mode-map (kbd "C-c m t")))
   (should-not (lookup-key chem-mode-map (kbd "C-c m w")))
-  (should-not (lookup-key chem-mode-map (kbd "C-c m r")))
   (should-not (lookup-key chem-mode-map (kbd "C-c m p"))))
 
 (ert-deftest chem-mode-ui-one-shot-commands-removed ()
@@ -312,6 +317,75 @@
       (should (equal (buffer-substring-no-properties (car bounds) (cdr bounds))
                      "CCO")))))
 
+;;; Reactions
+
+(ert-deftest chem-mode-ui-reaction-export-insert ()
+  "The reaction export command inserts a scheme."
+  (let ((chem-default-exporter 'chemfig))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-export-reaction))
+      (should (string-prefix-p "\\schemestart" (buffer-string)))
+      (should (string-match-p (regexp-quote "\\arrow") (buffer-string)))
+      (should (string-match-p (regexp-quote "\\chemfig{") (buffer-string))))))
+
+(ert-deftest chem-mode-ui-reaction-copy ()
+  "The reaction copy command puts the scheme on the kill ring."
+  (let ((chem-default-exporter 'chemfig))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-copy-reaction))
+      (should (string-prefix-p "\\schemestart" (current-kill 0))))))
+
+(ert-deftest chem-mode-ui-reaction-file-input ()
+  "A prefix argument reads an RXN file."
+  (let* ((chem-default-exporter 'chemfig)
+         (path (expand-file-name "corpus/reactions/simple.rxn"
+                                 chem-mode-ui-test--root)))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-file-name)
+                 (lambda (&rest _) path)))
+        (chem-export-reaction t))
+      (should (string-prefix-p "\\schemestart" (buffer-string))))))
+
+(ert-deftest chem-mode-ui-reaction-ignores-auto-wrap ()
+  "Reaction commands use the scheme wrapper, not the molecule wrapper."
+  (let ((chem-default-exporter 'chemfig)
+        (chem-mode-auto-wrap t))
+    (with-temp-buffer
+      (latex-mode)
+      (chem-mode 1)
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-export-reaction))
+      (should (string-prefix-p "\\schemestart" (buffer-string)))
+      (should-not (string-prefix-p "\\chemfig{" (buffer-string))))))
+
+(ert-deftest chem-mode-ui-reaction-empty-input ()
+  "Empty reaction input signals a user-error."
+  (let ((chem-default-exporter 'chemfig))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "")))
+        (should-error (chem-export-reaction) :type 'user-error)))))
+
+(ert-deftest chem-mode-ui-reaction-transient ()
+  "Reaction transient options and actions generate a reaction."
+  (let ((chem-default-exporter 'chemfig)
+        (chem-default-reaction-above "heat"))
+    (with-temp-buffer
+      (emacs-lisp-mode)
+      (chem-mode 1)
+      (setq chem-dispatch--edit-buffer (current-buffer))
+      (setq chem-dispatch--pending-overrides nil)
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-dispatch-reaction-generate))
+      (should (string-prefix-p "\\schemestart" (buffer-string)))
+      (should (string-match-p "heat" (buffer-string))))))
+
 ;;; Options introspection and persistence
 
 (ert-deftest chem-mode-ui-describe-options ()
@@ -430,6 +504,15 @@
   (with-temp-buffer
     (setq-local chem-default-exporter 'svg)
     (should (memq 'chem-exp-svg-default-width
+                  (chem-mode--option-vars)))))
+
+(ert-deftest chem-mode-ui-reaction-option-vars ()
+  "Reaction variables are part of the generic option surface."
+  (with-temp-buffer
+    (setq-local chem-default-exporter 'svg)
+    (should (memq 'chem-default-reaction-arrow
+                  (chem-mode--option-vars)))
+    (should (memq 'chem-default-reaction-spacing
                   (chem-mode--option-vars)))))
 
 (ert-deftest chem-mode-ui-insert-image-org ()

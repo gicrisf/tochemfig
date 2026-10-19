@@ -76,7 +76,8 @@ CCO
 (ert-deftest chem-babel-languages-defined ()
   "The Org Babel language entry points exist."
   (should (fboundp 'org-babel-execute:chem-smiles))
-  (should (fboundp 'org-babel-execute:chem-mol)))
+  (should (fboundp 'org-babel-execute:chem-mol))
+  (should (fboundp 'org-babel-execute:chem-rxn)))
 
 (ert-deftest chem-babel-default-header-args ()
   "The default Babel header arguments are installed."
@@ -86,7 +87,10 @@ CCO
   (should (equal "results"
                  (cdr (assq :exports
                             org-babel-default-header-args:chem-smiles))))
-  (should-not (assq :results org-babel-default-header-args:chem-smiles)))
+  (should-not (assq :results org-babel-default-header-args:chem-smiles))
+  (should (equal "svg"
+                 (cdr (assq :renderer
+                            org-babel-default-header-args:chem-rxn)))))
 
 (ert-deftest chem-babel-smiles-file ()
   "A SMILES block writes SVG and inserts a relative link."
@@ -218,6 +222,89 @@ CCO
         (should link)
         (should (file-exists-p path))
         (should (string-match-p "<svg " (chem-babel-test--contents path)))))))
+
+(ert-deftest chem-babel-rxn-svg-file ()
+  "A chem-rxn block writes SVG and inserts a relative link."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :results file
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (let* ((link (chem-babel-test--link))
+           (path (chem-babel-test--path link)))
+      (should link)
+      (should (file-exists-p path))
+      (should (string-match-p "<svg " (chem-babel-test--contents path)))
+      (should (string-match-p "data-reaction-part=\"arrow\""
+                              (chem-babel-test--contents path))))))
+
+(ert-deftest chem-babel-rxn-chemfig ()
+  "A chem-rxn block can return chemfig source."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :renderer chemfig :results value
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (should (string-match-p (regexp-quote "\\schemestart") (buffer-string)))
+    (should (string-match-p (regexp-quote "\\arrow") (buffer-string)))
+    (should-not (chem-babel-test--link))))
+
+(ert-deftest chem-babel-rxn-chemfig-options ()
+  "Reaction header options reach chemfig output."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :renderer chemfig :results value :reaction-arrow reverse :reaction-above heat
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (should (string-match-p (regexp-quote "\\arrow{<-[heat]}")
+                            (buffer-string)))
+    (should (string-match-p "heat" (buffer-string)))))
+
+(ert-deftest chem-babel-rxn-options ()
+  "Reaction options are accepted by the correct renderer."
+  (let ((svg (chem-babel--overrides
+              '((:reaction-arrow . "reverse")
+                (:reaction-above . "heat")
+                (:reaction-spacing . 0.5))
+              'svg t))
+        (chemfig (chem-babel--overrides
+                  '((:reaction-wrap . "yes")
+                    (:reaction-arrow-chemfig . "->"))
+                  'chemfig t)))
+    (should (eq 'reverse
+                (cdr (assoc "reaction-arrow" svg))))
+    (should (equal "heat"
+                   (cdr (assoc "reaction-above" svg))))
+    (should (= 0.5
+               (cdr (assoc "reaction-spacing" svg))))
+    (should (eq t (cdr (assoc "reaction-wrap" chemfig))))
+    (should (equal "->"
+                   (cdr (assoc "reaction-arrow-chemfig" chemfig))))
+    (should-error
+     (chem-babel--overrides '((:reaction-spacing . 1)) 'chemfig t)
+     :type 'user-error)
+    (should-error
+     (chem-babel--overrides '((:reaction-wrap . "yes")) 'svg t)
+     :type 'user-error)
+    (should-error
+     (chem-babel--overrides '((:wrap-chemfig . "yes")) 'chemfig t)
+     :type 'user-error)
+    (should-error
+     (chem-babel--overrides '((:reaction-above . "heat")) 'svg)
+     :type 'user-error)))
+
+(ert-deftest chem-babel-rxn-regenerate-buffer ()
+  "`chem-org-regenerate-buffer' executes chem-rxn blocks."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :results file
+CCO>>CC=O
+#+end_src
+"
+    (chem-org-regenerate-buffer)
+    (should (chem-babel-test--link))))
 
 (ert-deftest chem-babel-from-mol-string ()
   "`chem-from-mol-string' builds a drawing from MOL text."
