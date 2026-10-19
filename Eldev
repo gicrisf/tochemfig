@@ -27,6 +27,7 @@
 
 (setf eldev-test-fileset
       '("test/chem-parity-test.el"
+        "test/chem-exp-chemfig-reaction-test.el"
         "test/chem-ir-test.el"
         "test/chem-reaction-test.el"
         "test/chem-mode-test.el"

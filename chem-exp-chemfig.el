@@ -628,14 +628,151 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
                            (_ 0))
                          clockwise)))))))))
 
-(defun chem-exp-chemfig-render (drawing options)
-  "Render DRAWING as chemfig using OPTIONS."
+(defun chem-exp-chemfig--render-lines (drawing options)
+  "Return DRAWING's chemfig lines using OPTIONS."
   (let ((state (chem-exp-chemfig--make-state options)))
     (chem-exp-chemfig--prepare-cross-state state drawing)
     (chem-exp-chemfig--prepare-rings state drawing options)
     (maphash (lambda (_ atom) (chem-atom-score-angles atom state))
              (chem-drawing-atoms drawing))
-    (chem--format-output options (chem--render-molecule drawing state))))
+    (chem--render-molecule drawing state)))
+
+(defun chem-exp-chemfig--escape-latex (text)
+  "Escape TEXT for use in a LaTeX chemfig scheme."
+  (mapconcat
+   (lambda (char)
+     (pcase char
+       (?\\ "\\textbackslash{}")
+       (?% "\\%")
+       (?# "\\#")
+       (?& "\\&")
+       (?_ "\\_")
+       (?{ "\\{")
+       (?} "\\}")
+       (_ (char-to-string char))))
+   (string-to-list (or text ""))
+   ""))
+
+(defun chem-exp-chemfig--format-agent (label)
+  "Format normalized agent LABEL as LaTeX."
+  (let ((formula label)
+        (charge nil))
+    (when (string-match "\\([0-9]*\\)\\([+-]\\)\\'" label)
+      (setq formula (substring label 0 (match-beginning 0)))
+      (setq charge (concat (match-string 1 label)
+                           (match-string 2 label))))
+    (concat
+     (replace-regexp-in-string
+      "\\([0-9]+\\)"
+      (lambda (digits) (concat "$_{" digits "}$"))
+      formula)
+     (when charge (concat "$^{" charge "}$")))))
+
+(defun chem-exp-chemfig--reaction-above-text (reaction terse)
+  "Return REACTION's formatted above-arrow text.
+TERSE non-nil rejects literal percent signs in conditions."
+  (let* ((agents (mapcar (lambda (agent)
+                          (chem-exp-chemfig--format-agent
+                           (chem-reaction-agent-label agent)))
+                        (chem-reaction-agents reaction)))
+         (agent-text (mapconcat #'identity agents ", "))
+         (above (plist-get (chem-reaction-conditions reaction) :above)))
+    (when (and terse (string-match-p "%" above))
+      (user-error "Cannot use a literal %% in reaction conditions with terse output"))
+    (mapconcat #'identity
+               (delq nil
+                     (list (unless (string-empty-p agent-text) agent-text)
+                           (unless (string-empty-p above)
+                             (chem-exp-chemfig--escape-latex above))))
+               ", ")))
+
+(defun chem-exp-chemfig--reaction-below-text (reaction terse)
+  "Return REACTION's formatted below-arrow text.
+TERSE non-nil rejects literal percent signs in conditions."
+  (let ((below (plist-get (chem-reaction-conditions reaction) :below)))
+    (when (and terse (string-match-p "%" below))
+      (user-error "Cannot use a literal %% in reaction conditions with terse output"))
+    (chem-exp-chemfig--escape-latex below)))
+
+(defun chem-exp-chemfig--reaction-arrow (reaction options)
+  "Return REACTION's chemfig arrow using OPTIONS."
+  (let* ((explicit (plist-get options :reaction-arrow-chemfig))
+         (style (or explicit
+                    (pcase (plist-get (chem-reaction-arrow reaction) :style)
+                      (:forward "->")
+                      (:reverse "<-")
+                      (:equilibrium "<->")
+                      (_ "->"))))
+         (above (chem-exp-chemfig--reaction-above-text
+                 reaction (plist-get options :terse)))
+         (below (chem-exp-chemfig--reaction-below-text
+                 reaction (plist-get options :terse))))
+    (cond
+     ((and (not (string-empty-p above))
+           (not (string-empty-p below)))
+      (format "\\arrow{%s[%s][%s]}" style above below))
+     ((not (string-empty-p above))
+      (format "\\arrow{%s[%s]}" style above))
+     ((not (string-empty-p below))
+      (format "\\arrow{%s[][%s]}" style below))
+     (t (format "\\arrow{%s}" style)))))
+
+(defun chem-exp-chemfig--format-reaction-molecule (drawing options)
+  "Return DRAWING as a wrapped chemfig block using OPTIONS."
+  (let* ((block-options (copy-sequence options))
+         (block-options (plist-put block-options :wrap-chemfig t))
+         (block-options (plist-put block-options :submol-name nil))
+         (block-options (plist-put block-options :terse nil)))
+    (split-string (chem--format-output
+                   block-options
+                   (chem-exp-chemfig--render-lines drawing options))
+                  "\n")))
+
+(defun chem-exp-chemfig--reaction-lines (reaction options)
+  "Return REACTION's scheme lines using OPTIONS."
+  (let* ((indent (make-string (or (plist-get options :indent) 4) ?\s))
+         (lines nil)
+         (first t))
+    (when (plist-get options :reaction-wrap)
+      (push "\\schemestart" lines))
+    (dolist (drawing (chem-reaction-reactants reaction))
+      (unless first
+        (push (concat indent "\\+") lines))
+      (dolist (line (chem-exp-chemfig--format-reaction-molecule
+                     drawing options))
+        (push (concat indent line) lines))
+      (setq first nil))
+    (push (concat indent (chem-exp-chemfig--reaction-arrow reaction options))
+          lines)
+    (setq first t)
+    (dolist (drawing (chem-reaction-products reaction))
+      (unless first
+        (push (concat indent "\\+") lines))
+      (dolist (line (chem-exp-chemfig--format-reaction-molecule
+                     drawing options))
+        (push (concat indent line) lines))
+      (setq first nil))
+    (when (plist-get options :reaction-wrap)
+      (push "\\schemestop" lines))
+    (nreverse lines)))
+
+(defun chem-exp-chemfig-reaction-render (reaction options)
+  "Render REACTION as a chemfig scheme using OPTIONS."
+  (when (plist-get options :submol-name)
+    (user-error ":submol-name is not supported for reactions"))
+  (when (plist-get options :wrap-chemfig)
+    (user-error ":wrap-chemfig is not supported for reactions"))
+  (let ((lines (chem-exp-chemfig--reaction-lines reaction options)))
+    (if (plist-get options :terse)
+        (mapconcat #'identity (chem--strip-output lines) "%\n")
+      (mapconcat #'identity lines "\n"))))
+
+(defun chem-exp-chemfig-render (object options)
+  "Render OBJECT as chemfig using OPTIONS."
+  (if (chem-reaction-p object)
+      (chem-exp-chemfig-reaction-render object options)
+    (chem--format-output options
+                         (chem-exp-chemfig--render-lines object options))))
 
 (defconst chem-exp-chemfig-option-specs
   '((:key :terse
@@ -667,7 +804,17 @@ OUTPUT is the reversed line accumulator; returns the updated accumulator."
      :variable chem-exp-chemfig-default-submol-name
      :label "Submol name"
      :type string
-     :group sub-molecule))
+     :group sub-molecule)
+    (:key :reaction-wrap
+     :variable chem-exp-chemfig-default-reaction-wrap
+     :label "Wrap reaction in scheme"
+     :type boolean
+     :group reaction)
+    (:key :reaction-arrow-chemfig
+     :variable chem-exp-chemfig-default-reaction-arrow-chemfig
+     :label "Chemfig arrow"
+     :type string
+     :group reaction))
   "Chemfig exporter option metadata.")
 
 (chem-register-exporter 'chemfig #'chem-exp-chemfig-render

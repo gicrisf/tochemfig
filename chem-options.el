@@ -208,6 +208,17 @@ Without effect when `chem-exp-chemfig-default-terse' is non-nil."
   :group 'chem-mode
   :type '(choice (const :tag "Disabled" nil) string))
 
+(defcustom chem-exp-chemfig-default-reaction-wrap t
+  "Wrap reaction output in \\schemestart...\\schemestop when non-nil."
+  :group 'chem-mode
+  :type 'boolean)
+
+(defcustom chem-exp-chemfig-default-reaction-arrow-chemfig nil
+  "Explicit chemfig arrow specification for reactions, or nil.
+When nil, derive the arrow from `chem-default-reaction-arrow'."
+  :group 'chem-mode
+  :type '(choice (const :tag "Automatic" nil) string))
+
 ;;; Option registry
 
 (defconst chem-common-option-specs
