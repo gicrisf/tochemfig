@@ -11,9 +11,9 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
-- Implementation status: Batches 0 and 1 are complete.
+- Implementation status: Batches 0, 1, and 2 are complete.
 - Branch: `svg`
-- Fixture count: **27**
+- Fixture count: **31**
 - Fast suite: **503 tests**
 - Hard raster gates: **12 curated fixtures**
 - Known fixture gaps: none currently declared
@@ -56,6 +56,10 @@ macrocycle_10
 quinoline
 purine
 cyclohexanone
+tetramethylammonium
+phosphate
+azide
+pyridine_n_oxide
 ```
 
 The current fast tests cover:
@@ -291,6 +295,25 @@ Expected renderer risk:
 - radial vs linear gradients
 - terminal label direction
 - pseudo-group detection
+
+### Batch 2 deferred cases
+
+These candidates exposed SmilesDrawer behavior that the native renderer does
+not yet implement, so they are intentionally not in the corpus:
+
+- `sulfonate`: SmilesDrawer folds the methyl group into the sulfur pseudo
+  label (`SO₂O⁻CH₃`), hiding the S-C bond and carbon.
+- `boronic_acid`: SmilesDrawer stacks the pseudo label vertically; the native
+  renderer still lays it out horizontally.
+- `acetate`: SmilesDrawer folds the methyl group into the carboxylate pseudo
+  label.
+- `methylammonium`: SmilesDrawer labels the terminal methyl as `CH₃`; the
+  native renderer does not.
+- `methyl_radical`: SmilesDrawer does not expose a radical field for the
+  fixture builder.
+
+Add these only after the corresponding pseudo-group or terminal-label behavior
+is covered by native tests.
 
 ## Batch 3 — stereochemistry and bond edge cases
 

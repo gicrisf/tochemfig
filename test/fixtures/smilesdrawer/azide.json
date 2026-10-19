@@ -1,0 +1,212 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "azide",
+  "smiles": "N=[N+]=[N-]",
+  "features": [
+    "charge-separation",
+    "cumulated-double-bond",
+    "nitrogen-heteroatom"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 141.961631,
+      "y": 29.999668,
+      "element": "N",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 115.980816,
+      "y": 14.99976,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 1,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 90,
+      "y": -0.000147,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": -1,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 117.255808,
+      "y1": 12.791391,
+      "x2": 143.236623,
+      "y2": 27.791298,
+      "stroke": "#3498db",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 114.705824,
+      "y1": 17.20813,
+      "x2": 140.686639,
+      "y2": 32.208037,
+      "stroke": "#3498db",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 91.274992,
+      "y1": -2.208516,
+      "x2": 117.255808,
+      "y2": 12.791391,
+      "stroke": "#3498db",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 88.725008,
+      "y1": 2.208222,
+      "x2": 114.705824,
+      "y2": 17.20813,
+      "stroke": "#3498db",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 0,
+      "text": "NH",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        },
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
+      "direction": "right",
+      "x": 138.221631,
+      "y": 29.999668,
+      "transform": "transform: translateX(138.2216313509124px) translateY(29.999667526775163px)"
+    },
+    {
+      "atom": 1,
+      "text": "N⁺",
+      "parts": [
+        {
+          "text": "N⁺",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "down",
+      "x": 112.240816,
+      "y": 14.99976,
+      "transform": "transform: translateX(112.24081567536625px) translateY(14.999760299285521px)"
+    },
+    {
+      "atom": 2,
+      "text": "N⁻",
+      "parts": [
+        {
+          "text": "N⁻",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "left",
+      "x": 96.215,
+      "y": -0.000147,
+      "transform": "transform: translateX(96.21499999982011px) translateY(-0.00014692820412317312px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 141.961631,
+      "cy": 29.999668,
+      "r": 8.25
+    },
+    {
+      "cx": 115.980816,
+      "cy": 14.99976,
+      "r": 8.25
+    },
+    {
+      "cx": 90,
+      "cy": -0.000147,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [],
+  "viewBox": [
+    77.5699999998201,
+    -24.676055376260635,
+    79.35163135109231,
+    79.35163135109231
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 77.57,
+  "minY": -11.000147,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"77.5699999998201 -24.676055376260635 79.35163135109231 79.35163135109231\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"77.5699999998201\" y=\"-11.000146928204122\" width=\"79.35163135109231\" height=\"51.99981445497929\"><rect x=\"77.5699999998201\" y=\"-11.000146928204122\" width=\"79.35163135109231\" height=\"51.99981445497929\" fill=\"white\"></rect><circle cx=\"141.9616313509124\" cy=\"29.999667526775163\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"115.98081567536624\" cy=\"14.999760299285521\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"89.9999999998201\" cy=\"-0.00014692820412317312\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"117.25580778970286\" y1=\"12.791390966864098\" x2=\"143.236623465249\" y2=\"27.79129819435374\" stroke=\"#3498db\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"114.70582356102963\" y1=\"17.208129631706942\" x2=\"140.6866392365758\" y2=\"32.20803685919658\" stroke=\"#3498db\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"91.27499211415673\" y1=\"-2.208516260625545\" x2=\"117.25580778970287\" y2=\"12.7913909668641\" stroke=\"#3498db\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"88.72500788548348\" y1=\"2.2082224042172984\" x2=\"114.70582356102962\" y2=\"17.208129631706942\" stroke=\"#3498db\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line></g><g><g style=\"transform: translateX(138.2216313509124px) translateY(29.999667526775163px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#3498db\">N</tspan><tspan fill=\"#666666\">H</tspan></text></g><g style=\"transform: translateX(112.24081567536625px) translateY(14.999760299285521px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"down\" dominant-baseline=\"central\"><tspan fill=\"#3498db\" x=\"0px\" y=\"0em\">N⁺</tspan></text></g><g style=\"transform: translateX(96.21499999982011px) translateY(-0.00014692820412317312px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#3498db\">N⁻</tspan></text></g></g></svg>"
+}

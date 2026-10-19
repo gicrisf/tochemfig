@@ -1,0 +1,234 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "tetramethylammonium",
+  "smiles": "C[N+](C)(C)C",
+  "features": [
+    "positive-charge",
+    "nitrogen-heteroatom",
+    "gradient"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 141.961631,
+      "y": 29.999668,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 115.980816,
+      "y": 14.99976,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 1,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 2,
+      "x": 90,
+      "y": -0.000147,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "x": 130.980723,
+      "y": -10.981055,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 4,
+      "x": 100.980908,
+      "y": 40.980576,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 1,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 1,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 115.980816,
+      "y1": 14.99976,
+      "x2": 141.961631,
+      "y2": 29.999668,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 90,
+      "y1": -0.000147,
+      "x2": 115.980816,
+      "y2": 14.99976,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 115.980816,
+      "y1": 14.99976,
+      "x2": 130.980723,
+      "y2": -10.981055,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 100.980908,
+      "y1": 40.980576,
+      "x2": 115.980816,
+      "y2": 14.99976,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 1,
+      "text": "N⁺",
+      "parts": [
+        {
+          "text": "N⁺",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "left",
+      "x": 122.195816,
+      "y": 14.99976,
+      "transform": "transform: translateX(122.19581567536625px) translateY(14.999760299285521px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 115.980816,
+      "cy": 14.99976,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 115.980816,
+      "cy": 14.99976,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    79.9999999998201,
+    -20.981055376260628,
+    71.9616313510923,
+    71.9616313510923
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 80,
+  "minY": -20.981055,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"79.9999999998201 -20.981055376260628 71.9616313510923 71.9616313510923\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"115.98081567536624\" cy=\"14.999760299285521\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"79.9999999998201\" y=\"-20.98105537626062\" width=\"71.9616313510923\" height=\"71.96163135109228\"><rect x=\"79.9999999998201\" y=\"-20.98105537626062\" width=\"71.9616313510923\" height=\"71.96163135109228\" fill=\"white\"></rect><circle cx=\"115.98081567536624\" cy=\"14.999760299285521\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"115.98081567536624\" y1=\"14.999760299285521\" x2=\"141.9616313509124\" y2=\"29.999667526775163\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"89.9999999998201\" y1=\"-0.00014692820412317312\" x2=\"115.98081567536624\" y2=\"14.999760299285521\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"115.98081567536624\" y1=\"14.999760299285521\" x2=\"130.9807229028559\" y2=\"-10.981055376260622\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"100.9809084478766\" y1=\"40.98057597483166\" x2=\"115.98081567536624\" y2=\"14.999760299285521\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line></g><g><g style=\"transform: translateX(122.19581567536625px) translateY(14.999760299285521px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#3498db\">N⁺</tspan></text></g></g></svg>"
+}

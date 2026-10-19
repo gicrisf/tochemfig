@@ -292,6 +292,48 @@
         "exocyclic-double-bond"
       ],
       "raster": false
+    },
+    {
+      "name": "tetramethylammonium",
+      "smiles": "C[N+](C)(C)C",
+      "features": [
+        "positive-charge",
+        "nitrogen-heteroatom",
+        "gradient"
+      ],
+      "raster": false
+    },
+    {
+      "name": "phosphate",
+      "smiles": "OP(=O)(O)O",
+      "features": [
+        "phosphorus-heteroatom",
+        "multiple-oxygen",
+        "terminal-label"
+      ],
+      "raster": false
+    },
+    {
+      "name": "azide",
+      "smiles": "N=[N+]=[N-]",
+      "features": [
+        "charge-separation",
+        "cumulated-double-bond",
+        "nitrogen-heteroatom"
+      ],
+      "raster": false
+    },
+    {
+      "name": "pyridine_n_oxide",
+      "smiles": "[O-][n+]1ccccc1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "charge-separation",
+        "ring-circle",
+        "gradient"
+      ],
+      "raster": false
     }
   ]
 }
