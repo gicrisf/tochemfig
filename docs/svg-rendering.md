@@ -34,7 +34,10 @@ and ring-record implementation.
 - Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
   and documentation updates.
 - Org Babel integration is implemented in `chem-babel.el`; see
-  `chem-mode-plans/org.md`.  The suite currently has 497 tests.
+  `chem-mode-plans/org.md`.
+- Reaction SVG rendering is implemented, including composition parity against
+  a separate SmilesDrawer reaction corpus; see
+  `docs/smilesdrawer-parity.md`.  Reaction raster gates remain deferred.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.

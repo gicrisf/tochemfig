@@ -1,0 +1,476 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "4355e7bc6e539780a642b978c677d72bb5a88213",
+    "theme": "light",
+    "molecule_options": {},
+    "reaction_options": {},
+    "text_above": "{reagents}",
+    "text_below": ""
+  },
+  "name": "esterification",
+  "smiles": "CC(=O)O.OCC>>CC(=O)OCC.O",
+  "features": [
+    "reaction",
+    "two-reactants",
+    "two-products",
+    "forward-arrow"
+  ],
+  "raster": false,
+  "known_gap": null,
+  "reactant_count": 2,
+  "product_count": 2,
+  "components": [
+    {
+      "kind": "reactant",
+      "index": 0,
+      "x": 0,
+      "y": 35,
+      "width": 55,
+      "height": 55,
+      "viewBox": [
+        49.99999999991005,
+        -27.440073464102063,
+        54.88,
+        54.88
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 60,
+          "y": -0.000073,
+          "element": "C",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 3,
+          "x": 74.999873,
+          "y": -25.980909,
+          "element": "O",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 2,
+          "a": 1,
+          "b": 3,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "reactant",
+      "index": 1,
+      "x": 84,
+      "y": 24,
+      "width": 77,
+      "height": 77,
+      "viewBox": [
+        64.99999999991005,
+        -5.480043182994994,
+        76.92148749497608,
+        76.92148749497608
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 126.961487,
+          "y": 25.980683,
+          "element": "O",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 100.980745,
+          "y": 40.980718,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 2,
+      "x": 301,
+      "y": 0,
+      "width": 124,
+      "height": 124,
+      "viewBox": [
+        109.99999999982009,
+        12.499899058589797,
+        123.92297498995214,
+        123.92297498995214
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 223.922975,
+          "y": 51.961367,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 197.942233,
+          "y": 66.961401,
+          "element": "C",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "id": 2,
+          "x": 197.942346,
+          "y": 96.961401,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 3,
+          "x": 171.961487,
+          "y": 51.961372,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1,
+            4
+          ]
+        },
+        {
+          "id": 4,
+          "x": 145.980745,
+          "y": 66.961406,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            3,
+            5
+          ]
+        },
+        {
+          "id": 5,
+          "x": 120,
+          "y": 51.961377,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            4
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 2,
+          "a": 1,
+          "b": 3,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 3,
+          "a": 3,
+          "b": 4,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 4,
+          "a": 4,
+          "b": 5,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 3,
+      "x": 454,
+      "y": 49,
+      "width": 25,
+      "height": 25,
+      "viewBox": [
+        20,
+        -12.48,
+        24.96,
+        24.96
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "O",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": []
+        }
+      ],
+      "edges": [],
+      "rings": []
+    }
+  ],
+  "flow": [
+    {
+      "kind": "reactant",
+      "component": 0,
+      "x": 0,
+      "y": 35,
+      "width": 55,
+      "height": 55
+    },
+    {
+      "kind": "plus",
+      "x": 65,
+      "y": 57,
+      "width": 9,
+      "height": 9
+    },
+    {
+      "kind": "reactant",
+      "component": 1,
+      "x": 84,
+      "y": 24,
+      "width": 77,
+      "height": 77
+    },
+    {
+      "kind": "arrow",
+      "x": 171,
+      "y": 56,
+      "width": 120,
+      "height": 12
+    },
+    {
+      "kind": "product",
+      "component": 2,
+      "x": 301,
+      "y": 0,
+      "width": 124,
+      "height": 124
+    },
+    {
+      "kind": "plus",
+      "x": 435,
+      "y": 57,
+      "width": 9,
+      "height": 9
+    },
+    {
+      "kind": "product",
+      "component": 3,
+      "x": 454,
+      "y": 49,
+      "width": 25,
+      "height": 25
+    }
+  ],
+  "texts": [],
+  "viewBox": [
+    0,
+    0,
+    489,
+    123.92297498995214
+  ],
+  "width": 500,
+  "height": 500,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"500\" height=\"500\" viewBox=\"0 0 489 123.92297498995214\" style=\"width: 489px; height: 123.92297498995214px;\"><svg viewBox=\"49.99999999991005 -27.440073464102063 54.88 54.88\" x=\"0\" y=\"35\" width=\"55\" height=\"55\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"54.88\" height=\"22\"><rect x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"54.88\" height=\"22\" fill=\"white\"></rect><circle cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"></g><g><g style=\"transform: translateX(56.25999999991005px) translateY(-0.00007346410206158656px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">C</tspan><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#666666\">H</tspan><tspan fill=\"#222222\">C</tspan><tspan fill=\"#666666\">H₃</tspan></text></g></g></svg><svg id=\"plus\" viewBox=\"0 0 9 9\" x=\"65\" y=\"57\" width=\"9\" height=\"9\"><rect x=\"0\" y=\"4\" width=\"9\" height=\"1\" fill=\"#222222\"></rect><rect x=\"4\" y=\"0\" width=\"1\" height=\"9\" fill=\"#222222\"></rect></svg><svg viewBox=\"64.99999999991005 -5.480043182994994 76.92148749497608 76.92148749497608\" x=\"84\" y=\"24\" width=\"77\" height=\"77\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"wRVMW-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"126.96148749488611\" cy=\"25.98068332892836\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"wRVMW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"64.99999999991005\" y=\"14.980683328928361\" width=\"76.92148749497608\" height=\"36.00003447112937\"><rect x=\"64.99999999991005\" y=\"14.980683328928361\" width=\"76.92148749497608\" height=\"36.00003447112937\" fill=\"white\"></rect><circle cx=\"126.96148749488611\" cy=\"25.98068332892836\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#wRVMW-text-mask)\"><line x1=\"100.98074528329926\" y1=\"40.98071780005773\" x2=\"126.96148749488611\" y2=\"25.98068332892836\" stroke=\"url(#wRVMW-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"74.99999999991005\" y1=\"25.980688649431098\" x2=\"100.98074528329926\" y2=\"40.98071780005773\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(123.22148749488612px) translateY(25.98068332892836px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#666666\">H</tspan></text></g></g></svg><svg id=\"arrow\" viewBox=\"0 -3 129.33333333333334 6\" x=\"171\" y=\"56\" width=\"120\" height=\"12\"><defs><marker id=\"arrowhead\" viewBox=\"0 0 9.333333333333334 6\" markerUnits=\"userSpaceOnUse\" markerWidth=\"18.666666666666668\" markerHeight=\"12\" refX=\"2.2\" refY=\"2.2\" orient=\"auto\" fill=\"#222222\"><path style=\"fill-rule:nonzero;\" d=\"m 0 0 l 7 2.25 l -7 2.25 c 0 0 0.735 -1.084 0.735 -2.28 c 0 -1.196 -0.735 -2.22 -0.735 -2.22 z\"></path></marker></defs><line x1=\"0\" y1=\"-0.5\" x2=\"120\" y2=\"-0.5\" stroke-width=\"1\" stroke=\"#222222\" marker-end=\"url(#arrowhead)\"></line></svg><svg x=\"231\" y=\"43\" width=\"0\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(0, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\"></tspan></text></svg><svg x=\"231\" y=\"65\" width=\"0\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(0, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\"></tspan></text></svg><svg viewBox=\"109.99999999982009 12.499899058589797 123.92297498995214 123.92297498995214\" x=\"301\" y=\"0\" width=\"124\" height=\"124\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"Wol0Q-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"197.94234604613433\" cy=\"96.96140112877228\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"Wol0Q-atom-1\" gradientUnits=\"userSpaceOnUse\" cx=\"171.96148749479616\" cy=\"51.96137197835946\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"Wol0Q-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"109.99999999982009\" y=\"40.96137197835946\" width=\"123.92297498995214\" height=\"67.00002915041281\"><rect x=\"109.99999999982009\" y=\"40.96137197835946\" width=\"123.92297498995214\" height=\"67.00002915041281\" fill=\"white\"></rect><circle cx=\"197.94234604613433\" cy=\"96.96140112877228\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"171.96148749479616\" cy=\"51.96137197835946\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#Wol0Q-text-mask)\"><line x1=\"197.94223277818537\" y1=\"66.9614011289861\" x2=\"223.92297498977223\" y2=\"51.96136665785672\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"195.39223277820355\" y1=\"66.96141075676177\" x2=\"195.3923460461525\" y2=\"96.96141075654795\" stroke=\"url(#Wol0Q-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"200.4922327781672\" y1=\"66.96139150121043\" x2=\"200.49234604611615\" y2=\"96.96139150099661\" stroke=\"url(#Wol0Q-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"171.96148749479616\" y1=\"51.96137197835946\" x2=\"197.94223277818537\" y2=\"66.9614011289861\" stroke=\"url(#Wol0Q-atom-1)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"145.9807452832093\" y1=\"66.96140644948883\" x2=\"171.96148749479616\" y2=\"51.96137197835946\" stroke=\"url(#Wol0Q-atom-1)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"119.99999999982009\" y1=\"51.961377298862196\" x2=\"145.9807452832093\" y2=\"66.96140644948883\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(194.20234604613432px) translateY(96.96140112877228px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#e74c3c\">O</tspan></text></g><g style=\"transform: translateX(168.22148749479615px) translateY(51.96137197835946px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"up\" dominant-baseline=\"central\"><tspan fill=\"#e74c3c\" x=\"0px\" y=\"-0em\">O</tspan></text></g></g></svg><svg id=\"plus\" viewBox=\"0 0 9 9\" x=\"435\" y=\"57\" width=\"9\" height=\"9\"><rect x=\"0\" y=\"4\" width=\"9\" height=\"1\" fill=\"#222222\"></rect><rect x=\"4\" y=\"0\" width=\"1\" height=\"9\" fill=\"#222222\"></rect></svg><svg viewBox=\"20 -12.48 24.96 24.96\" x=\"454\" y=\"49\" width=\"25\" height=\"25\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"TaLRW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"20\" y=\"-11\" width=\"24.96\" height=\"22\"><rect x=\"20\" y=\"-11\" width=\"24.96\" height=\"22\" fill=\"white\"></rect><circle cx=\"30\" cy=\"0\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#TaLRW-text-mask)\"></g><g><g style=\"transform: translateX(26.259999999999998px) translateY(0px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#666666\">H₂</tspan></text></g></g></svg></svg>"
+}

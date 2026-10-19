@@ -30,6 +30,26 @@ while drawing.  Every manifest entry must have `name`, `smiles`, non-empty
 generated fixture metadata.  The generator records the oracle commit from the
 local checkout.
 
+## Generate reaction fixtures
+
+```sh
+cd tools/smilesdrawer
+node render-reactions.mjs
+```
+
+This reads `test/fixtures/smilesdrawer-reactions/manifest.json` and writes
+`test/fixtures/smilesdrawer-reactions/*.json`.  It instruments
+`SvgDrawer.draw` while `ReactionDrawer` runs, so each component keeps its
+SmilesDrawer graph as well as its final nested-SVG placement.  The fixture also
+records the ordered reaction composition: components, plus signs, the arrow,
+and any text above or below the arrow.
+
+Reaction fixtures intentionally omit per-component SVG primitives and labels;
+those are covered by the molecule parity corpus.  The reaction parity test
+compares composition only: component placement, plus/arrow/text boxes, text
+content, and viewBox coverage.  Reaction raster gates are deferred until the
+fast composition suite is stable.
+
 ## Coverage report
 
 ```sh

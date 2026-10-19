@@ -456,10 +456,12 @@ guard against regressions:
 
 6. *SmilesDrawer parity*: =test/chem-svg-parity-test.el= compares native SVG
    primitives against generated SmilesDrawer fixtures using shared
-   coordinates.  =tools/svg-raster-report.el= adds an advisory Inkscape raster
-   and bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
+   coordinates.  =test/chem-svg-reaction-parity-test.el= compares reaction
+   composition against a separate SmilesDrawer reaction corpus.
+   =tools/svg-raster-report.el= adds an advisory Inkscape raster and
+   bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 542 tests.
+The full ERT suite currently has 549 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

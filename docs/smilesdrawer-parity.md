@@ -69,6 +69,29 @@ Renderer parity is complete for the current corpus:
 - Fixture-corpus expansion is planned in
   `docs/smilesdrawer-fixture-plan.md`.
 
+## Reaction composition parity
+
+Reaction support uses a separate corpus so the molecule fixtures stay focused
+on renderer parity:
+
+- `tools/smilesdrawer/render-reactions.mjs` instruments `SvgDrawer.draw` while
+  `ReactionDrawer` lays out a reaction.  Each fixture records the component
+  graphs, their final nested-SVG placement, and the ordered composition
+  (reactants, plus signs, arrow, text, products).
+- `test/fixtures/smilesdrawer-reactions/` currently covers esterification,
+  Diels-Alder, two products, stereo/aromatic input, an agent with conditions,
+  and a charged salt.
+- `test/chem-svg-reaction-parity-test.el` builds test-only reaction IR from the
+  reference graphs and composition boxes, renders it with the native SVG
+  exporter, and checks component placements, plus and arrow geometry, text
+  positions and content, and viewBox coverage.
+
+Per-component SVG primitives, labels, masks, and gradients are not compared in
+the reaction corpus; the molecule parity suite already covers those.  The
+reaction viewBox check is containment-based because native text bounds can be
+larger than SmilesDrawer's clipped estimates.  Reaction raster gates are
+deferred until the fast composition suite is stable.
+
 ## Text bounds and viewBox divergence
 
 SmilesDrawer estimates a horizontal label's extent as the first text part's

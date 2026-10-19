@@ -53,6 +53,15 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - Reference fixtures for sulfonate, acetate, and boronic acid pseudo groups,
   covering hidden methyl bonds, `SO₂O⁻CH₃` / `COO⁻CH₃` / `BO₃H₃` labels, and
   down/right pseudo-label directions.
+- Native single-step reaction support: reaction IR, reaction SMILES and RXN
+  ingestion, renderer-neutral layout, chemfig reaction rendering, and SVG
+  reaction rendering with arrows, plus signs, agents, and conditions.
+- =tools/smilesdrawer/render-reactions.mjs= and
+  =test/fixtures/smilesdrawer-reactions/=: a separate SmilesDrawer reaction
+  composition corpus.
+- =test/chem-svg-reaction-parity-test.el=: composition parity for component
+  placement, plus signs, arrows, text, and viewBox coverage.  Reaction raster
+  gates remain deferred until this fast suite is stable.
 - SVG text bounds now measure every label part, so wide charged or subscripted
   labels such as `[NH4+]` are not clipped.  Native viewBoxes intentionally
   exceed SmilesDrawer's where the oracle clips; viewBox parity checks

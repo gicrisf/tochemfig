@@ -1,0 +1,251 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "4355e7bc6e539780a642b978c677d72bb5a88213",
+    "theme": "light",
+    "molecule_options": {},
+    "reaction_options": {},
+    "text_above": "{reagents}",
+    "text_below": ""
+  },
+  "name": "two_products",
+  "smiles": "CCO>>C=C.O",
+  "features": [
+    "reaction",
+    "two-products",
+    "forward-arrow"
+  ],
+  "raster": false,
+  "known_gap": null,
+  "reactant_count": 1,
+  "product_count": 2,
+  "components": [
+    {
+      "kind": "reactant",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 77,
+      "height": 77,
+      "viewBox": [
+        60.039999999910044,
+        -5.480040522743625,
+        76.92148749497608,
+        76.92148749497608
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 126.961487,
+          "y": 25.980683,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 100.980745,
+          "y": 40.980718,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 1,
+      "x": 217,
+      "y": 11,
+      "width": 56,
+      "height": 56,
+      "viewBox": [
+        45.03999999991005,
+        -20.450527688130318,
+        55.900815675546156,
+        55.900815675546156
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 85.980816,
+          "y": 14.999834,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 60,
+          "y": -0.000073,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 2,
+      "x": 302,
+      "y": 26,
+      "width": 25,
+      "height": 25,
+      "viewBox": [
+        20,
+        -12.48,
+        24.96,
+        24.96
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "O",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": []
+        }
+      ],
+      "edges": [],
+      "rings": []
+    }
+  ],
+  "flow": [
+    {
+      "kind": "reactant",
+      "component": 0,
+      "x": 0,
+      "y": 0,
+      "width": 77,
+      "height": 77
+    },
+    {
+      "kind": "arrow",
+      "x": 87,
+      "y": 32,
+      "width": 120,
+      "height": 12
+    },
+    {
+      "kind": "product",
+      "component": 1,
+      "x": 217,
+      "y": 11,
+      "width": 56,
+      "height": 56
+    },
+    {
+      "kind": "plus",
+      "x": 283,
+      "y": 34,
+      "width": 9,
+      "height": 9
+    },
+    {
+      "kind": "product",
+      "component": 2,
+      "x": 302,
+      "y": 26,
+      "width": 25,
+      "height": 25
+    }
+  ],
+  "texts": [],
+  "viewBox": [
+    0,
+    0,
+    337,
+    76.92148749497608
+  ],
+  "width": 500,
+  "height": 500,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"500\" height=\"500\" viewBox=\"0 0 337 76.92148749497608\" style=\"width: 337px; height: 76.92148749497608px;\"><svg viewBox=\"60.039999999910044 -5.480040522743625 76.92148749497608 76.92148749497608\" x=\"0\" y=\"0\" width=\"77\" height=\"77\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"60.039999999910044\" y=\"14.980688649431098\" width=\"76.92148749497608\" height=\"36.00002915062663\"><rect x=\"60.039999999910044\" y=\"14.980688649431098\" width=\"76.92148749497608\" height=\"36.00002915062663\" fill=\"white\"></rect><circle cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"100.98074528329926\" y1=\"40.98071780005773\" x2=\"126.96148749488611\" y2=\"25.98068332892836\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"74.99999999991005\" y1=\"25.980688649431098\" x2=\"100.98074528329926\" y2=\"40.98071780005773\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(78.73999999991004px) translateY(25.980688649431098px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg><svg id=\"arrow\" viewBox=\"0 -3 129.33333333333334 6\" x=\"87\" y=\"32\" width=\"120\" height=\"12\"><defs><marker id=\"arrowhead\" viewBox=\"0 0 9.333333333333334 6\" markerUnits=\"userSpaceOnUse\" markerWidth=\"18.666666666666668\" markerHeight=\"12\" refX=\"2.2\" refY=\"2.2\" orient=\"auto\" fill=\"#222222\"><path style=\"fill-rule:nonzero;\" d=\"m 0 0 l 7 2.25 l -7 2.25 c 0 0 0.735 -1.084 0.735 -2.28 c 0 -1.196 -0.735 -2.22 -0.735 -2.22 z\"></path></marker></defs><line x1=\"0\" y1=\"-0.5\" x2=\"120\" y2=\"-0.5\" stroke-width=\"1\" stroke=\"#222222\" marker-end=\"url(#arrowhead)\"></line></svg><svg x=\"147\" y=\"19\" width=\"0\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(0, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\"></tspan></text></svg><svg x=\"147\" y=\"41\" width=\"0\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(0, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\"></tspan></text></svg><svg viewBox=\"45.03999999991005 -20.450527688130318 55.900815675546156 55.900815675546156\" x=\"217\" y=\"11\" width=\"56\" height=\"56\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"wRVMW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"45.03999999991005\" y=\"-11.000073464102062\" width=\"55.900815675546156\" height=\"36.99990722748964\"><rect x=\"45.03999999991005\" y=\"-11.000073464102062\" width=\"55.900815675546156\" height=\"36.99990722748964\" fill=\"white\"></rect><circle cx=\"85.9808156754562\" cy=\"14.999833763387581\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#wRVMW-text-mask)\"><line x1=\"61.27499211424667\" y1=\"-2.208442796523484\" x2=\"87.25580778979281\" y2=\"12.791464430966158\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"58.72500788557343\" y1=\"2.2082958683193605\" x2=\"84.70582356111959\" y2=\"17.208203095809004\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(82.2408156754562px) translateY(14.999833763387581px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">C</tspan><tspan fill=\"#666666\">H₂</tspan></text></g><g style=\"transform: translateX(63.739999999910054px) translateY(-0.00007346410206158656px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H₂</tspan><tspan fill=\"#222222\">C</tspan></text></g></g></svg><svg id=\"plus\" viewBox=\"0 0 9 9\" x=\"283\" y=\"34\" width=\"9\" height=\"9\"><rect x=\"0\" y=\"4\" width=\"9\" height=\"1\" fill=\"#222222\"></rect><rect x=\"4\" y=\"0\" width=\"1\" height=\"9\" fill=\"#222222\"></rect></svg><svg viewBox=\"20 -12.48 24.96 24.96\" x=\"302\" y=\"26\" width=\"25\" height=\"25\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"Wol0Q-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"20\" y=\"-11\" width=\"24.96\" height=\"22\"><rect x=\"20\" y=\"-11\" width=\"24.96\" height=\"22\" fill=\"white\"></rect><circle cx=\"30\" cy=\"0\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#Wol0Q-text-mask)\"></g><g><g style=\"transform: translateX(26.259999999999998px) translateY(0px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#666666\">H₂</tspan></text></g></g></svg></svg>"
+}

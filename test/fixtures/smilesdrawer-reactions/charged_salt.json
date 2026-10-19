@@ -1,0 +1,393 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "4355e7bc6e539780a642b978c677d72bb5a88213",
+    "theme": "light",
+    "molecule_options": {},
+    "reaction_options": {},
+    "text_above": "{reagents}",
+    "text_below": ""
+  },
+  "name": "charged_salt",
+  "smiles": "CC(=O)[O-].[Na+]>[H+]>CC(=O)O.[Na+]",
+  "features": [
+    "reaction",
+    "agent",
+    "charged-salt",
+    "forward-arrow"
+  ],
+  "raster": false,
+  "known_gap": null,
+  "reactant_count": 2,
+  "product_count": 2,
+  "components": [
+    {
+      "kind": "reactant",
+      "index": 0,
+      "x": 0,
+      "y": 4,
+      "width": 47,
+      "height": 47,
+      "viewBox": [
+        49.99999999991005,
+        -23.70007346410206,
+        47.4,
+        47.4
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 60,
+          "y": -0.000073,
+          "element": "C",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 3,
+          "x": 74.999873,
+          "y": -25.980909,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": -1,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 2,
+          "a": 1,
+          "b": 3,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "reactant",
+      "index": 1,
+      "x": 76,
+      "y": 16,
+      "width": 24,
+      "height": 24,
+      "viewBox": [
+        20,
+        -11.82,
+        23.64,
+        23.64
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "Na",
+          "hydrogens": 0,
+          "charge": 1,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": []
+        }
+      ],
+      "edges": [],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 2,
+      "x": 240,
+      "y": 0,
+      "width": 55,
+      "height": 55,
+      "viewBox": [
+        49.99999999991005,
+        -27.440073464102063,
+        54.88,
+        54.88
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 60,
+          "y": -0.000073,
+          "element": "C",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2,
+            3
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 3,
+          "x": 74.999873,
+          "y": -25.980909,
+          "element": "O",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": false,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 2,
+          "a": 1,
+          "b": 3,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 3,
+      "x": 324,
+      "y": 16,
+      "width": 24,
+      "height": 24,
+      "viewBox": [
+        20,
+        -11.82,
+        23.64,
+        23.64
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 30,
+          "y": 0,
+          "element": "Na",
+          "hydrogens": 0,
+          "charge": 1,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": []
+        }
+      ],
+      "edges": [],
+      "rings": []
+    }
+  ],
+  "flow": [
+    {
+      "kind": "reactant",
+      "component": 0,
+      "x": 0,
+      "y": 4,
+      "width": 47,
+      "height": 47
+    },
+    {
+      "kind": "plus",
+      "x": 57,
+      "y": 23,
+      "width": 9,
+      "height": 9
+    },
+    {
+      "kind": "reactant",
+      "component": 1,
+      "x": 76,
+      "y": 16,
+      "width": 24,
+      "height": 24
+    },
+    {
+      "kind": "arrow",
+      "x": 110,
+      "y": 21,
+      "width": 120,
+      "height": 12
+    },
+    {
+      "kind": "text",
+      "text": "H",
+      "x": 167,
+      "y": 8,
+      "width": 6,
+      "height": 16,
+      "role": "above"
+    },
+    {
+      "kind": "product",
+      "component": 2,
+      "x": 240,
+      "y": 0,
+      "width": 55,
+      "height": 55
+    },
+    {
+      "kind": "plus",
+      "x": 305,
+      "y": 23,
+      "width": 9,
+      "height": 9
+    },
+    {
+      "kind": "product",
+      "component": 3,
+      "x": 324,
+      "y": 16,
+      "width": 24,
+      "height": 24
+    }
+  ],
+  "texts": [
+    {
+      "kind": "text",
+      "text": "H",
+      "x": 167,
+      "y": 8,
+      "width": 6,
+      "height": 16,
+      "role": "above"
+    }
+  ],
+  "viewBox": [
+    0,
+    0,
+    358,
+    54.88
+  ],
+  "width": 500,
+  "height": 500,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"500\" height=\"500\" viewBox=\"0 0 358 54.88\" style=\"width: 358px; height: 54.88px;\"><svg viewBox=\"49.99999999991005 -23.70007346410206 47.4 47.4\" x=\"0\" y=\"4\" width=\"47\" height=\"47\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"47.4\" height=\"22\"><rect x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"47.4\" height=\"22\" fill=\"white\"></rect><circle cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"></g><g><g style=\"transform: translateX(56.25999999991005px) translateY(-0.00007346410206158656px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">C</tspan><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#e74c3c\">O⁻</tspan><tspan fill=\"#222222\">C</tspan><tspan fill=\"#666666\">H₃</tspan></text></g></g></svg><svg id=\"plus\" viewBox=\"0 0 9 9\" x=\"57\" y=\"23\" width=\"9\" height=\"9\"><rect x=\"0\" y=\"4\" width=\"9\" height=\"1\" fill=\"#222222\"></rect><rect x=\"4\" y=\"0\" width=\"1\" height=\"9\" fill=\"#222222\"></rect></svg><svg viewBox=\"20 -11.82 23.64 23.64\" x=\"76\" y=\"16\" width=\"24\" height=\"24\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"wRVMW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"20\" y=\"-11\" width=\"23.64\" height=\"22\"><rect x=\"20\" y=\"-11\" width=\"23.64\" height=\"22\" fill=\"white\"></rect><circle cx=\"30\" cy=\"0\" r=\"12.100000000000001\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#wRVMW-text-mask)\"></g><g><g style=\"transform: translateX(23.18px) translateY(0px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">Na⁺</tspan></text></g></g></svg><svg id=\"arrow\" viewBox=\"0 -3 129.33333333333334 6\" x=\"110\" y=\"21\" width=\"120\" height=\"12\"><defs><marker id=\"arrowhead\" viewBox=\"0 0 9.333333333333334 6\" markerUnits=\"userSpaceOnUse\" markerWidth=\"18.666666666666668\" markerHeight=\"12\" refX=\"2.2\" refY=\"2.2\" orient=\"auto\" fill=\"#222222\"><path style=\"fill-rule:nonzero;\" d=\"m 0 0 l 7 2.25 l -7 2.25 c 0 0 0.735 -1.084 0.735 -2.28 c 0 -1.196 -0.735 -2.22 -0.735 -2.22 z\"></path></marker></defs><line x1=\"0\" y1=\"-0.5\" x2=\"120\" y2=\"-0.5\" stroke-width=\"1\" stroke=\"#222222\" marker-end=\"url(#arrowhead)\"></line></svg><svg x=\"167\" y=\"8\" width=\"6\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(2.9920000000000004, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\">H</tspan></text></svg><svg x=\"170\" y=\"30\" width=\"0\" height=\"16\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(0, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\"></tspan></text></svg><svg viewBox=\"49.99999999991005 -27.440073464102063 54.88 54.88\" x=\"240\" y=\"0\" width=\"55\" height=\"55\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"Wol0Q-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"54.88\" height=\"22\"><rect x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"54.88\" height=\"22\" fill=\"white\"></rect><circle cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#Wol0Q-text-mask)\"></g><g><g style=\"transform: translateX(56.25999999991005px) translateY(-0.00007346410206158656px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">C</tspan><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#e74c3c\">O</tspan><tspan fill=\"#666666\">H</tspan><tspan fill=\"#222222\">C</tspan><tspan fill=\"#666666\">H₃</tspan></text></g></g></svg><svg id=\"plus\" viewBox=\"0 0 9 9\" x=\"305\" y=\"23\" width=\"9\" height=\"9\"><rect x=\"0\" y=\"4\" width=\"9\" height=\"1\" fill=\"#222222\"></rect><rect x=\"4\" y=\"0\" width=\"1\" height=\"9\" fill=\"#222222\"></rect></svg><svg viewBox=\"20 -11.82 23.64 23.64\" x=\"324\" y=\"16\" width=\"24\" height=\"24\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"TaLRW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"20\" y=\"-11\" width=\"23.64\" height=\"22\"><rect x=\"20\" y=\"-11\" width=\"23.64\" height=\"22\" fill=\"white\"></rect><circle cx=\"30\" cy=\"0\" r=\"12.100000000000001\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#TaLRW-text-mask)\"></g><g><g style=\"transform: translateX(23.18px) translateY(0px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">Na⁺</tspan></text></g></g></svg></svg>"
+}

@@ -1,0 +1,72 @@
+{
+  "fixtures": [
+    {
+      "name": "esterification",
+      "smiles": "CC(=O)O.OCC>>CC(=O)OCC.O",
+      "features": [
+        "reaction",
+        "two-reactants",
+        "two-products",
+        "forward-arrow"
+      ],
+      "raster": false
+    },
+    {
+      "name": "diels_alder",
+      "smiles": "C=CC=C.C=C>>C1CC=CCC1",
+      "features": [
+        "reaction",
+        "two-reactants",
+        "ring-formation",
+        "forward-arrow"
+      ],
+      "raster": false
+    },
+    {
+      "name": "two_products",
+      "smiles": "CCO>>C=C.O",
+      "features": [
+        "reaction",
+        "two-products",
+        "forward-arrow"
+      ],
+      "raster": false
+    },
+    {
+      "name": "stereo",
+      "smiles": "N[C@@H](C)C(=O)[O-].c1ccccc1>>N[C@@H](C)C(=O)O.c1ccccc1",
+      "features": [
+        "reaction",
+        "stereocenter",
+        "charged",
+        "aromatic",
+        "forward-arrow"
+      ],
+      "raster": false
+    },
+    {
+      "name": "agent_above",
+      "smiles": "CC(=O)O.OCC>[H+]>CC(=O)OCC.O",
+      "features": [
+        "reaction",
+        "agent",
+        "conditions",
+        "forward-arrow"
+      ],
+      "raster": false,
+      "text_above": "{reagents}, heat",
+      "text_below": "cat."
+    },
+    {
+      "name": "charged_salt",
+      "smiles": "CC(=O)[O-].[Na+]>[H+]>CC(=O)O.[Na+]",
+      "features": [
+        "reaction",
+        "agent",
+        "charged-salt",
+        "forward-arrow"
+      ],
+      "raster": false
+    }
+  ]
+}
