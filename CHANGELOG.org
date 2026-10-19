@@ -39,6 +39,12 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   cleanup, and HTML export tests.
 - =examples/org-playground.org=: an executable tour of SVG options,
   stereochemistry, aromatic display, MOL/chemfig input, and Org caching.
+- A SmilesDrawer SVG parity harness in =tools/smilesdrawer/= with pinned
+  =jsdom= dependencies, twenty reference fixtures, and a development plan in
+  =docs/smilesdrawer-parity.md=.
+- =test/chem-svg-parity-test.el=: shared-coordinate renderer parity tests for
+  edge geometry, absolute line placement, aromatic circle radii, label text,
+  label placement, and deterministic rendering.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -57,11 +63,30 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - Common drawing decisions (labels, numbering, bond decoration, ring display)
   are stored in the IR.  Exporters render attributes instead of re-reading
   common options.
+- SVG labels are centered on their atoms.  Left-directed labels reverse the
+  element/hydrogen order, and text direction follows SmilesDrawer's
+  neighbor-angle logic.
 - The package entry is =chem-mode.el=.  The old =tochemfig-*= mode, dispatch,
   commands, and variables are removed.
+- The Nix development shell now includes FreeType and FontConfig; its
+  description and shell banner use the =chem-mode= name.
+- Removed the stale =quickstart.md= and refreshed the README, SVG rendering
+  notes, and local Doom development instructions.
+
+** Fixed
+- Explicit double bonds inside aromatic-circle rings no longer draw inner
+  strokes into the circle; shared bonds keep their second stroke on the
+  non-circle ring side.
+- Aromatic circle radii now use SmilesDrawer's =apothem - bondSpacing=
+  formula, and ring double-bond strokes use the full bond spacing.
+- One-bond atom labels no longer drift toward their bond; all SVG labels are
+  centered on the atom.
+- Acyclic double bonds now choose the same inner-stroke side as SmilesDrawer
+  and shorten the inner stroke consistently.
+- The full ERT suite is now 494 tests.
 
 ** Migration
-=chem-mode= makes a clean break: the old =tochemfig= commands and variables
+=chem-mode= makes a clean break; the old =tochemfig= commands and variables
 are not aliased.  See [[file:MIGRATION.org][MIGRATION.org]] for the full mapping and optional
 compatibility snippets.
 
