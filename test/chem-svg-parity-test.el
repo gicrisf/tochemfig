@@ -230,7 +230,7 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
             (y1 (string-to-number (match-string 2 svg)))
             (x2 (string-to-number (match-string 3 svg)))
             (y2 (string-to-number (match-string 4 svg))))
-        (push (list (- x2 x1) (- y2 y1)) lines))
+        (push (list (abs (- x2 x1)) (abs (- y2 y1))) lines))
       (setq start (match-end 0)))
     (nreverse lines)))
 
@@ -350,7 +350,7 @@ Orient each line along the canonical lower-to-higher atom direction."
                       (sign (if (< (+ (* dx canonical-x) (* dy canonical-y)) 0.0)
                                 -1
                               1)))
-                 (list (* sign dx) (* sign dy)))))
+                 (list (abs (* sign dx)) (abs (* sign dy))))))
            primitives))))
 
 (defun chem-svg-parity-test--sort-vectors (vectors)
@@ -509,6 +509,113 @@ Orient each line along the canonical lower-to-higher atom direction."
               (should (< (chem-svg-parity-test--vector-distance
                           (car pair) (cdr pair))
                          0.01)))))))))
+
+(defun chem-svg-parity-test--polygon-elements (svg)
+  "Return polygon point lists from SVG."
+  (let ((start 0)
+        (polygons nil))
+    (while (string-match "<polygon points=\"\\([^\"]+\\)\"" svg start)
+      (push (mapcar (lambda (pair)
+                      (mapcar #'string-to-number (split-string pair ",")))
+                    (split-string (match-string 1 svg) " " t))
+            polygons)
+      (setq start (match-end 0)))
+    (nreverse polygons)))
+
+(defun chem-svg-parity-test--reference-polygons (fixture edge)
+  "Return reference polygon point lists for EDGE in FIXTURE."
+  (let ((primitives (chem-svg-parity-test--list
+                     (chem-svg-parity-test--get fixture "primitives"))))
+    (delq nil
+          (mapcar
+           (lambda (primitive)
+             (when (and (equal (chem-svg-parity-test--get primitive "kind")
+                               "polygon")
+                        (equal (chem-svg-parity-test--number
+                                (chem-svg-parity-test--get primitive "edge"))
+                               edge))
+               (mapcar (lambda (point)
+                         (list (chem-svg-parity-test--number
+                                (aref point 0))
+                               (chem-svg-parity-test--number
+                                (aref point 1))))
+                       (chem-svg-parity-test--list
+                        (chem-svg-parity-test--get primitive "points")))))
+           primitives))))
+
+(defun chem-svg-parity-test--relative-points (points origin)
+  "Translate POINTS relative to ORIGIN and sort them."
+  (sort
+   (mapcar (lambda (point)
+             (list (- (car point) (car origin))
+                   (- (cadr point) (cdr origin))))
+           points)
+   (lambda (a b)
+     (if (= (car a) (car b))
+         (< (cadr a) (cadr b))
+       (< (car a) (car b))))))
+
+(ert-deftest chem-svg-parity-wedge-polygon ()
+  "Native solid-wedge polygons match SmilesDrawer."
+  (dolist (entry (chem-svg-parity-test--strict-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
+           (atoms (chem-drawing-atoms drawing))
+           (fixture-atoms (chem-svg-parity-test--list
+                           (chem-svg-parity-test--get fixture "atoms")))
+           (fixture-edges (chem-svg-parity-test--list
+                           (chem-svg-parity-test--get fixture "edges"))))
+      (dolist (edge (chem-edges drawing))
+        (when (chem-exp-svg--edge-visible-p state edge)
+          (let* ((edge-id (chem-edge-id edge))
+                 (reference (chem-svg-parity-test--reference-polygons
+                             fixture edge-id)))
+            (when reference
+              (let* ((edge-json (cl-find-if
+                                 (lambda (candidate)
+                                   (equal (chem-svg-parity-test--number
+                                           (chem-svg-parity-test--get candidate "id"))
+                                          edge-id))
+                                 fixture-edges))
+                     (a (chem-svg-parity-test--number
+                         (chem-svg-parity-test--get edge-json "a")))
+                     (atom-a (gethash a atoms))
+                     (fixture-atom-a (cl-find-if
+                                      (lambda (candidate)
+                                        (equal (chem-svg-parity-test--number
+                                                (chem-svg-parity-test--get candidate "id"))
+                                               a))
+                                      fixture-atoms))
+                     (reference-origin
+                      (cons (chem-svg-parity-test--number
+                             (chem-svg-parity-test--get fixture-atom-a "x"))
+                            (chem-svg-parity-test--number
+                             (chem-svg-parity-test--get fixture-atom-a "y"))))
+                     (native-origin (chem-exp-svg--point
+                                     state
+                                     (chem-atom-x atom-a)
+                                     (chem-atom-y atom-a)))
+                     (native (chem-svg-parity-test--polygon-elements
+                              (chem-exp-svg--edge-svg state edge))))
+                (should (= (length reference) (length native)))
+                (dolist (polygon-pair (cl-mapcar #'cons reference native))
+                  (let ((reference-points
+                         (chem-svg-parity-test--relative-points
+                          (car polygon-pair) reference-origin))
+                        (native-points
+                         (chem-svg-parity-test--relative-points
+                          (cdr polygon-pair) native-origin)))
+                    (should (= (length reference-points)
+                               (length native-points)))
+                    (dolist (point-pair (cl-mapcar #'cons
+                                                   reference-points
+                                                   native-points))
+                      (should (< (chem-svg-parity-test--point-distance
+                                  (car point-pair) (cdr point-pair))
+                                 0.01)))))))))))))
 
 (defun chem-svg-parity-test--point-distance (a b)
   "Return the distance between points A and B."

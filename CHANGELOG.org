@@ -48,6 +48,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - SVG pseudo-element grouping for terminal heteroatom groups such as COOH and
   NO2.  Hidden atoms and their bonds are omitted, group text is attached to the
   center atom, and nitro groups render as N+O2.
+- A hashed-wedge parity fixture and shared-coordinate checks for solid-wedge
+  polygons.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -88,7 +90,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   and shorten the inner stroke consistently.
 - Pseudo-element labels now follow SmilesDrawer's terminal-heteroatom grouping
   and hide the grouped atoms' separate labels and bonds.
-- The full ERT suite is now 495 tests.
+- Solid wedge width and hashed-wedge dash geometry now match SmilesDrawer.
+- The full ERT suite is now 496 tests.
 
 ** Migration
 =chem-mode= makes a clean break; the old =tochemfig= commands and variables

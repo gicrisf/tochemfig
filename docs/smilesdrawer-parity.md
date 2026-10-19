@@ -26,7 +26,7 @@ Phase 1 is in progress:
 
 - The development-only reference generator and normalizer live in
   `tools/smilesdrawer/`.
-- Twenty fixtures cover aromatic rings, fused rings, heterocycles, acyclic
+- Twenty-one fixtures cover aromatic rings, fused rings, heterocycles, acyclic
   chains, stereochemistry, bridged rings, charges, and allenes.
 - `test/chem-svg-parity-test.el` builds test-only IR from SmilesDrawer
   coordinates and runs fast shared-coordinate checks for edge geometry,
@@ -40,7 +40,10 @@ Phase 1 is in progress:
 - Attached pseudo-element groups (COOH, NO2, and related terminal heteroatom
   groups) are detected, hidden atoms and edges are omitted, and the group text
   is rendered on the center atom.
-- Known next gap: the allene carbon label.
+- Solid-wedge polygons and dashed-wedge strokes now match SmilesDrawer's
+  geometry, including the wide half-width and hashed-wedge step/cap.
+- Known next gap: the allene carbon label.  Next parity target is viewBox,
+  masks, colors, and gradients.
 
 ## Reference version
 

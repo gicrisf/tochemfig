@@ -1060,7 +1060,7 @@ and center-double-bond cases."
 
 (defun chem-exp-svg--wedge-half-width (state)
   "Return the wide half-width for wedges in STATE."
-  (* 0.5 (chem-exp-svg--option state :svg-font-size)))
+  (+ 3.0 (/ (chem-exp-svg--option state :svg-font-size) 4.0)))
 
 (defun chem-exp-svg--wedge-points (state point-narrow point-wide)
   "Return the four polygon points for a wedge."
@@ -1115,25 +1115,33 @@ and center-double-bond cases."
              (uy (/ dy length))
              (nx (- uy))
              (ny ux)
-             (narrow-half (/ (chem-exp-svg--option
-                              state :svg-bond-thickness)
-                             2.0))
-             (wide-half (chem-exp-svg--wedge-half-width state))
-             (steps (max 5 (min 12 (round (/ length 4.0))))))
-        (mapconcat
-         (lambda (index)
-           (let* ((ratio (/ (float index) (1+ steps)))
-                  (base-x (+ (car point-narrow) (* dx ratio)))
-                  (base-y (+ (cdr point-narrow) (* dy ratio)))
-                  (half (+ narrow-half
-                           (* (- wide-half narrow-half) ratio))))
-             (chem-exp-svg--line state
-                                 (- base-x (* nx half))
-                                 (- base-y (* ny half))
-                                 (+ base-x (* nx half))
-                                 (+ base-y (* ny half)))))
-         (number-sequence 1 steps)
-         "")))))
+             (step (/ 3.75 length))
+             (font-size (chem-exp-svg--option state :svg-font-size))
+             (progress 0.0)
+             (lines nil))
+        (while (< progress 1.0)
+          (let* ((width (* 0.5 font-size progress))
+                 (base-x (+ (car point-narrow) (* dx progress)))
+                 (base-y (+ (cdr point-narrow) (* dy progress))))
+            (push (chem-exp-svg--line
+                   state
+                   (- base-x (* nx width))
+                   (- base-y (* ny width))
+                   (+ base-x (* nx width))
+                   (+ base-y (* ny width)))
+                  lines))
+          (setq progress (+ progress step)))
+        (let* ((width (* 0.5 font-size))
+               (base-x (car point-wide))
+               (base-y (cdr point-wide)))
+          (push (chem-exp-svg--line
+                 state
+                 (- base-x (* nx width))
+                 (- base-y (* ny width))
+                 (+ base-x (* nx width))
+                 (+ base-y (* ny width)))
+                lines))
+        (mapconcat #'identity (nreverse lines) "")))))
 
 (defun chem-exp-svg--stereo-wedge-up-p (state edge center)
   "Return non-nil when EDGE is solid at CENTER in STATE."

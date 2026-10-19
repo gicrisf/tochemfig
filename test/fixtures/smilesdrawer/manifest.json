@@ -79,6 +79,10 @@
     {
       "name": "imidazole",
       "smiles": "c1c[nH]cn1"
+    },
+    {
+      "name": "alanine_down",
+      "smiles": "N[C@H](C)C(=O)O"
     }
   ]
 }
