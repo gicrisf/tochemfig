@@ -1,0 +1,155 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "terminal_alkyne",
+  "smiles": "CC#C",
+  "features": [
+    "acyclic",
+    "triple-bond",
+    "terminal-label"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 141.961631,
+      "y": 29.999668,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 115.980816,
+      "y": 14.99976,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 90,
+      "y": -0.000147,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "triple",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 115.980816,
+      "y1": 14.99976,
+      "x2": 141.961631,
+      "y2": 29.999668,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 91.699989,
+      "y1": -2.944639,
+      "x2": 117.680805,
+      "y2": 12.055268,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 88.300011,
+      "y1": 2.944346,
+      "x2": 114.280826,
+      "y2": 17.944253,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 90,
+      "y1": -0.000147,
+      "x2": 115.980816,
+      "y2": 14.99976,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [],
+  "masks": [],
+  "points": [],
+  "gradients": [],
+  "viewBox": [
+    79.9999999998201,
+    -20.981055376260628,
+    71.9616313510923,
+    71.9616313510923
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 80,
+  "minY": -10.000147,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"79.9999999998201 -20.981055376260628 71.9616313510923 71.9616313510923\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"79.9999999998201\" y=\"-10.000146928204122\" width=\"71.9616313510923\" height=\"49.99981445497929\"><rect x=\"79.9999999998201\" y=\"-10.000146928204122\" width=\"71.9616313510923\" height=\"49.99981445497929\" fill=\"white\"></rect></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"115.98081567536624\" y1=\"14.999760299285521\" x2=\"141.9616313509124\" y2=\"29.999667526775163\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"91.69998948560226\" y1=\"-2.9446393714326855\" x2=\"117.6808051611484\" y2=\"12.05526785605696\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"88.30001051403795\" y1=\"2.944345515024439\" x2=\"114.28082618958409\" y2=\"17.944252742514085\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"89.9999999998201\" y1=\"-0.00014692820412317312\" x2=\"115.98081567536624\" y2=\"14.999760299285521\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line></g><g></g></svg>"
+}

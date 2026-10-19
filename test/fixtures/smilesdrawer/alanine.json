@@ -30,6 +30,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1
       ]
@@ -44,6 +46,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": true,
+      "forcePositioned": false,
       "neighbours": [
         0,
         2,
@@ -61,6 +65,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1
       ]
@@ -75,6 +81,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1
       ]
@@ -89,6 +97,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1,
         5,
@@ -105,6 +115,8 @@
       "isotope": 0,
       "isDrawn": false,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         4
       ]
@@ -119,6 +131,8 @@
       "isotope": 0,
       "isDrawn": false,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         4
       ]

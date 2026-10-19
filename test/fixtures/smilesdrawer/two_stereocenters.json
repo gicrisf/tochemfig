@@ -1,0 +1,580 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "two_stereocenters",
+  "smiles": "C[C@H](O)[C@@H](C)O",
+  "features": [
+    "stereocenter",
+    "wedge",
+    "multiple-stereocenters",
+    "terminal-label"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 197.942447,
+      "y": 44.999501,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 171.961631,
+      "y": 29.999594,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": true,
+      "forcePositioned": false,
+      "neighbours": [
+        0,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": 2,
+      "x": 186.961539,
+      "y": 4.018778,
+      "element": "H",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "x": 156.961724,
+      "y": 55.98041,
+      "element": "O",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 4,
+      "x": 145.980816,
+      "y": 14.999687,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": true,
+      "forcePositioned": false,
+      "neighbours": [
+        1,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "id": 5,
+      "x": 120,
+      "y": -0.00022,
+      "element": "H",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        4
+      ]
+    },
+    {
+      "id": 6,
+      "x": 160.980723,
+      "y": -10.981129,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        4
+      ]
+    },
+    {
+      "id": 7,
+      "x": 130.980908,
+      "y": 40.980503,
+      "element": "O",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        4
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 1,
+      "b": 3,
+      "order": "single",
+      "stereo": "up",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 1,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 5,
+      "a": 4,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 6,
+      "a": 4,
+      "b": 7,
+      "order": "single",
+      "stereo": "down",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 171.961631,
+      "y1": 29.999594,
+      "x2": 197.942447,
+      "y2": 44.999501,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 171.961631,
+      "y1": 29.999594,
+      "x2": 186.961539,
+      "y2": 4.018778,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "polygon",
+      "edge": 2,
+      "ring": null,
+      "points": [
+        [
+          172.3946449454149,
+          30.2495925164646
+        ],
+        [
+          161.9413804611458,
+          58.85539195682143
+        ],
+        [
+          151.9820677855198,
+          53.10542751961706
+        ],
+        [
+          171.52861775623003,
+          29.74959560888161
+        ]
+      ],
+      "fill": "url(#G66O4-atom-1)"
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 145.980816,
+      "y1": 14.999687,
+      "x2": 171.961631,
+      "y2": 29.999594,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": 120,
+      "y1": -0.00022,
+      "x2": 145.980816,
+      "y2": 14.999687,
+      "stroke": "url(#G66O4-atom-2)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": 145.980816,
+      "y1": 14.999687,
+      "x2": 160.980723,
+      "y2": -10.981129,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 145.980816,
+      "y1": 14.999687,
+      "x2": 145.980816,
+      "y2": 14.999687,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 143.510434,
+      "y1": 17.903541,
+      "x2": 144.701221,
+      "y2": 18.591037,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 141.040051,
+      "y1": 20.807395,
+      "x2": 143.421626,
+      "y2": 22.182387,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 138.569669,
+      "y1": 23.711249,
+      "x2": 142.142032,
+      "y2": 25.773736,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 136.099287,
+      "y1": 26.615103,
+      "x2": 140.862437,
+      "y2": 29.365086,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 133.628905,
+      "y1": 29.518957,
+      "x2": 139.582842,
+      "y2": 32.956436,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 131.158523,
+      "y1": 32.422811,
+      "x2": 138.303247,
+      "y2": 36.547786,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 128.688141,
+      "y1": 35.326665,
+      "x2": 137.023653,
+      "y2": 40.139136,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 126.217759,
+      "y1": 38.23052,
+      "x2": 135.744058,
+      "y2": 43.730486,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 2,
+      "text": "H",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
+      "direction": "right",
+      "x": 183.221539,
+      "y": 4.018778,
+      "transform": "transform: translateX(183.22153857831208px) translateY(4.018778387126963px)"
+    },
+    {
+      "atom": 3,
+      "text": "HO",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
+      "direction": "left",
+      "x": 160.701724,
+      "y": 55.98041,
+      "transform": "transform: translateX(160.7017241233328px) translateY(55.980409738219244px)"
+    },
+    {
+      "atom": 5,
+      "text": "H",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
+      "direction": "left",
+      "x": 123.74,
+      "y": -0.00022,
+      "transform": "transform: translateX(123.73999999973016px) translateY(-0.00022039230618475965px)"
+    },
+    {
+      "atom": 7,
+      "text": "HO",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
+      "direction": "left",
+      "x": 134.720908,
+      "y": 40.980503,
+      "transform": "transform: translateX(134.72090844778668px) translateY(40.9805025107296px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 186.961539,
+      "cy": 4.018778,
+      "r": 8.25
+    },
+    {
+      "cx": 156.961724,
+      "cy": 55.98041,
+      "r": 8.25
+    },
+    {
+      "cx": 120,
+      "cy": -0.00022,
+      "r": 8.25
+    },
+    {
+      "cx": 130.980908,
+      "cy": 40.980503,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 186.961539,
+      "cy": 4.018778,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#666666"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-1",
+      "cx": 156.961724,
+      "cy": 55.98041,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-2",
+      "cx": 120,
+      "cy": -0.00022,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#666666"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-3",
+      "cx": 130.980908,
+      "cy": 40.980503,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    109.99999999973016,
+    -25.971583064390934,
+    97.94244702663843,
+    97.94244702663843
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 110,
+  "minY": -20.981129,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"109.99999999973016 -25.971583064390934 97.94244702663843 97.94244702663843\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"186.9615385783121\" cy=\"4.018778387126963\" r=\"30\"><stop offset=\"20%\" stop-color=\"#666666\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-1\" gradientUnits=\"userSpaceOnUse\" cx=\"156.9617241233328\" cy=\"55.980409738219244\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-2\" gradientUnits=\"userSpaceOnUse\" cx=\"119.99999999973016\" cy=\"-0.00022039230618475965\" r=\"30\"><stop offset=\"20%\" stop-color=\"#666666\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-3\" gradientUnits=\"userSpaceOnUse\" cx=\"130.98090844778667\" cy=\"40.9805025107296\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"109.99999999973016\" y=\"-20.98112884036268\" width=\"97.94244702663843\" height=\"87.96153857858192\"><rect x=\"109.99999999973016\" y=\"-20.98112884036268\" width=\"97.94244702663843\" height=\"87.96153857858192\" fill=\"white\"></rect><circle cx=\"186.9615385783121\" cy=\"4.018778387126963\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"156.9617241233328\" cy=\"55.980409738219244\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"119.99999999973016\" cy=\"-0.00022039230618475965\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"130.98090844778667\" cy=\"40.9805025107296\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"171.96163135082247\" y1=\"29.999594062673104\" x2=\"197.9424470263686\" y2=\"44.999501290162755\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"171.96163135082247\" y1=\"29.999594062673104\" x2=\"186.9615385783121\" y2=\"4.018778387126963\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><polygon points=\"172.3946449454149,30.2495925164646 161.9413804611458,58.85539195682143 151.9820677855198,53.10542751961706 171.52861775623003,29.74959560888161\" fill=\"url(#G66O4-atom-1)\" data-edge=\"2\"></polygon><line x1=\"145.98081567527632\" y1=\"14.999686835183462\" x2=\"171.96163135082247\" y2=\"29.999594062673104\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line><line x1=\"119.99999999973016\" y1=\"-0.00022039230618475965\" x2=\"145.98081567527632\" y2=\"14.999686835183462\" stroke=\"url(#G66O4-atom-2)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"4\"></line><line x1=\"145.98081567527632\" y1=\"14.999686835183462\" x2=\"160.98072290276596\" y2=\"-10.981128840362677\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"5\"></line><line x1=\"145.98081567527632\" y1=\"14.999686835183462\" x2=\"145.98081567527632\" y2=\"14.999686835183462\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"143.51043357927554\" y1=\"17.903540920663424\" x2=\"144.70122096440474\" y2=\"18.591036668590032\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"141.0400514832747\" y1=\"20.807395006143388\" x2=\"143.4216262535331\" y2=\"22.182386501996604\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"138.56966938727393\" y1=\"23.711249091623348\" x2=\"142.14203154266153\" y2=\"25.77373633540317\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"136.0992872912731\" y1=\"26.615103177103315\" x2=\"140.8624368317899\" y2=\"29.365086168809746\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"133.62890519527232\" y1=\"29.518957262583275\" x2=\"139.58284212091831\" y2=\"32.956436002216314\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"131.1585230992715\" y1=\"32.422811348063235\" x2=\"138.30324741004668\" y2=\"36.54778583562288\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"128.68814100327072\" y1=\"35.326665433543205\" x2=\"137.0236526991751\" y2=\"40.139135669029464\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"126.21775890726988\" y1=\"38.23051951902317\" x2=\"135.74405798830347\" y2=\"43.73048550243604\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line></g><g><g style=\"transform: translateX(183.22153857831208px) translateY(4.018778387126963px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#666666\">H</tspan></text></g><g style=\"transform: translateX(160.7017241233328px) translateY(55.980409738219244px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan><tspan fill=\"#e74c3c\">O</tspan></text></g><g style=\"transform: translateX(123.73999999973016px) translateY(-0.00022039230618475965px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan></text></g><g style=\"transform: translateX(134.72090844778668px) translateY(40.9805025107296px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg>"
+}

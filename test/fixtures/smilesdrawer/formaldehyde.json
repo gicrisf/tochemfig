@@ -1,0 +1,168 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "formaldehyde",
+  "smiles": "C=O",
+  "features": [
+    "acyclic",
+    "double-bond",
+    "terminal-label"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 85.980816,
+      "y": 14.999834,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 60,
+      "y": -0.000073,
+      "element": "O",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        0
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 61.274992,
+      "y1": -2.208443,
+      "x2": 87.255808,
+      "y2": 12.791464,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 58.725008,
+      "y1": 2.208296,
+      "x2": 84.705824,
+      "y2": 17.208203,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 0,
+      "text": "CH₂",
+      "parts": [
+        {
+          "text": "C",
+          "fill": "#222222"
+        },
+        {
+          "text": "H₂",
+          "fill": "#666666"
+        }
+      ],
+      "direction": "right",
+      "x": 82.240816,
+      "y": 14.999834,
+      "transform": "transform: translateX(82.2408156754562px) translateY(14.999833763387581px)"
+    },
+    {
+      "atom": 1,
+      "text": "O",
+      "parts": [
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
+      "direction": "left",
+      "x": 63.74,
+      "y": -0.000073,
+      "transform": "transform: translateX(63.739999999910054px) translateY(-0.00007346410206158656px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 85.980816,
+      "cy": 14.999834,
+      "r": 8.25
+    },
+    {
+      "cx": 60,
+      "cy": -0.000073,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 60,
+      "cy": -0.000073,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    49.99999999991005,
+    -17.970527688130318,
+    50.940815675546155,
+    50.940815675546155
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 50,
+  "minY": -11.000073,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"49.99999999991005 -17.970527688130318 50.940815675546155 50.940815675546155\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"50.940815675546155\" height=\"36.99990722748964\"><rect x=\"49.99999999991005\" y=\"-11.000073464102062\" width=\"50.940815675546155\" height=\"36.99990722748964\" fill=\"white\"></rect><circle cx=\"85.9808156754562\" cy=\"14.999833763387581\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"59.99999999991005\" cy=\"-0.00007346410206158656\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"61.27499211424667\" y1=\"-2.208442796523484\" x2=\"87.25580778979281\" y2=\"12.791464430966158\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"58.72500788557343\" y1=\"2.2082958683193605\" x2=\"84.70582356111959\" y2=\"17.208203095809004\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line></g><g><g style=\"transform: translateX(82.2408156754562px) translateY(14.999833763387581px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#222222\">C</tspan><tspan fill=\"#666666\">H₂</tspan></text></g><g style=\"transform: translateX(63.739999999910054px) translateY(-0.00007346410206158656px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg>"
+}

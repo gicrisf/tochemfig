@@ -84,6 +84,15 @@
     ("down" :down)
     (_ :none)))
 
+(defun chem-svg-parity-test--fixture-atom (atoms id)
+  "Return the atom JSON with ID from ATOMS."
+  (cl-find-if
+   (lambda (atom)
+     (equal (chem-svg-parity-test--number
+             (chem-svg-parity-test--get atom "id"))
+            id))
+   atoms))
+
 (defun chem-svg-parity-test--build-drawing (fixture)
   "Build a test-only `chem-drawing' from SmilesDrawer FIXTURE.
 SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
@@ -143,13 +152,24 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
                       (chem-svg-parity-test--get json "b")))
              (order (chem-svg-parity-test--bond-order
                      (chem-svg-parity-test--get json "order")))
-             (stereo (chem-svg-parity-test--bond-stereo
-                      (chem-svg-parity-test--get json "stereo")))
+             (raw-stereo (chem-svg-parity-test--bond-stereo
+                          (chem-svg-parity-test--get json "stereo")))
+             (source-json (chem-svg-parity-test--fixture-atom atoms-json source))
+             (target-json (chem-svg-parity-test--fixture-atom atoms-json target))
+             (source-center (eq t (chem-svg-parity-test--get source-json "stereocenter")))
+             (target-center (eq t (chem-svg-parity-test--get target-json "stereocenter")))
+             (wedge-end (cond ((and source-center (not target-center)) target)
+                              ((and target-center (not source-center)) source)
+                              (t source)))
+             (stereo (if (and (memq raw-stereo '(:up :down))
+                              (= wedge-end target))
+                         (if (eq raw-stereo :up) :down :up)
+                       raw-stereo))
              (edge (chem-edge-create
                     :id id :a source :b target
                     :order order
                     :stereo stereo
-                    :stereo-center (when (memq stereo '(:up :down)) source)
+                    :stereo-center (when (memq stereo '(:up :down)) wedge-end)
                     :link-p nil
                     :cross-p nil
                     :marker ""

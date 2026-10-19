@@ -11,9 +11,9 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
-- Implementation status: Batches 0, 1, and 2 are complete.
+- Implementation status: Batches 0, 1, 2, and 3 are complete.
 - Branch: `svg`
-- Fixture count: **31**
+- Fixture count: **37**
 - Fast suite: **503 tests**
 - Hard raster gates: **12 curated fixtures**
 - Known fixture gaps: none currently declared
@@ -60,6 +60,12 @@ tetramethylammonium
 phosphate
 azide
 pyridine_n_oxide
+two_stereocenters
+substituted_allene
+terminal_alkyne
+naphthalene_kekule
+ethyl_cyclohexane
+formaldehyde
 ```
 
 The current fast tests cover:

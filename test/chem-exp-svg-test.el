@@ -595,11 +595,11 @@
             (should (< (abs (- (cadr center) (cdr point))) 1e-6))))))
     (should (> checked 0))))
 
-(ert-deftest chem-exp-svg-linear-carbon-dot ()
-  "Linear carbons receive SmilesDrawer-style carbon dots."
-  (let ((svg (chem-exp-svg-test--render "CC#CC")))
-    (should (string-match-p "<circle[^>]*r=\"0.75\"" svg))
-    (should (string-match-p "<circle[^>]*r=\"1.5\" fill=\"black\"" svg))))
+(ert-deftest chem-exp-svg-triple-bond-no-carbon-dot ()
+  "Triple-bonded linear carbons do not receive carbon dots."
+  (let ((alkyne (chem-exp-svg-test--render "CC#CC")))
+    (should-not (string-match-p "<circle[^>]*r=\"0.75\"" alkyne))
+    (should-not (string-match-p "<circle[^>]*r=\"1.5\" fill=\"black\"" alkyne))))
 
 (ert-deftest chem-exp-svg-pseudo-elements ()
   "Terminal pseudo-element groups are combined into one label."

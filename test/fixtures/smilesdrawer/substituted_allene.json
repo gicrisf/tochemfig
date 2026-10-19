@@ -1,0 +1,250 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "substituted_allene",
+  "smiles": "CC=C=CC",
+  "features": [
+    "allene",
+    "cumulated-double-bond",
+    "terminal-label"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 223.922975,
+      "y": 51.961367,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 197.942233,
+      "y": 66.961401,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 171.961487,
+      "y": 51.961372,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 3,
+      "x": 145.980742,
+      "y": 36.961343,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        2,
+        4
+      ]
+    },
+    {
+      "id": 4,
+      "x": 120,
+      "y": 51.961377,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        3
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 2,
+      "b": 3,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 197.942233,
+      "y1": 66.961401,
+      "x2": 223.922975,
+      "y2": 51.961367,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 173.23649,
+      "y1": 49.753009,
+      "x2": 199.217235,
+      "y2": 64.753038,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 170.686485,
+      "y1": 54.169735,
+      "x2": 196.66723,
+      "y2": 69.169764,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 147.255745,
+      "y1": 34.752979,
+      "x2": 173.23649,
+      "y2": 49.753009,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 144.70574,
+      "y1": 39.169706,
+      "x2": 170.686485,
+      "y2": 54.169735,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 120,
+      "y1": 51.961377,
+      "x2": 145.980742,
+      "y2": 36.961343,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 2,
+      "text": "C",
+      "parts": [
+        {
+          "text": "C",
+          "fill": "#222222"
+        }
+      ],
+      "direction": "up",
+      "x": 168.221487,
+      "y": 51.961372,
+      "transform": "transform: translateX(168.22148749479615px) translateY(51.96137197835947px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 171.961487,
+      "cy": 51.961372,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [],
+  "viewBox": [
+    109.99999999982009,
+    -10.000115516616596,
+    123.92297498995214,
+    123.92297498995214
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 110,
+  "minY": 26.961343,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"109.99999999982009 -10.000115516616596 123.92297498995214 123.92297498995214\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"109.99999999982009\" y=\"26.961342827732835\" width=\"123.92297498995214\" height=\"50.000058301253276\"><rect x=\"109.99999999982009\" y=\"26.961342827732835\" width=\"123.92297498995214\" height=\"50.000058301253276\" fill=\"white\"></rect><circle cx=\"171.96148749479616\" cy=\"51.96137197835947\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"197.94223277818537\" y1=\"66.96140112898611\" x2=\"223.92297498977223\" y2=\"51.961366657856736\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"173.23648997259943\" y1=\"49.75300862927139\" x2=\"199.21723525598864\" y2=\"64.75303777989802\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"170.6864850169929\" y1=\"54.169735327447555\" x2=\"196.6672303003821\" y2=\"69.1697644780742\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"147.25574468921022\" y1=\"34.752979478644754\" x2=\"173.23648997259943\" y2=\"49.75300862927139\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"144.70573973360368\" y1=\"39.16970617682092\" x2=\"170.6864850169929\" y2=\"54.169735327447555\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"119.99999999982009\" y1=\"51.9613772988622\" x2=\"145.98074221140695\" y2=\"36.961342827732835\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line></g><g><g style=\"transform: translateX(168.22148749479615px) translateY(51.96137197835947px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"up\" dominant-baseline=\"central\"><tspan fill=\"#222222\" x=\"0px\" y=\"-0em\">C</tspan></text></g></g></svg>"
+}

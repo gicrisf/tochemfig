@@ -515,6 +515,29 @@ negative terminal oxygens is drawn as N+O2."
         (mapconcat #'identity parts "")
       (mapconcat #'identity (nreverse parts) ""))))
 
+(defun chem-exp-svg--small-carbon-p (state atom)
+  "Return non-nil when ATOM is a carbon in a molecule with fewer than 3 atoms."
+  (and (equal (chem-atom-element atom) "C")
+       (< (hash-table-count
+           (chem-drawing-atoms (chem-exp-svg-state-drawing state)))
+          3)))
+
+(defun chem-exp-svg--small-carbon-parts (atom)
+  "Return ATOM's text parts for a small-molecule carbon label."
+  (let ((hydrogens (chem-exp-svg--hydrogen-text
+                    (chem-atom-hydrogens atom)))
+        (radical (chem-exp-svg--radical-text
+                  (chem-atom-radical atom))))
+    (nconc (list (cons "C" "C"))
+           (unless (string-empty-p hydrogens)
+             (list (cons hydrogens "H")))
+           (unless (string-empty-p radical)
+             (list (cons radical "C"))))))
+
+(defun chem-exp-svg--parts-text (parts direction)
+  "Return PARTS as text in DIRECTION."
+  (mapconcat #'car (chem-exp-svg--ordered-text-parts parts direction) ""))
+
 (defun chem-exp-svg--atom-text-for-state (state atom)
   "Return ATOM's displayed text in STATE, including pseudo groups."
   (let* ((idx (chem-atom-idx atom))
@@ -524,6 +547,9 @@ negative terminal oxygens is drawn as N+O2."
     (cond
      (groups (chem-exp-svg--pseudo-atom-text atom groups direction))
      ((chem-exp-svg--allene-center-p state atom) "C")
+     ((chem-exp-svg--small-carbon-p state atom)
+      (chem-exp-svg--parts-text
+       (chem-exp-svg--small-carbon-parts atom) direction))
      (t (chem-exp-svg--atom-text atom direction)))))
 
 (defun chem-exp-svg--direction-from-svg-angle (angle)
@@ -665,6 +691,8 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
      (groups (chem-exp-svg--pseudo-text-parts atom groups))
      ((chem-exp-svg--allene-center-p state atom)
       (list (cons "C" "C")))
+     ((chem-exp-svg--small-carbon-p state atom)
+      (chem-exp-svg--small-carbon-parts atom))
      (t (chem-exp-svg--normal-text-parts atom)))))
 
 (defun chem-exp-svg--ordered-text-parts (parts direction)
@@ -843,6 +871,13 @@ atom and uses the mask to keep bonds clear."
          (null (chem-atom-label atom))
          (not (chem-exp-svg--allene-center-p state atom))
          (= 2 (length neighbors))
+         (not (cl-some
+               (lambda (neighbor)
+                 (eq :triple
+                     (chem-edge-order
+                      (chem-get-edge drawing (chem-atom-idx atom)
+                                     neighbor))))
+               neighbors))
          (not (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom)))
          (let* ((a (gethash (car neighbors) atoms))
                 (b (gethash (cadr neighbors) atoms))
@@ -1440,7 +1475,7 @@ and center-double-bond cases."
              (font-size (chem-exp-svg--option state :svg-font-size))
              (progress 0.0)
              (lines nil))
-        (while (< progress 1.0)
+        (while (< progress 0.999999)
           (let* ((width (* 0.5 font-size progress))
                  (base-x (+ (car point-narrow) (* dx progress)))
                  (base-y (+ (cdr point-narrow) (* dy progress))))

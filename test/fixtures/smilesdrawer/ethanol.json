@@ -28,6 +28,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1
       ]
@@ -42,6 +44,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         0,
         2
@@ -57,6 +61,8 @@
       "isotope": 0,
       "isDrawn": true,
       "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
       "neighbours": [
         1
       ]

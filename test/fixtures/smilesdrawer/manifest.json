@@ -334,6 +334,67 @@
         "gradient"
       ],
       "raster": false
+    },
+    {
+      "name": "two_stereocenters",
+      "smiles": "C[C@H](O)[C@@H](C)O",
+      "features": [
+        "stereocenter",
+        "wedge",
+        "multiple-stereocenters",
+        "terminal-label"
+      ],
+      "raster": false
+    },
+    {
+      "name": "substituted_allene",
+      "smiles": "CC=C=CC",
+      "features": [
+        "allene",
+        "cumulated-double-bond",
+        "terminal-label"
+      ],
+      "raster": false
+    },
+    {
+      "name": "terminal_alkyne",
+      "smiles": "CC#C",
+      "features": [
+        "acyclic",
+        "triple-bond",
+        "terminal-label"
+      ],
+      "raster": false
+    },
+    {
+      "name": "naphthalene_kekule",
+      "smiles": "C1=CC=C2C=CC=CC2=C1",
+      "features": [
+        "explicit-kekule",
+        "fused-ring",
+        "shared-edge"
+      ],
+      "raster": false
+    },
+    {
+      "name": "ethyl_cyclohexane",
+      "smiles": "CCC1CCCCC1",
+      "features": [
+        "ring",
+        "six-membered-ring",
+        "terminal-label"
+      ],
+      "raster": false
+    },
+    {
+      "name": "formaldehyde",
+      "smiles": "C=O",
+      "features": [
+        "acyclic",
+        "double-bond",
+        "terminal-label"
+      ],
+      "raster": false
     }
   ]
 }

@@ -219,6 +219,8 @@ function renderReference(entry) {
     isotope: number(vertex.value.bracket?.isotope ?? 0),
     isDrawn: Boolean(vertex.value.isDrawn),
     isAromatic: Boolean(vertex.value.isPartOfAromaticRing),
+    stereocenter: Boolean(vertex.value.isStereoCenter),
+    forcePositioned: Boolean(vertex.forcePositioned),
     neighbours: vertex.neighbours.slice(),
   }));
   const edges = processor.graph.edges.map((edge) => ({
