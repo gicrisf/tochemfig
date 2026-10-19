@@ -43,8 +43,10 @@ Phase 1 is in progress:
 - Solid-wedge polygons and dashed-wedge strokes now match SmilesDrawer's
   geometry, including the wide half-width and hashed-wedge step/cap.
 - Label mask centers and radii now match SmilesDrawer for text labels.
+- Square viewBox, 500x500 default output, text measurement, and text-inclusive
+  bounds now match SmilesDrawer.
 - Known gaps: the allene carbon label and the dot used for linear carbon
-  atoms.  Next parity target is viewBox, colors, and gradients.
+  atoms.  Next parity target is bond gradients and per-part text colors.
 
 ## Reference version
 

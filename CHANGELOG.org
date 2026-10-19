@@ -49,7 +49,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   NO2.  Hidden atoms and their bonds are omitted, group text is attached to the
   center atom, and nitro groups render as N+O2.
 - A hashed-wedge parity fixture and shared-coordinate checks for solid-wedge
-  polygons, label masks, and label mask radii.
+  polygons, label masks, label mask radii, and viewBox bounds.
+- SVG text layout now uses SmilesDrawer's measured text extents and tspan
+  parts; the default SVG output is 500x500 with a square viewBox.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -92,7 +94,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   and hide the grouped atoms' separate labels and bonds.
 - Solid wedge width and hashed-wedge dash geometry now match SmilesDrawer.
 - SVG label masks now use SmilesDrawer's element-based radius formula.
-- The full ERT suite is now 497 tests.
+- SVG output now defaults to a square, text-inclusive viewBox and 500x500
+  dimensions.
+- The full ERT suite is now 498 tests.
 
 ** Migration
 =chem-mode= makes a clean break; the old =tochemfig= commands and variables

@@ -345,8 +345,8 @@ Starting set:
 
 | Variable | Key | Meaning |
 | --- | --- | --- |
-| `chem-exp-svg-default-width` | `:svg-width` | number or nil for automatic |
-| `chem-exp-svg-default-height` | `:svg-height` | number or nil for automatic |
+| `chem-exp-svg-default-width` | `:svg-width` | number or nil for automatic; default 500 |
+| `chem-exp-svg-default-height` | `:svg-height` | number or nil for automatic; default 500 |
 | `chem-exp-svg-default-padding` | `:svg-padding` | margin in final SVG units |
 | `chem-exp-svg-default-scale` | `:svg-scale` | IR-to-SVG multiplier, default 30.0 |
 | `chem-exp-svg-default-bond-spacing` | `:svg-bond-spacing` | double/triple offset |
@@ -478,14 +478,16 @@ IR coordinates are 2D chemistry coordinates with y up.  SVG uses y down.
 Use one coordinate wrapper:
 
 ```elisp
-x_svg = (x - min-x) * :svg-scale + :svg-padding
-y_svg = (max-y - y) * :svg-scale + :svg-padding
+x_svg = x * :svg-scale
+y_svg = -y * :svg-scale
 ```
 
 All geometry options (`:svg-scale`, `:svg-padding`, `:svg-bond-spacing`,
 `:svg-bond-thickness`, and `:svg-font-size`) are expressed in SVG user units.
-The viewBox is computed from the scaled IR bounds plus `:svg-padding` on each
-side.  `:svg-width` and `:svg-height` are output dimensions only; they do not
+The viewBox is computed from visible atom positions, `:svg-padding`, and the
+measured text extents, then squared to the larger dimension.  Text bounds use
+SmilesDrawer's estimate; labels use absolute SVG coordinates.  `:svg-width` and
+`:svg-height` are output dimensions only; they default to 500x500 and do not
 change the drawing coordinate system.  The default `:svg-scale` is 30.0, which
 maps a normalized IR bond length of 1.0 to 30 SVG user units.
 
@@ -510,6 +512,8 @@ metrics across platforms.  Use a deterministic estimate based on
 ### ViewBox and dimensions
 
 - Always emit a `viewBox`.
+- The default dimensions are 500x500; explicit options override them.
+- The viewBox is always square and includes SmilesDrawer-style text bounds.
 - If `:svg-width` and `:svg-height` are nil, emit no fixed pixel dimensions;
   the SVG scales to its container.
 - If only one dimension is supplied, compute the other from the viewBox aspect

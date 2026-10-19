@@ -72,6 +72,15 @@
       (setq start (match-end 0)))
     count))
 
+(defun chem-exp-svg-test--text-content (svg)
+  "Return concatenated tspan text from SVG labels."
+  (let ((start 0)
+        (text ""))
+    (while (string-match "<tspan[^>]*>\\([^<]*\\)</tspan>" svg start)
+      (setq text (concat text (match-string 1 svg)))
+      (setq start (match-end 0)))
+    text))
+
 (defun chem-exp-svg-test--edge-between (drawing a b)
   "Return DRAWING's visible edge between atom indices A and B."
   (let ((ends (sort (list a b) #'<)))
@@ -188,21 +197,21 @@
                   :type 'user-error)))
 
 (ert-deftest chem-exp-svg-bounds-and-point ()
-  "Bounds and coordinate mapping use the configured scale and padding."
+  "Coordinates are absolute and the viewBox is square."
   (let* ((chem-default-exporter 'svg)
          (options (chem--build-options '(("svg-scale" . 10.0)
                                          ("svg-padding" . 1.0))))
          (drawing (chem-from-string "CCO" options))
          (state (chem-exp-svg--make-state drawing options))
-         (bounds (chem-exp-svg--bounds state))
-         (point (chem-exp-svg--point state (nth 0 bounds) (nth 3 bounds)))
+         (atom (gethash 0 (chem-drawing-atoms drawing)))
+         (point (chem-exp-svg--point state
+                                      (chem-atom-x atom)
+                                      (chem-atom-y atom)))
          (viewbox (chem-exp-svg--viewbox state)))
-    (should (= 1.0 (car point)))
-    (should (= 1.0 (cdr point)))
-    (should (= 0.0 (nth 0 viewbox)))
-    (should (= 0.0 (nth 1 viewbox)))
-    (should (> (nth 2 viewbox) 0.0))
-    (should (> (nth 3 viewbox) 0.0))))
+    (should (= (* 10.0 (chem-atom-x atom)) (car point)))
+    (should (= (* -10.0 (chem-atom-y atom)) (cdr point)))
+    (should (= (nth 2 viewbox) (nth 3 viewbox)))
+    (should (> (nth 2 viewbox) 0.0))))
 
 (ert-deftest chem-exp-svg-render-xml ()
   "The renderer returns valid deterministic SVG."
@@ -215,11 +224,11 @@
     (should (equal svg (chem-exp-svg-test--render "CCO")))))
 
 (ert-deftest chem-exp-svg-dimensions ()
-  "Width and height are emitted only when requested."
+  "The default output is 500x500; explicit dimensions override it."
   (let* ((svg (chem-exp-svg-test--render "CCO"))
          (root (chem-exp-svg-test--root svg)))
-    (should-not (string-match-p " width=\"" root))
-    (should-not (string-match-p " height=\"" root)))
+    (should (string-match-p " width=\"500\"" root))
+    (should (string-match-p " height=\"500\"" root)))
   (let* ((svg (chem-exp-svg-test--render "CCO" '(("svg-width" . 300))))
          (root (chem-exp-svg-test--root svg)))
     (should (string-match-p " width=\"300\"" root))
@@ -399,7 +408,7 @@
 (ert-deftest chem-exp-svg-allene-wedge ()
   "Allene input wedges are preserved."
   (let ((svg (chem-exp-svg-test--render-file "data/allene.mol")))
-    (should (string-match-p ">OH</text>" svg))
+    (should (string-match-p "OH" (chem-exp-svg-test--text-content svg)))
     (should (string-match-p "<polygon " svg))))
 
 (ert-deftest chem-exp-svg-two-stereocenters ()
@@ -522,7 +531,7 @@
   "Heteroatom labels appear and hidden carbons stay hidden."
   (let ((svg (chem-exp-svg-test--render "CCO")))
     (should (= 1 (chem-exp-svg-test--count "<text " svg)))
-    (should (string-match-p ">OH</text>" svg))))
+    (should (string-match-p "OH" (chem-exp-svg-test--text-content svg)))))
 
 (ert-deftest chem-exp-svg-caffeine ()
   "Caffeine renders as valid SVG."
@@ -588,35 +597,37 @@
 
 (ert-deftest chem-exp-svg-pseudo-elements ()
   "Terminal pseudo-element groups are combined into one label."
-  (let ((alanine (chem-exp-svg-test--render
-                  "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil)))))
-    (should (string-match-p ">\\(COOH\\|HOOC\\)</text>" alanine))
-    (should (string-match-p ">\\(NH₂\\|H₂N\\)</text>" alanine))
-    (should-not (string-match-p ">O</text>" alanine))
+  (let* ((alanine (chem-exp-svg-test--render
+                   "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil))))
+         (text (chem-exp-svg-test--text-content alanine)))
+    (should (string-match-p "COOH\\|HOOC" text))
+    (should (string-match-p "NH₂\\|H₂N" text))
+    (should (= 2 (chem-exp-svg-test--count "<text " alanine)))
     (should (= 3 (chem-exp-svg-test--count "<line " alanine))))
   (let ((nitro (chem-exp-svg-test--render "O=[N+]([O-])c1ccccc1")))
-    (should (string-match-p ">\\(N⁺O₂\\|O₂N⁺\\)</text>" nitro))
-    (should-not (string-match-p ">O</text>" nitro))
+    (should (string-match-p "N⁺O₂\\|O₂N⁺"
+                            (chem-exp-svg-test--text-content nitro)))
+    (should (= 1 (chem-exp-svg-test--count "<text " nitro)))
     (should (= 7 (chem-exp-svg-test--count "<line " nitro)))))
 
 (ert-deftest chem-exp-svg-atom-numbers ()
   "Atom numbers replace hydrogen and charge annotations."
   (let ((svg (chem-exp-svg-test--render "CCO" '(("atom-numbers" . t)))))
     (should (= 3 (chem-exp-svg-test--count "<text " svg)))
-    (should (string-match-p ">1</text>" svg))
-    (should (string-match-p ">2</text>" svg))
-    (should (string-match-p ">O3</text>" svg))
-    (should-not (string-match-p ">H" svg))))
+    (should (string-match-p "1" (chem-exp-svg-test--text-content svg)))
+    (should (string-match-p "2" (chem-exp-svg-test--text-content svg)))
+    (should (string-match-p "O3" (chem-exp-svg-test--text-content svg)))
+    (should-not (string-match-p "H" (chem-exp-svg-test--text-content svg)))))
 
 (ert-deftest chem-exp-svg-charge-and-hydrogens ()
   "Charges and hydrogens use Unicode sub/superscripts."
   (let ((svg (chem-exp-svg-test--render "[NH4+]")))
-    (should (string-match-p ">NH₄⁺</text>" svg))))
+    (should (string-match-p "N⁺H₄" (chem-exp-svg-test--text-content svg)))))
 
 (ert-deftest chem-exp-svg-radical ()
   "Radicals are rendered as superscript dots."
   (let ((svg (chem-exp-svg-test--render "[CH3]")))
-    (should (string-match-p ">CH₃·</text>" svg))))
+    (should (string-match-p "CH₃·" (chem-exp-svg-test--text-content svg)))))
 
 (ert-deftest chem-exp-svg-markers ()
   "Markers become stable SVG IDs, including hidden atoms."

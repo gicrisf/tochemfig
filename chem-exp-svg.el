@@ -23,12 +23,12 @@
 
 ;;; Options
 
-(defcustom chem-exp-svg-default-width nil
+(defcustom chem-exp-svg-default-width 500
   "Width of the generated SVG in pixels, or nil for automatic."
   :group 'chem-mode
   :type '(choice (const :tag "Automatic" nil) number))
 
-(defcustom chem-exp-svg-default-height nil
+(defcustom chem-exp-svg-default-height 500
   "Height of the generated SVG in pixels, or nil for automatic."
   :group 'chem-mode
   :type '(choice (const :tag "Automatic" nil) number))
@@ -574,6 +574,126 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
                           (chem-exp-svg-state-pseudo state))))
     (chem-exp-svg--text-direction-from-angles angles (and pseudo t))))
 
+(defun chem-exp-svg--text-size (state text)
+  "Return (WIDTH . HEIGHT) for TEXT using SmilesDrawer's estimate."
+  (let ((font-size (chem-exp-svg--option state :svg-font-size))
+        (width 0.0))
+    (dolist (char (string-to-list (or text "")))
+      (setq width
+            (+ width
+               (cond
+                ((= char ?\s) 0.35)
+                ((and (>= char ?A) (<= char ?Z)) 0.68)
+                ((and (>= char ?a) (<= char ?z)) 0.56)
+                ((and (>= char ?0) (<= char ?9)) 0.55)
+                (t 0.45)))))
+    (cons (* font-size width) font-size)))
+
+(defun chem-exp-svg--normal-text-parts (atom)
+  "Return ATOM's text parts as (DISPLAY . ELEMENT)."
+  (let* ((label (chem-atom-label atom))
+         (number (chem-atom-number atom))
+         (element (chem-atom-element atom)))
+    (cond
+     (number
+      (list (cons (if label
+                      (concat label (number-to-string number))
+                    (number-to-string number))
+                  element)))
+     (label
+      (let ((parts
+             (list (cons (concat label
+                                 (chem-exp-svg--charge-text
+                                  (or (chem-atom-charge atom) 0)))
+                         element)))
+            (hydrogens (chem-exp-svg--hydrogen-text
+                        (chem-atom-hydrogens atom)))
+            (radical (chem-exp-svg--radical-text
+                      (chem-atom-radical atom))))
+        (unless (string-empty-p hydrogens)
+          (push (cons hydrogens "H") parts))
+        (unless (string-empty-p radical)
+          (push (cons radical element) parts))
+        (nreverse parts)))
+     (t nil))))
+
+(defun chem-exp-svg--pseudo-text-parts (atom groups)
+  "Return ATOM's pseudo-element text parts in logical order."
+  (let* ((groups (chem-exp-svg--pseudo-groups-for-atom atom groups))
+         (element (chem-atom-element atom))
+         (parts
+          (list (cons (concat (or (chem-atom-label atom) element)
+                              (chem-exp-svg--charge-text
+                               (or (chem-atom-charge atom) 0)))
+                      element)))
+         (hydrogens (chem-exp-svg--hydrogen-text
+                     (chem-atom-hydrogens atom))))
+    (unless (string-empty-p hydrogens)
+      (push (cons hydrogens "H") parts))
+    (dolist (group groups)
+      (push (cons (chem-exp-svg--pseudo-group-text group)
+                  (plist-get group :element))
+            parts)
+      (let ((hcount (* (plist-get group :count)
+                       (plist-get group :hydrogens))))
+        (unless (zerop hcount)
+          (push (cons (chem-exp-svg--hydrogen-text hcount) "H") parts))))
+    (nreverse parts)))
+
+(defun chem-exp-svg--atom-text-parts-for-state (state atom)
+  "Return ATOM's logical text parts in STATE."
+  (let* ((idx (chem-atom-idx atom))
+         (groups (and (chem-exp-svg-state-pseudo state)
+                      (gethash idx (chem-exp-svg-state-pseudo state)))))
+    (if groups
+        (chem-exp-svg--pseudo-text-parts atom groups)
+      (chem-exp-svg--normal-text-parts atom))))
+
+(defun chem-exp-svg--ordered-text-parts (parts direction)
+  "Return PARTS in drawing order for DIRECTION."
+  (if (eq direction 'left)
+      (nreverse (copy-sequence parts))
+    parts))
+
+(defun chem-exp-svg--text-bbox (state parts direction)
+  "Return (WIDTH . HEIGHT) for PARTS in DIRECTION."
+  (when parts
+    (let* ((first (car parts))
+           (element (cdr first))
+           (display (car first))
+           (bbox (chem-exp-svg--text-size state element)))
+      (when (and (eq direction 'left)
+                 (not (equal display element)))
+        (setq bbox (chem-exp-svg--text-size state display)))
+      bbox)))
+
+(defun chem-exp-svg--text-layout (state atom)
+  "Return SmilesDrawer-compatible text layout information for ATOM."
+  (let* ((direction (chem-exp-svg--text-direction-for-state state atom))
+         (parts (chem-exp-svg--ordered-text-parts
+                 (chem-exp-svg--atom-text-parts-for-state state atom)
+                 direction)))
+    (when parts
+      (let* ((bbox (chem-exp-svg--text-bbox state parts direction))
+             (point (chem-exp-svg--point state
+                                         (chem-atom-x atom)
+                                         (chem-atom-y atom)))
+             (width (car bbox))
+             (x (if (eq direction 'left)
+                    (+ (car point) (/ width 2.0))
+                  (- (car point) (/ width 2.0))))
+             (baseline (if (memq direction '(left right))
+                           "alphabetic"
+                         "central")))
+        (list :parts parts
+              :direction direction
+              :x x
+              :y (cdr point)
+              :anchor (if (eq direction 'left) "end" "start")
+              :baseline baseline
+              :mask-center point
+              :bbox bbox)))))
+
 (defun chem-exp-svg--text-position (state atom _direction &optional _text)
   "Return (X Y ANCHOR) for ATOM's text, centered on the atom.
 The anchor is always `middle'; SmilesDrawer centers each label over its
@@ -593,20 +713,11 @@ atom and uses the mask to keep bonds clear."
          (length (length element)))
     (* font-size (if (> length 1) 1.1 0.75))))
 
-(defun chem-exp-svg--label-center (state atom text)
-  "Return the approximate center of ATOM's TEXT in STATE."
-  (let* ((direction (chem-exp-svg--text-direction atom))
-         (position (chem-exp-svg--text-position state atom direction text))
-         (x (nth 0 position))
-         (y (nth 1 position))
-         (anchor (nth 2 position))
-         (font-size (chem-exp-svg--option state :svg-font-size))
-         (half-width (* 0.3 font-size (length text))))
-    (list (pcase anchor
-            ("start" (+ x half-width))
-            ("end" (- x half-width))
-            (_ x))
-          y)))
+(defun chem-exp-svg--label-center (state atom _text)
+  "Return the mask center for ATOM in STATE."
+  (let ((point (plist-get (chem-exp-svg--text-layout state atom)
+                          :mask-center)))
+    (list (car point) (cdr point))))
 
 (defun chem-exp-svg--marker-present-p (marker)
   "Return non-nil when MARKER should be emitted."
@@ -640,37 +751,70 @@ atom and uses the mask to keep bonds clear."
   "Return ATOM's label SVG for STATE."
   (if (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom))
       ""
-    (let* ((text (chem-exp-svg--atom-text-for-state state atom))
+    (let* ((layout (chem-exp-svg--text-layout state atom))
+           (parts (plist-get layout :parts))
            (attributes (chem-exp-svg--marker-attributes
                         (chem-atom-marker atom))))
-      (cond
-       (text
-        (let* ((direction (chem-exp-svg--text-direction-for-state state atom))
-               (position (chem-exp-svg--text-position state atom direction text))
-             (text-svg
-              (format "<text x=\"%s\" y=\"%s\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"%s\" dominant-baseline=\"central\">%s</text>\n"
-                      (chem-exp-svg--number (nth 0 position))
-                      (chem-exp-svg--number (nth 1 position))
-                      (chem-exp-svg--escape
-                       (chem-exp-svg--atom-text-color state atom))
-                      (chem-exp-svg--escape
-                       (chem-exp-svg--option state :svg-font-family))
-                      (chem-exp-svg--number
-                       (chem-exp-svg--option state :svg-font-size))
-                      (nth 2 position)
-                      (chem-exp-svg--escape text))))
+      (if parts
+          (let* ((direction (plist-get layout :direction))
+                 (x (plist-get layout :x))
+                 (y (plist-get layout :y))
+                 (anchor (plist-get layout :anchor))
+                 (baseline (plist-get layout :baseline))
+                 (font-size (chem-exp-svg--option state :svg-font-size))
+                 (element-color
+                  (chem-exp-svg--theme-color
+                   (chem-exp-svg-state-theme state)
+                   (chem-atom-element atom)))
+                 (tspans
+                  (cl-loop
+                   for part in parts
+                   for index from 0
+                   concat
+                   (format "<tspan fill=\"%s\"%s>%s</tspan>"
+                           (chem-exp-svg--escape
+                            (chem-exp-svg--theme-color
+                             (chem-exp-svg-state-theme state)
+                             (cdr part)))
+                           (if (memq direction '(up down))
+                               (format " x=\"0px\" y=\"%s\""
+                                       (if (eq direction 'up)
+                                           (format "-%sem" (* 0.9 index))
+                                         (format "%sem" (* 0.9 index))))
+                             "")
+                           (chem-exp-svg--escape (car part)))))
+                 (text-svg
+                  (format "<text fill=\"%s\" font-family=\"%s\" font-size=\"%s\" data-direction=\"%s\" dominant-baseline=\"%s\"%s%s>%s</text>"
+                          (chem-exp-svg--escape element-color)
+                          (chem-exp-svg--escape
+                           (chem-exp-svg--option state :svg-font-family))
+                          (chem-exp-svg--number font-size)
+                          (symbol-name direction)
+                          baseline
+                          (if (equal anchor "end")
+                              " text-anchor=\"end\""
+                            "")
+                          (if (memq direction '(left right))
+                              " y=\"0.36em\""
+                            "")
+                          tspans))
+                 (group
+                  (format "<g style=\"transform: translateX(%spx) translateY(%spx)\">%s</g>\n"
+                          (chem-exp-svg--number x)
+                          (chem-exp-svg--number y)
+                          text-svg)))
+            (if attributes
+                (format "<g%s>%s</g>\n" attributes group)
+              group))
         (if attributes
-            (format "<g%s>%s</g>\n" attributes text-svg)
-          text-svg)))
-       (attributes
-        (let ((point (chem-exp-svg--point state
-                                          (chem-atom-x atom)
-                                          (chem-atom-y atom))))
-          (format "<g%s transform=\"translate(%s %s)\"></g>\n"
-                  attributes
-                  (chem-exp-svg--number (car point))
-                  (chem-exp-svg--number (cdr point)))))
-       (t "")))))
+            (let ((point (chem-exp-svg--point state
+                                              (chem-atom-x atom)
+                                              (chem-atom-y atom))))
+              (format "<g%s transform=\"translate(%s %s)\"></g>\n"
+                      attributes
+                      (chem-exp-svg--number (car point))
+                      (chem-exp-svg--number (cdr point))))
+          "")))))
 
 (defun chem-exp-svg--atoms (state)
   "Return the atom label SVG for STATE."
@@ -708,9 +852,15 @@ atom and uses the mask to keep bonds clear."
                      (chem-exp-svg--sorted-atoms
                       (chem-exp-svg-state-drawing state))
                      "")))
-    (format "<defs>\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"%s\" height=\"%s\">\n<rect x=\"0\" y=\"0\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
+    (format "<defs>\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
             (chem-exp-svg--escape (chem-exp-svg--mask-id))
-            width height width height circles)))
+            (chem-exp-svg--number (nth 0 viewbox))
+            (chem-exp-svg--number (nth 1 viewbox))
+            width height
+            (chem-exp-svg--number (nth 0 viewbox))
+            (chem-exp-svg--number (nth 1 viewbox))
+            width height
+            circles)))
 
 ;;; Bonds
 
@@ -1001,25 +1151,24 @@ and center-double-bond cases."
           (+ (nth 3 bounds) margin))))
 
 (defun chem-exp-svg--point (state x y)
-  "Map IR coordinates X and Y to SVG user coordinates in STATE."
-  (let* ((bounds (chem-exp-svg--bounds state))
-         (min-x (nth 0 bounds))
-         (max-y (nth 3 bounds))
-         (scale (chem-exp-svg--option state :svg-scale))
-         (padding (chem-exp-svg--option state :svg-padding)))
-    (cons (+ (* (- x min-x) scale) padding)
-          (+ (* (- max-y y) scale) padding))))
+  "Map IR coordinates X and Y to absolute SVG user coordinates in STATE."
+  (let ((scale (chem-exp-svg--option state :svg-scale)))
+    (cons (* x scale) (* (- y) scale))))
 
 (defun chem-exp-svg--viewbox (state)
-  "Return STATE's viewBox as (MIN-X MIN-Y WIDTH HEIGHT)."
+  "Return STATE's square viewBox as (MIN-X MIN-Y WIDTH HEIGHT)."
   (let* ((bounds (chem-exp-svg--bounds state))
-         (scale (chem-exp-svg--option state :svg-scale))
-         (padding (chem-exp-svg--option state :svg-padding))
-         (width (+ (* (- (nth 2 bounds) (nth 0 bounds)) scale)
-                   (* 2 padding)))
-         (height (+ (* (- (nth 3 bounds) (nth 1 bounds)) scale)
-                    (* 2 padding))))
-    (list 0.0 0.0 (max width 1.0) (max height 1.0))))
+         (min-x (nth 0 bounds))
+         (min-y (nth 1 bounds))
+         (width (- (nth 2 bounds) min-x))
+         (height (- (nth 3 bounds) min-y)))
+    (if (> width height)
+        (list min-x
+              (- min-y (/ (- width height) 2.0))
+              width width)
+      (list (- min-x (/ (- height width) 2.0))
+            min-y
+            height height))))
 
 (defun chem-exp-svg--size-attributes (state)
   "Return the width and height attributes for STATE."
@@ -1432,7 +1581,9 @@ ring's side."
                 (chem-exp-svg-state-theme state))))
     (if color
         (let ((viewbox (chem-exp-svg--viewbox state)))
-          (format "<rect x=\"0\" y=\"0\" width=\"%s\" height=\"%s\" fill=\"%s\"/>\n"
+          (format "<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"%s\"/>\n"
+                  (chem-exp-svg--number (nth 0 viewbox))
+                  (chem-exp-svg--number (nth 1 viewbox))
                   (chem-exp-svg--number (nth 2 viewbox))
                   (chem-exp-svg--number (nth 3 viewbox))
                   (chem-exp-svg--escape color)))
@@ -1446,6 +1597,77 @@ ring's side."
           (chem-exp-svg--rings state)
           (chem-exp-svg--cross-bonds state)))
 
+(defun chem-exp-svg--initial-bounds (state)
+  "Return SVG bounds from visible atoms plus padding."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (padding (chem-exp-svg--option state :svg-padding))
+         (min-x nil) (min-y nil) (max-x nil) (max-y nil))
+    (maphash
+     (lambda (idx atom)
+       (unless (chem-exp-svg--hidden-atom-p state idx)
+         (let* ((point (chem-exp-svg--point state
+                                             (chem-atom-x atom)
+                                             (chem-atom-y atom)))
+                (x (car point))
+                (y (cdr point)))
+           (setq min-x (if min-x (min min-x x) x))
+           (setq min-y (if min-y (min min-y y) y))
+           (setq max-x (if max-x (max max-x x) x))
+           (setq max-y (if max-y (max max-y y) y)))))
+     (chem-drawing-atoms drawing))
+    (list (- (or min-x 0.0) padding)
+          (- (or min-y 0.0) padding)
+          (+ (or max-x 0.0) padding)
+          (+ (or max-y 0.0) padding))))
+
+(defun chem-exp-svg--text-bounds (state bounds)
+  "Expand BOUNDS with the text layout of visible atoms in STATE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (single-vertex (= 1 (hash-table-count
+                              (chem-drawing-atoms drawing))))
+         (min-x (nth 0 bounds))
+         (min-y (nth 1 bounds))
+         (max-x (nth 2 bounds))
+         (max-y (nth 3 bounds)))
+    (dolist (atom (chem-exp-svg--sorted-atoms drawing))
+      (unless (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom))
+        (let* ((layout (chem-exp-svg--text-layout state atom))
+               (parts (and layout (plist-get layout :parts))))
+          (when parts
+            (let* ((bbox (plist-get layout :bbox))
+                   (direction (plist-get layout :direction))
+                   (width (car bbox))
+                   (height (cdr bbox))
+                   (point (plist-get layout :mask-center))
+                   (x (car point))
+                   (y (cdr point))
+                   (count (length parts)))
+              (if single-vertex
+                  (progn
+                    (setq max-x (max max-x (+ x (* width count))))
+                    (setq min-x (min min-x (- x (/ width 2.0))))
+                    (setq min-y (min min-y (- y height)))
+                    (setq max-y (max max-y (+ y height))))
+                (if (not (eq direction 'right))
+                    (progn
+                      (setq max-x (max max-x (+ x (* width count))))
+                      (setq min-x (min min-x (- x (* width count)))))
+                  (progn
+                    (setq max-x (max max-x (+ x (* width count))))
+                    (setq min-x (min min-x (- x (/ width 2.0))))))
+                (setq min-y (min min-y (- y height)))
+                (setq max-y (max max-y (+ y height)))
+                (when (eq direction 'down)
+                  (setq max-y (max max-y (+ y (* 0.8 height count)))))
+                (when (eq direction 'up)
+                  (setq min-y (min min-y (- y (* 0.8 height count)))))))))))
+    (list min-x min-y max-x max-y)))
+
+(defun chem-exp-svg--compute-bounds (state)
+  "Return final SVG bounds for STATE."
+  (chem-exp-svg--text-bounds state
+                             (chem-exp-svg--initial-bounds state)))
+
 (defun chem-exp-svg--make-state (drawing options)
   "Create an SVG renderer state for DRAWING and OPTIONS."
   (let* ((pseudo (chem-exp-svg--pseudo-elements drawing))
@@ -1456,11 +1678,11 @@ ring's side."
                  :options options
                  :hidden hidden
                  :pseudo groups
-                 :bounds (chem-exp-svg--atom-bounds drawing hidden))))
+                 :bounds nil)))
     (setf (chem-exp-svg-state-theme state)
           (chem-exp-svg--theme state))
     (setf (chem-exp-svg-state-bounds state)
-          (chem-exp-svg--expanded-bounds state))
+          (chem-exp-svg--compute-bounds state))
     state))
 
 (defun chem-exp-svg-render (drawing options)

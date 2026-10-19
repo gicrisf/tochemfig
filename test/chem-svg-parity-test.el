@@ -819,6 +819,38 @@ heteroatom labels covered here.")
                        0.01))
             (should (< (abs (- (caddr expected) (caddr actual))) 0.01))))))))
 
+(defun chem-svg-parity-test--viewbox-options ()
+  "Return shared-coordinate options matching SmilesDrawer's padding."
+  (let ((chem-default-exporter 'svg))
+    (chem--build-options
+     '(("svg-scale" . 1.0)
+       ("svg-padding" . 10.0)
+       ("svg-width" . nil)
+       ("svg-height" . nil)
+       ("svg-font-size" . 11.0)
+       ("svg-bond-spacing" . 5.1)
+       ("svg-bond-thickness" . 1.0)
+       ("svg-short-bond-length" . 0.8)
+       ("svg-theme" . light)
+       ("svg-aromatic" . circle)
+       ("svg-show-stereo" . t)))))
+
+(ert-deftest chem-svg-parity-viewbox ()
+  "Native square viewBox matches SmilesDrawer."
+  (dolist (entry (chem-svg-parity-test--strict-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--viewbox-options)))
+           (reference (mapcar #'chem-svg-parity-test--number
+                              (chem-svg-parity-test--list
+                               (chem-svg-parity-test--get fixture "viewBox"))))
+           (native (chem-exp-svg--viewbox state)))
+      (should (= (length reference) (length native)))
+      (dolist (pair (cl-mapcar #'cons reference native))
+        (should (< (abs (- (car pair) (cdr pair))) 0.01))))))
+
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."
   (dolist (entry (chem-svg-parity-test--strict-fixtures))
