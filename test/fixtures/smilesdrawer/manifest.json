@@ -228,6 +228,70 @@
         "terminal-label"
       ],
       "raster": true
+    },
+    {
+      "name": "spiro_decane",
+      "smiles": "C1CCC2(CC1)CCCC2",
+      "features": [
+        "spiro",
+        "ring",
+        "carbon-dot"
+      ],
+      "raster": false
+    },
+    {
+      "name": "adamantane",
+      "smiles": "C1C2CC3CC1CC(C2)C3",
+      "features": [
+        "bridged-ring",
+        "cage",
+        "carbon-dot"
+      ],
+      "raster": false
+    },
+    {
+      "name": "macrocycle_10",
+      "smiles": "C1CCCCCCCCC1",
+      "features": [
+        "ring",
+        "large-ring",
+        "carbon-dot"
+      ],
+      "raster": false
+    },
+    {
+      "name": "quinoline",
+      "smiles": "c1ccc2ncccc2c1",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "heteroaromatic",
+        "shared-edge",
+        "ring-circle"
+      ],
+      "raster": false
+    },
+    {
+      "name": "purine",
+      "smiles": "c1ncc2[nH]cnc2n1",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "heteroaromatic",
+        "shared-edge",
+        "ring-circle"
+      ],
+      "raster": false
+    },
+    {
+      "name": "cyclohexanone",
+      "smiles": "O=C1CCCCC1",
+      "features": [
+        "ring",
+        "six-membered-ring",
+        "exocyclic-double-bond"
+      ],
+      "raster": false
     }
   ]
 }

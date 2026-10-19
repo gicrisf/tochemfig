@@ -1,0 +1,479 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "adamantane",
+  "smiles": "C1C2CC3CC1CC(C2)C3",
+  "features": [
+    "bridged-ring",
+    "cage",
+    "carbon-dot"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 105.852343,
+      "y": 71.905524,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1,
+        5
+      ]
+    },
+    {
+      "id": 1,
+      "x": 79.672289,
+      "y": 93.258675,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2,
+        8
+      ]
+    },
+    {
+      "id": 2,
+      "x": 52.410857,
+      "y": 115.430961,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 3,
+      "x": 27.192086,
+      "y": 91.997572,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        2,
+        4,
+        9
+      ]
+    },
+    {
+      "id": 4,
+      "x": 56.346523,
+      "y": 73.53798,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "x": 84.282467,
+      "y": 45.852367,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        4,
+        6,
+        0
+      ]
+    },
+    {
+      "id": 6,
+      "x": 62.089563,
+      "y": 18.63899,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        5,
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "x": 32.892954,
+      "y": 36.741981,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        6,
+        8,
+        9
+      ]
+    },
+    {
+      "id": 8,
+      "x": 58.109881,
+      "y": 60.551143,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        7,
+        1
+      ]
+    },
+    {
+      "id": 9,
+      "x": 8.690589,
+      "y": 62.16544,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        7,
+        3
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 2,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 5,
+      "a": 5,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 6,
+      "a": 6,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 7,
+      "a": 7,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 8,
+      "a": 7,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 9,
+      "a": 3,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 10,
+      "a": 1,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 11,
+      "a": 0,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [
+    {
+      "id": 0,
+      "atoms": [
+        5,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "aromatic": false,
+      "cx": 67.626094,
+      "cy": 81.99718
+    },
+    {
+      "id": 1,
+      "atoms": [
+        7,
+        8,
+        1,
+        0,
+        5,
+        6
+      ],
+      "aromatic": false,
+      "cx": 70.48325,
+      "cy": 54.491447
+    },
+    {
+      "id": 2,
+      "atoms": [
+        7,
+        8,
+        1,
+        2,
+        3,
+        9
+      ],
+      "aromatic": false,
+      "cx": 43.161443,
+      "cy": 76.690962
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 79.672289,
+      "y1": 93.258675,
+      "x2": 105.852343,
+      "y2": 71.905524,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 11,
+      "ring": null,
+      "x1": 84.282467,
+      "y1": 45.852367,
+      "x2": 105.852343,
+      "y2": 71.905524,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 52.410857,
+      "y1": 115.430961,
+      "x2": 79.672289,
+      "y2": 93.258675,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 10,
+      "ring": null,
+      "x1": 58.109881,
+      "y1": 60.551143,
+      "x2": 79.672289,
+      "y2": 93.258675,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": 56.346523,
+      "y1": 73.53798,
+      "x2": 84.282467,
+      "y2": 45.852367,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": 62.089563,
+      "y1": 18.63899,
+      "x2": 84.282467,
+      "y2": 45.852367,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 27.192086,
+      "y1": 91.997572,
+      "x2": 52.410857,
+      "y2": 115.430961,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 7,
+      "ring": null,
+      "x1": 32.892954,
+      "y1": 36.741981,
+      "x2": 58.109881,
+      "y2": 60.551143,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 27.192086,
+      "y1": 91.997572,
+      "x2": 56.346523,
+      "y2": 73.53798,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 32.892954,
+      "y1": 36.741981,
+      "x2": 62.089563,
+      "y2": 18.63899,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 9,
+      "ring": null,
+      "x1": 8.690589,
+      "y1": 62.16544,
+      "x2": 27.192086,
+      "y2": 91.997572,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 8,
+      "ring": null,
+      "x1": 8.690589,
+      "y1": 62.16544,
+      "x2": 32.892954,
+      "y2": 36.741981,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [],
+  "masks": [],
+  "points": [],
+  "gradients": [],
+  "viewBox": [
+    -1.3094110488891602,
+    8.45409846332467,
+    117.16175437795557,
+    117.16175437795557
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": -1.309411,
+  "minY": 8.63899,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"-1.3094110488891602 8.45409846332467 117.16175437795557 117.16175437795557\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"-1.3094110488891602\" y=\"8.638990298342513\" width=\"117.16175437795557\" height=\"116.79197070791989\"><rect x=\"-1.3094110488891602\" y=\"8.638990298342513\" width=\"117.16175437795557\" height=\"116.79197070791989\" fill=\"white\"></rect></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"79.6722886456295\" y1=\"93.25867497038726\" x2=\"105.85234332906641\" y2=\"71.90552394135184\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"84.28246661170434\" y1=\"45.85236731295803\" x2=\"105.85234332906641\" y2=\"71.90552394135184\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"11\"></line><line x1=\"52.41085743150093\" y1=\"115.4309610062624\" x2=\"79.6722886456295\" y2=\"93.25867497038726\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"58.109880973048845\" y1=\"60.55114281979945\" x2=\"79.6722886456295\" y2=\"93.25867497038726\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"10\"></line><line x1=\"56.346523112194284\" y1=\"73.53797997086443\" x2=\"84.28246661170434\" y2=\"45.85236731295803\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"4\"></line><line x1=\"62.08956347712203\" y1=\"18.638990298342513\" x2=\"84.28246661170434\" y2=\"45.85236731295803\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"5\"></line><line x1=\"27.192085751457306\" y1=\"91.99757188363486\" x2=\"52.41085743150093\" y2=\"115.4309610062624\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"32.89295409786032\" y1=\"36.74198088066403\" x2=\"58.109880973048845\" y2=\"60.55114281979945\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"7\"></line><line x1=\"27.192085751457306\" y1=\"91.99757188363486\" x2=\"56.346523112194284\" y2=\"73.53797997086443\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line><line x1=\"32.89295409786032\" y1=\"36.74198088066403\" x2=\"62.08956347712203\" y2=\"18.638990298342513\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"8.69058895111084\" y1=\"62.16543960571289\" x2=\"27.192085751457306\" y2=\"91.99757188363486\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"9\"></line><line x1=\"8.69058895111084\" y1=\"62.16543960571289\" x2=\"32.89295409786032\" y2=\"36.74198088066403\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"8\"></line></g><g></g></svg>"
+}

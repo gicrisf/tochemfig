@@ -1,0 +1,580 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "purine",
+  "smiles": "c1ncc2[nH]cnc2n1",
+  "features": [
+    "aromatic",
+    "fused-ring",
+    "heteroaromatic",
+    "shared-edge",
+    "ring-circle"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 165.230158,
+      "y": 37.14118,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        1,
+        8
+      ]
+    },
+    {
+      "id": 1,
+      "x": 162.094337,
+      "y": 7.30552,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 134.687987,
+      "y": -4.89661,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 3,
+      "x": 110.417458,
+      "y": 12.73692,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        2,
+        4,
+        7
+      ]
+    },
+    {
+      "id": 4,
+      "x": 81.073037,
+      "y": 6.499537,
+      "element": "N",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "x": 66.073008,
+      "y": 32.480282,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 6,
+      "x": 86.146901,
+      "y": 54.774649,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        5,
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "x": 113.553278,
+      "y": 42.572581,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        6,
+        8,
+        3
+      ]
+    },
+    {
+      "id": 8,
+      "x": 140.959628,
+      "y": 54.774711,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        7,
+        0
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 2,
+      "a": 2,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 5,
+      "a": 5,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 6,
+      "a": 6,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 7,
+      "a": 7,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 8,
+      "a": 3,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 9,
+      "a": 0,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    }
+  ],
+  "rings": [
+    {
+      "id": 0,
+      "atoms": [
+        7,
+        6,
+        5,
+        4,
+        3
+      ],
+      "aromatic": true,
+      "cx": 91.452736,
+      "cy": 29.812794
+    },
+    {
+      "id": 1,
+      "atoms": [
+        7,
+        8,
+        0,
+        1,
+        2,
+        3
+      ],
+      "aromatic": true,
+      "cx": 137.823808,
+      "cy": 24.93905
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 162.094337,
+      "y1": 7.30552,
+      "x2": 165.230158,
+      "y2": 37.14118,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 9,
+      "ring": null,
+      "x1": 140.959628,
+      "y1": 54.774711,
+      "x2": 165.230158,
+      "y2": 37.14118,
+      "stroke": "url(#G66O4-atom-1)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 134.687987,
+      "y1": -4.89661,
+      "x2": 162.094337,
+      "y2": 7.30552,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 7,
+      "ring": null,
+      "x1": 113.553278,
+      "y1": 42.572581,
+      "x2": 140.959628,
+      "y2": 54.774711,
+      "stroke": "url(#G66O4-atom-1)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 110.417458,
+      "y1": 12.73692,
+      "x2": 134.687987,
+      "y2": -4.89661,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 86.146901,
+      "y1": 54.774649,
+      "x2": 113.553278,
+      "y2": 42.572581,
+      "stroke": "url(#G66O4-atom-2)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 8,
+      "ring": null,
+      "x1": 110.417458,
+      "y1": 12.73692,
+      "x2": 113.553278,
+      "y2": 42.572581,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 81.073037,
+      "y1": 6.499537,
+      "x2": 110.417458,
+      "y2": 12.73692,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": 66.073008,
+      "y1": 32.480282,
+      "x2": 86.146901,
+      "y2": 54.774649,
+      "stroke": "url(#G66O4-atom-2)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": 66.073008,
+      "y1": 32.480282,
+      "x2": 81.073037,
+      "y2": 6.499537,
+      "stroke": "url(#G66O4-atom-3)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "circle",
+      "edge": null,
+      "ring": 0,
+      "cx": 91.452736,
+      "cy": 29.812794,
+      "r": 15.545729,
+      "stroke": "#222222",
+      "fill": "none"
+    },
+    {
+      "kind": "circle",
+      "edge": null,
+      "ring": 1,
+      "cx": 137.823808,
+      "cy": 24.93905,
+      "r": 20.880762,
+      "stroke": "#222222",
+      "fill": "none"
+    }
+  ],
+  "labels": [
+    {
+      "atom": 1,
+      "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "right",
+      "x": 158.354337,
+      "y": 7.30552,
+      "transform": "transform: translateX(158.35433741447906px) translateY(7.305519991276103px)"
+    },
+    {
+      "atom": 4,
+      "text": "NH",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        },
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
+      "direction": "up",
+      "x": 77.333037,
+      "y": 6.499537,
+      "transform": "transform: translateX(77.3330367362076px) translateY(6.499536636654536px)"
+    },
+    {
+      "atom": 6,
+      "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "down",
+      "x": 82.406901,
+      "y": 54.774649,
+      "transform": "transform: translateX(82.40690076188964px) translateY(54.774649207458495px)"
+    },
+    {
+      "atom": 8,
+      "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "down",
+      "x": 137.219628,
+      "y": 54.774711,
+      "transform": "transform: translateX(137.2196282204112px) translateY(54.77471070780492px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 162.094337,
+      "cy": 7.30552,
+      "r": 8.25
+    },
+    {
+      "cx": 81.073037,
+      "cy": 6.499537,
+      "r": 8.25
+    },
+    {
+      "cx": 86.146901,
+      "cy": 54.774649,
+      "r": 8.25
+    },
+    {
+      "cx": 140.959628,
+      "cy": 54.774711,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 162.094337,
+      "cy": 7.30552,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-1",
+      "cx": 140.959628,
+      "cy": 54.774711,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-2",
+      "cx": 86.146901,
+      "cy": 54.774649,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-3",
+      "cx": 81.073037,
+      "cy": 6.499537,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    56.07300758558098,
+    -34.13952479721172,
+    119.15715025106495,
+    119.15715025106495
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 56.073008,
+  "minY": -14.89661,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"56.07300758558098 -34.13952479721172 119.15715025106495 119.15715025106495\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"162.09433741447907\" cy=\"7.305519991276103\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-1\" gradientUnits=\"userSpaceOnUse\" cx=\"140.95962822041122\" cy=\"54.77471070780492\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-2\" gradientUnits=\"userSpaceOnUse\" cx=\"86.14690076188964\" cy=\"54.774649207458495\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient><radialGradient id=\"G66O4-atom-3\" gradientUnits=\"userSpaceOnUse\" cx=\"81.0730367362076\" cy=\"6.499536636654536\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"56.07300758558098\" y=\"-14.896610051163414\" width=\"119.15715025106495\" height=\"80.67132075896833\"><rect x=\"56.07300758558098\" y=\"-14.896610051163414\" width=\"119.15715025106495\" height=\"80.67132075896833\" fill=\"white\"></rect><circle cx=\"162.09433741447907\" cy=\"7.305519991276103\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"81.0730367362076\" cy=\"6.499536636654536\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"86.14690076188964\" cy=\"54.774649207458495\" r=\"8.25\" fill=\"black\"></circle><circle cx=\"140.95962822041122\" cy=\"54.77471070780492\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"162.09433741447907\" y1=\"7.305519991276103\" x2=\"165.23015783664593\" y2=\"37.14118037076027\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"140.95962822041122\" y1=\"54.77471070780492\" x2=\"165.23015783664593\" y2=\"37.14118037076027\" stroke=\"url(#G66O4-atom-1)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"9\"></line><line x1=\"134.68798737607747\" y1=\"-4.896610051163414\" x2=\"162.09433741447907\" y2=\"7.305519991276103\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"113.5532781820096\" y1=\"42.57258066536539\" x2=\"140.95962822041122\" y2=\"54.77471070780492\" stroke=\"url(#G66O4-atom-1)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"7\"></line><line x1=\"110.41745775984273\" y1=\"12.736920285881219\" x2=\"134.68798737607747\" y2=\"-4.896610051163414\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"86.14690076188964\" y1=\"54.774649207458495\" x2=\"113.5532781820096\" y2=\"42.57258066536539\" stroke=\"url(#G66O4-atom-2)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"110.41745775984273\" y1=\"12.736920285881219\" x2=\"113.5532781820096\" y2=\"42.57258066536539\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"8\"></line><line x1=\"81.0730367362076\" y1=\"6.499536636654536\" x2=\"110.41745775984273\" y2=\"12.736920285881219\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line><line x1=\"66.07300758558098\" y1=\"32.480281920043765\" x2=\"86.14690076188964\" y2=\"54.774649207458495\" stroke=\"url(#G66O4-atom-2)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"5\"></line><line x1=\"66.07300758558098\" y1=\"32.480281920043765\" x2=\"81.0730367362076\" y2=\"6.499536636654536\" stroke=\"url(#G66O4-atom-3)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"4\"></line><circle cx=\"91.45273620510612\" cy=\"29.812793743080682\" r=\"15.5457288070676\" stroke=\"#222222\" stroke-width=\"1\" fill=\"none\" data-ring=\"0\"></circle><circle cx=\"137.82380779824433\" cy=\"24.939050328320757\" r=\"20.880762113533162\" stroke=\"#222222\" stroke-width=\"1\" fill=\"none\" data-ring=\"1\"></circle></g><g><g style=\"transform: translateX(158.35433741447906px) translateY(7.305519991276103px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"right\" dominant-baseline=\"alphabetic\" y=\"0.36em\"><tspan fill=\"#3498db\">N</tspan></text></g><g style=\"transform: translateX(77.3330367362076px) translateY(6.499536636654536px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"up\" dominant-baseline=\"central\"><tspan fill=\"#3498db\" x=\"0px\" y=\"-0em\">N</tspan><tspan fill=\"#666666\" x=\"0px\" y=\"-0.9em\">H</tspan></text></g><g style=\"transform: translateX(82.40690076188964px) translateY(54.774649207458495px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"down\" dominant-baseline=\"central\"><tspan fill=\"#3498db\" x=\"0px\" y=\"0em\">N</tspan></text></g><g style=\"transform: translateX(137.2196282204112px) translateY(54.77471070780492px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"down\" dominant-baseline=\"central\"><tspan fill=\"#3498db\" x=\"0px\" y=\"0em\">N</tspan></text></g></g></svg>"
+}

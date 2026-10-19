@@ -1,0 +1,504 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "quinoline",
+  "smiles": "c1ccc2ncccc2c1",
+  "features": [
+    "aromatic",
+    "fused-ring",
+    "heteroaromatic",
+    "shared-edge",
+    "ring-circle"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 75,
+      "y": 25.980762,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        1,
+        9
+      ]
+    },
+    {
+      "id": 1,
+      "x": 60,
+      "y": 51.961524,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 30,
+      "y": 51.961524,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 3,
+      "x": 15,
+      "y": 25.980762,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        2,
+        4,
+        8
+      ]
+    },
+    {
+      "id": 4,
+      "x": -15,
+      "y": 25.980762,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "x": -30,
+      "y": 0,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 6,
+      "x": -15,
+      "y": -25.980762,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        5,
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "x": 15,
+      "y": -25.980762,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        6,
+        8
+      ]
+    },
+    {
+      "id": 8,
+      "x": 30,
+      "y": 0,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        7,
+        9,
+        3
+      ]
+    },
+    {
+      "id": 9,
+      "x": 60,
+      "y": 0,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        8,
+        0
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 2,
+      "a": 2,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 5,
+      "a": 5,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 6,
+      "a": 6,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 7,
+      "a": 7,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 8,
+      "a": 8,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 9,
+      "a": 3,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 10,
+      "a": 0,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    }
+  ],
+  "rings": [
+    {
+      "id": 0,
+      "atoms": [
+        8,
+        9,
+        0,
+        1,
+        2,
+        3
+      ],
+      "aromatic": true,
+      "cx": 45,
+      "cy": 25.980762
+    },
+    {
+      "id": 1,
+      "atoms": [
+        8,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "aromatic": true,
+      "cx": 0,
+      "cy": 0
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 60,
+      "y1": 51.961524,
+      "x2": 75,
+      "y2": 25.980762,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 10,
+      "ring": null,
+      "x1": 60,
+      "y1": 0,
+      "x2": 75,
+      "y2": 25.980762,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 30,
+      "y1": 51.961524,
+      "x2": 60,
+      "y2": 51.961524,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 8,
+      "ring": null,
+      "x1": 30,
+      "y1": 0,
+      "x2": 60,
+      "y2": 0,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 15,
+      "y1": 25.980762,
+      "x2": 30,
+      "y2": 51.961524,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 7,
+      "ring": null,
+      "x1": 15,
+      "y1": -25.980762,
+      "x2": 30,
+      "y2": 0,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 9,
+      "ring": null,
+      "x1": 15,
+      "y1": 25.980762,
+      "x2": 30,
+      "y2": 0,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": -15,
+      "y1": 25.980762,
+      "x2": 15,
+      "y2": 25.980762,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": -15,
+      "y1": -25.980762,
+      "x2": 15,
+      "y2": -25.980762,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": -30,
+      "y1": 0,
+      "x2": -15,
+      "y2": 25.980762,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": -30,
+      "y1": 0,
+      "x2": -15,
+      "y2": -25.980762,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "circle",
+      "edge": null,
+      "ring": 0,
+      "cx": 45,
+      "cy": 25.980762,
+      "r": 20.880762,
+      "stroke": "#222222",
+      "fill": "none"
+    },
+    {
+      "kind": "circle",
+      "edge": null,
+      "ring": 1,
+      "cx": 0,
+      "cy": 0,
+      "r": 20.880762,
+      "stroke": "#222222",
+      "fill": "none"
+    }
+  ],
+  "labels": [
+    {
+      "atom": 4,
+      "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
+      "direction": "down",
+      "x": -18.74,
+      "y": 25.980762,
+      "transform": "transform: translateX(-18.740000000000016px) translateY(25.98076211353319px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": -15,
+      "cy": 25.980762,
+      "r": 8.25
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": -15,
+      "cy": 25.980762,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    -40.000000000000014,
+    -49.50961894323341,
+    125.00000000000001,
+    125.00000000000001
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": -40,
+  "minY": -35.980762,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"-40.000000000000014 -49.50961894323341 125.00000000000001 125.00000000000001\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"-15.000000000000016\" cy=\"25.98076211353319\" r=\"30\"><stop offset=\"20%\" stop-color=\"#3498db\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"-40.000000000000014\" y=\"-35.980762113533146\" width=\"125.00000000000001\" height=\"97.94228634059948\"><rect x=\"-40.000000000000014\" y=\"-35.980762113533146\" width=\"125.00000000000001\" height=\"97.94228634059948\" fill=\"white\"></rect><circle cx=\"-15.000000000000016\" cy=\"25.98076211353319\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"60.000000000000014\" y1=\"51.96152422706632\" x2=\"75\" y2=\"25.98076211353315\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"59.999999999999986\" y1=\"-3.552713678800501e-15\" x2=\"75\" y2=\"25.98076211353315\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"10\"></line><line x1=\"30.000000000000018\" y1=\"51.961524227066334\" x2=\"60.000000000000014\" y2=\"51.96152422706632\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"30.000000000000004\" y1=\"0\" x2=\"59.999999999999986\" y2=\"-3.552713678800501e-15\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"8\"></line><line x1=\"14.999999999999996\" y1=\"25.980762113533196\" x2=\"30.000000000000018\" y2=\"51.961524227066334\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"14.999999999999975\" y1=\"-25.980762113533146\" x2=\"30.000000000000004\" y2=\"0\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"7\"></line><line x1=\"14.999999999999996\" y1=\"25.980762113533196\" x2=\"30.000000000000004\" y2=\"0\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"9\"></line><line x1=\"-15.000000000000016\" y1=\"25.98076211353319\" x2=\"14.999999999999996\" y2=\"25.980762113533196\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line><line x1=\"-15.000000000000023\" y1=\"-25.980762113533128\" x2=\"14.999999999999975\" y2=\"-25.980762113533146\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"-30.00000000000001\" y1=\"3.209564982784607e-14\" x2=\"-15.000000000000016\" y2=\"25.98076211353319\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"4\"></line><line x1=\"-30.00000000000001\" y1=\"3.209564982784607e-14\" x2=\"-15.000000000000023\" y2=\"-25.980762113533128\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"5\"></line><circle cx=\"45\" cy=\"25.980762113533164\" r=\"20.880762113533162\" stroke=\"#222222\" stroke-width=\"1\" fill=\"none\" data-ring=\"0\"></circle><circle cx=\"-7.105427357601002e-15\" cy=\"2.842170943040401e-14\" r=\"20.880762113533162\" stroke=\"#222222\" stroke-width=\"1\" fill=\"none\" data-ring=\"1\"></circle></g><g><g style=\"transform: translateX(-18.740000000000016px) translateY(25.98076211353319px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"down\" dominant-baseline=\"central\"><tspan fill=\"#3498db\" x=\"0px\" y=\"0em\">N</tspan></text></g></g></svg>"
+}

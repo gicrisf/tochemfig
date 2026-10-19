@@ -1,0 +1,411 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "macrocycle_10",
+  "smiles": "C1CCCCCCCCC1",
+  "features": [
+    "ring",
+    "large-ring",
+    "carbon-dot"
+  ],
+  "raster": false,
+  "chem_options": {},
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 195.165163,
+      "y": 51.633439,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1,
+        9
+      ]
+    },
+    {
+      "id": 1,
+      "x": 182.963094,
+      "y": 24.227062,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 156.982349,
+      "y": 9.227033,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1,
+        3
+      ]
+    },
+    {
+      "id": 3,
+      "x": 127.146689,
+      "y": 12.362853,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        2,
+        4
+      ]
+    },
+    {
+      "id": 4,
+      "x": 104.852322,
+      "y": 32.436747,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "x": 98.614938,
+      "y": 61.781168,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 6,
+      "x": 110.817006,
+      "y": 89.187545,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        5,
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "x": 136.797752,
+      "y": 104.187574,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        6,
+        8
+      ]
+    },
+    {
+      "id": 8,
+      "x": 166.633412,
+      "y": 101.051754,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        7,
+        9
+      ]
+    },
+    {
+      "id": 9,
+      "x": 188.927779,
+      "y": 80.977861,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        8,
+        0
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 2,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 5,
+      "a": 5,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 6,
+      "a": 6,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 7,
+      "a": 7,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 8,
+      "a": 8,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 9,
+      "a": 0,
+      "b": 9,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [
+    {
+      "id": 0,
+      "atoms": [
+        9,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "aromatic": false,
+      "cx": 146.89005,
+      "cy": 56.707304
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 182.963094,
+      "y1": 24.227062,
+      "x2": 195.165163,
+      "y2": 51.633439,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 9,
+      "ring": null,
+      "x1": 188.927779,
+      "y1": 80.977861,
+      "x2": 195.165163,
+      "y2": 51.633439,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 156.982349,
+      "y1": 9.227033,
+      "x2": 182.963094,
+      "y2": 24.227062,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 8,
+      "ring": null,
+      "x1": 166.633412,
+      "y1": 101.051754,
+      "x2": 188.927779,
+      "y2": 80.977861,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 127.146689,
+      "y1": 12.362853,
+      "x2": 156.982349,
+      "y2": 9.227033,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 7,
+      "ring": null,
+      "x1": 136.797752,
+      "y1": 104.187574,
+      "x2": 166.633412,
+      "y2": 101.051754,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 104.852322,
+      "y1": 32.436747,
+      "x2": 127.146689,
+      "y2": 12.362853,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 110.817006,
+      "y1": 89.187545,
+      "x2": 136.797752,
+      "y2": 104.187574,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": 98.614938,
+      "y1": 61.781168,
+      "x2": 104.852322,
+      "y2": 32.436747,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": 98.614938,
+      "y1": 61.781168,
+      "x2": 110.817006,
+      "y2": 89.187545,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [],
+  "masks": [],
+  "points": [],
+  "gradients": [],
+  "viewBox": [
+    88.6149378532626,
+    -1.5678090541634546,
+    116.55022514160797,
+    116.55022514160797
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 88.614938,
+  "minY": -0.772967,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"88.6149378532626 -1.5678090541634546 116.55022514160797 116.55022514160797\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"88.6149378532626\" y=\"-0.7729670797881028\" width=\"116.55022514160797\" height=\"114.96054119285726\"><rect x=\"88.6149378532626\" y=\"-0.7729670797881028\" width=\"116.55022514160797\" height=\"114.96054119285726\" fill=\"white\"></rect></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"182.9630944527774\" y1=\"24.227062070838528\" x2=\"195.16516299487057\" y2=\"51.63343949095849\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"188.92777934564384\" y1=\"80.97786051459366\" x2=\"195.16516299487057\" y2=\"51.63343949095849\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"9\"></line><line x1=\"156.9823491693882\" y1=\"9.227032920211897\" x2=\"182.9630944527774\" y2=\"24.227062070838528\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line><line x1=\"166.6334120582291\" y1=\"101.0517536909023\" x2=\"188.92777934564384\" y2=\"80.97786051459366\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"8\"></line><line x1=\"127.14668878990403\" y1=\"12.362853342378756\" x2=\"156.9823491693882\" y2=\"9.227032920211897\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"2\"></line><line x1=\"136.79775167874496\" y1=\"104.18757411306916\" x2=\"166.6334120582291\" y2=\"101.0517536909023\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"7\"></line><line x1=\"104.85232150248927\" y1=\"32.43674651868744\" x2=\"127.14668878990403\" y2=\"12.362853342378756\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"3\"></line><line x1=\"110.81700639535573\" y1=\"89.18754496244253\" x2=\"136.79775167874496\" y2=\"104.18757411306916\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"6\"></line><line x1=\"98.6149378532626\" y1=\"61.78116754232258\" x2=\"104.85232150248927\" y2=\"32.43674651868744\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"4\"></line><line x1=\"98.6149378532626\" y1=\"61.78116754232258\" x2=\"110.81700639535573\" y2=\"89.18754496244253\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"5\"></line></g><g></g></svg>"
+}

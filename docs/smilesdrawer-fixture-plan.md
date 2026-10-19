@@ -11,8 +11,9 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
+- Implementation status: Batches 0 and 1 are complete.
 - Branch: `svg`
-- Fixture count: **21**
+- Fixture count: **27**
 - Fast suite: **503 tests**
 - Hard raster gates: **12 curated fixtures**
 - Known fixture gaps: none currently declared
@@ -49,6 +50,12 @@ furan
 thiophene
 imidazole
 alanine_down
+spiro_decane
+adamantane
+macrocycle_10
+quinoline
+purine
+cyclohexanone
 ```
 
 The current fast tests cover:

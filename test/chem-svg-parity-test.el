@@ -283,15 +283,15 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
                       (- (cadr point) (cdr origin))))
               line)
              (lambda (a b)
-               (if (= (car a) (car b))
-                   (< (cadr a) (cadr b))
-                 (< (car a) (car b))))))
+               (if (= (cadr a) (cadr b))
+                   (< (car a) (car b))
+                 (< (cadr a) (cadr b))))))
           lines)))
     (sort relative
           (lambda (a b)
-            (if (= (caar a) (caar b))
-                (< (cadar a) (cadar b))
-              (< (caar a) (caar b)))))))
+            (if (= (cadar a) (cadar b))
+                (< (caar a) (caar b))
+              (< (cadar a) (cadar b)))))))
 
 (defun chem-svg-parity-test--reference-lines (fixture edge)
   "Return reference line vectors for EDGE in FIXTURE.
