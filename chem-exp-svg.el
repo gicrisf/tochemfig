@@ -568,6 +568,97 @@ that bond so terminal labels stay centered on the bond axis."
                                (+ y2 (* normal-y offset))))
          offsets "")))))
 
+(defun chem-exp-svg--edge-normals (point-a point-b)
+  "Return the two unit normals for the SVG segment POINT-A to POINT-B."
+  (let* ((dx (- (car point-b) (car point-a)))
+         (dy (- (cdr point-b) (cdr point-a)))
+         (length (sqrt (+ (* dx dx) (* dy dy)))))
+    (when (> length 1e-9)
+      (let ((nx (/ (- dy) length))
+            (ny (/ dx length)))
+        (list (cons nx ny) (cons (- nx) (- ny)))))))
+
+(defun chem-exp-svg--which-side (point a b)
+  "Return the side of POINT relative to the line from A to B."
+  (- (* (- (car point) (car a)) (- (cdr b) (cdr a)))
+     (* (- (cdr point) (cdr a)) (- (car b) (car a)))))
+
+(defun chem-exp-svg--allene-edge-p (drawing edge)
+  "Return non-nil when EDGE participates in an allene center."
+  (let ((atoms (chem-drawing-atoms drawing)))
+    (cl-some
+     (lambda (idx)
+       (let* ((atom (gethash idx atoms))
+              (neighbors (chem-atom-neighbors atom)))
+         (and (= 2 (length neighbors))
+              (cl-every
+               (lambda (neighbor)
+                 (eq :double
+                     (chem-edge-order
+                      (chem-get-edge drawing idx neighbor))))
+               neighbors))))
+     (list (chem-edge-a edge) (chem-edge-b edge)))))
+
+(defun chem-exp-svg--same-side-p (a b)
+  "Return non-nil when A and B have the same sign, including both zero."
+  (or (and (< a 0.0) (< b 0.0))
+      (and (= a 0.0) (= b 0.0))
+      (and (> a 0.0) (> b 0.0))))
+
+(defun chem-exp-svg--double-side (state edge)
+  "Return the side (0 or 1) for EDGE's second stroke, or nil.
+Nil means draw two full parallel lines, matching SmilesDrawer's terminal
+and center-double-bond cases."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (atoms (chem-drawing-atoms drawing))
+         (atom-a (gethash (chem-edge-a edge) atoms))
+         (atom-b (gethash (chem-edge-b edge) atoms))
+         (neighbors-a (remove (chem-edge-b edge)
+                              (chem-atom-neighbors atom-a)))
+         (neighbors-b (remove (chem-edge-a edge)
+                              (chem-atom-neighbors atom-b)))
+         (an-count (length neighbors-a))
+         (bn-count (length neighbors-b)))
+    (unless (or (and (zerop an-count) (zerop bn-count))
+                (and (zerop an-count) (> bn-count 1))
+                (and (zerop bn-count) (> an-count 1))
+                (chem-exp-svg--allene-edge-p drawing edge))
+      (let* ((point-a (chem-exp-svg--point state
+                                           (chem-atom-x atom-a)
+                                           (chem-atom-y atom-a)))
+             (point-b (chem-exp-svg--point state
+                                           (chem-atom-x atom-b)
+                                           (chem-atom-y atom-b)))
+             (normal (car (chem-exp-svg--edge-normals point-a point-b)))
+             (side-point (cons (+ (car point-a) (* 10.0 (car normal)))
+                               (+ (cdr point-a) (* 10.0 (cdr normal)))))
+             (side-sign (chem-exp-svg--which-side side-point point-a point-b))
+             (side-count (vector 0 0))
+             (total-count (vector 0 0)))
+        (dolist (idx (append neighbors-a neighbors-b))
+          (let* ((atom (gethash idx atoms))
+                 (point (chem-exp-svg--point state
+                                             (chem-atom-x atom)
+                                             (chem-atom-y atom)))
+                 (sign (chem-exp-svg--which-side point point-a point-b)))
+            (if (chem-exp-svg--same-side-p sign side-sign)
+                (aset side-count 0 (1+ (aref side-count 0)))
+              (aset side-count 1 (1+ (aref side-count 1))))))
+        (maphash
+         (lambda (_ atom)
+           (let* ((point (chem-exp-svg--point state
+                                               (chem-atom-x atom)
+                                               (chem-atom-y atom)))
+                  (sign (chem-exp-svg--which-side point point-a point-b)))
+             (if (chem-exp-svg--same-side-p sign side-sign)
+                 (aset total-count 0 (1+ (aref total-count 0)))
+               (aset total-count 1 (1+ (aref total-count 1))))))
+         atoms)
+        (cond ((> (aref side-count 0) (aref side-count 1)) 0)
+              ((< (aref side-count 0) (aref side-count 1)) 1)
+              ((> (aref total-count 0) (aref total-count 1)) 0)
+              (t 1))))))
+
 (defun chem-exp-svg--edge-svg (state edge)
   "Return EDGE's SVG for STATE."
   (let* ((atoms (chem-drawing-atoms (chem-exp-svg-state-drawing state)))
@@ -610,7 +701,7 @@ that bond so terminal labels stay centered on the bond axis."
                   (target-ring
                    (let ((offset
                           (chem-exp-svg--ring-normal-offset
-                           state edge target-ring (/ spacing 2.0))))
+                           state edge target-ring spacing)))
                      (if offset
                          (concat
                           base
@@ -618,9 +709,20 @@ that bond so terminal labels stay centered on the bond axis."
                            state point-a point-b short-fraction offset nil))
                        base)))
                   (t
-                   (let ((half (/ spacing 2.0)))
-                     (chem-exp-svg--parallel-lines
-                      state point-a point-b (list (- half) half)))))))
+                   (let ((side (chem-exp-svg--double-side state edge)))
+                     (if side
+                         (let* ((normal (nth side
+                                             (chem-exp-svg--edge-normals
+                                              point-a point-b)))
+                                (offset (cons (* spacing (car normal))
+                                              (* spacing (cdr normal)))))
+                           (concat
+                            base
+                            (chem-exp-svg--ring-inner-line
+                             state point-a point-b short-fraction offset nil)))
+                       (let ((half (/ spacing 2.0)))
+                         (chem-exp-svg--parallel-lines
+                          state point-a point-b (list (- half) half)))))))))
               (:triple
                (let ((offset (/ spacing 1.5)))
                  (chem-exp-svg--parallel-lines
@@ -631,7 +733,7 @@ that bond so terminal labels stay centered on the bond axis."
                    (let ((offset
                           (and ring
                                (chem-exp-svg--ring-normal-offset
-                                state edge ring (/ spacing 2.0)))))
+                                state edge ring spacing))))
                      (if offset
                          (concat
                           (chem-exp-svg--line state

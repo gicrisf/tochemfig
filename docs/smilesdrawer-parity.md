@@ -30,12 +30,13 @@ Phase 1 is in progress:
   chains, stereochemistry, bridged rings, charges, and allenes.
 - `test/chem-svg-parity-test.el` builds test-only IR from SmilesDrawer
   coordinates and runs fast shared-coordinate checks for edge geometry,
-  aromatic circle radii, and determinism.
+  absolute line placement, aromatic circle radii, and determinism.
 - The aromatic circle radius now matches SmilesDrawer's
   `apothem - bondSpacing` formula.
-- Known next gaps: acyclic double-bond side selection and shortening (the
-  butene fixtures), and attached pseudo-element labels (alanine and
-  nitrobenzene fixtures).
+- Acyclic double-bond side selection, shortening, and absolute line placement
+  now match the butene fixtures.
+- Known next gap: attached pseudo-element labels (alanine and nitrobenzene
+  fixtures).
 
 ## Reference version
 

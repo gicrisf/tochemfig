@@ -141,26 +141,22 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
                       (chem-svg-parity-test--get json "a")))
              (target (chem-svg-parity-test--number
                       (chem-svg-parity-test--get json "b")))
-             (a (min source target))
-             (b (max source target))
              (order (chem-svg-parity-test--bond-order
                      (chem-svg-parity-test--get json "order")))
              (stereo (chem-svg-parity-test--bond-stereo
                       (chem-svg-parity-test--get json "stereo")))
              (edge (chem-edge-create
-                    :id id :a a :b b
+                    :id id :a source :b target
                     :order order
-                    :stereo (if (and (memq stereo '(:up :down))
-                                     (/= source a))
-                                (if (eq stereo :up) :down :up)
-                              stereo)
+                    :stereo stereo
                     :stereo-center (when (memq stereo '(:up :down)) source)
                     :link-p nil
                     :cross-p nil
                     :marker ""
                     :decoration 'plain)))
         (puthash id edge edges)
-        (puthash (cons a b) edge edge-lookup)))
+        (puthash (cons (min source target) (max source target))
+                 edge edge-lookup)))
     (maphash
      (lambda (idx atom)
        (puthash idx
@@ -238,6 +234,65 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
       (setq start (match-end 0)))
     (nreverse lines)))
 
+(defun chem-svg-parity-test--line-endpoints (svg)
+  "Return absolute endpoint lists from the line elements in SVG."
+  (let ((start 0)
+        (lines nil))
+    (while (string-match
+            "<line x1=\"\\([^\"]+\\)\" y1=\"\\([^\"]+\\)\" x2=\"\\([^\"]+\\)\" y2=\"\\([^\"]+\\)\""
+            svg start)
+      (push (list (list (string-to-number (match-string 1 svg))
+                        (string-to-number (match-string 2 svg)))
+                  (list (string-to-number (match-string 3 svg))
+                        (string-to-number (match-string 4 svg))))
+            lines)
+      (setq start (match-end 0)))
+    (nreverse lines)))
+
+(defun chem-svg-parity-test--reference-endpoints (fixture edge)
+  "Return absolute reference endpoints for EDGE in FIXTURE."
+  (let ((primitives (chem-svg-parity-test--list
+                     (chem-svg-parity-test--get fixture "primitives"))))
+    (delq nil
+          (mapcar
+           (lambda (primitive)
+             (when (and (equal (chem-svg-parity-test--get primitive "kind") "line")
+                        (equal (chem-svg-parity-test--number
+                                (chem-svg-parity-test--get primitive "edge"))
+                               edge))
+               (list
+                (list (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get primitive "x1"))
+                      (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get primitive "y1")))
+                (list (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get primitive "x2"))
+                      (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get primitive "y2"))))))
+           primitives))))
+
+(defun chem-svg-parity-test--relative-lines (lines origin)
+  "Return LINES translated relative to ORIGIN, in canonical order."
+  (let ((relative
+         (mapcar
+          (lambda (line)
+            (sort
+             (mapcar
+              (lambda (point)
+                (list (- (car point) (car origin))
+                      (- (cadr point) (cdr origin))))
+              line)
+             (lambda (a b)
+               (if (= (car a) (car b))
+                   (< (cadr a) (cadr b))
+                 (< (car a) (car b))))))
+          lines)))
+    (sort relative
+          (lambda (a b)
+            (if (= (caar a) (caar b))
+                (< (cadar a) (cadar b))
+              (< (caar a) (caar b)))))))
+
 (defun chem-svg-parity-test--reference-lines (fixture edge)
   "Return reference line vectors for EDGE in FIXTURE.
 Orient each line along the canonical lower-to-higher atom direction."
@@ -259,13 +314,13 @@ Orient each line along the canonical lower-to-higher atom direction."
                   (lambda (atom)
                     (equal (chem-svg-parity-test--number
                             (chem-svg-parity-test--get atom "id"))
-                           (min a b)))
+                           a))
                   atoms))
          (atom-b (cl-find-if
                   (lambda (atom)
                     (equal (chem-svg-parity-test--number
                             (chem-svg-parity-test--get atom "id"))
-                           (max a b)))
+                           b))
                   atoms))
          (canonical-x (- (chem-svg-parity-test--number
                           (chem-svg-parity-test--get atom-b "x"))
@@ -394,10 +449,9 @@ Orient each line along the canonical lower-to-higher atom direction."
                    line-geometry-mismatches max-line-distance))))
 
 (defconst chem-svg-parity-test--known-gaps
-  '("alanine" "butene_e" "butene_z" "nitrobenzene")
+  '("alanine" "nitrobenzene")
   "Fixtures with known SmilesDrawer features not yet supported.
-Alanine and nitrobenzene use attached pseudo-element labels; the butenes
-exercise SmilesDrawer's acyclic double-bond side selection and shortening.")
+Alanine and nitrobenzene use attached pseudo-element labels.")
 
 (defun chem-svg-parity-test--strict-fixtures ()
   "Return fixtures that should match the renderer exactly."
@@ -455,6 +509,67 @@ exercise SmilesDrawer's acyclic double-bond side selection and shortening.")
             (should (< (chem-svg-parity-test--vector-distance
                         (car pair) (cdr pair))
                        0.01))))))))
+
+(defun chem-svg-parity-test--point-distance (a b)
+  "Return the distance between points A and B."
+  (sqrt (+ (expt (- (car a) (car b)) 2)
+           (expt (- (cadr a) (cadr b)) 2))))
+
+(ert-deftest chem-svg-parity-edge-placement ()
+  "Native line placement matches SmilesDrawer relative to each edge."
+  (dolist (entry (chem-svg-parity-test--strict-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
+           (atoms (chem-drawing-atoms drawing))
+           (fixture-atoms (chem-svg-parity-test--list
+                           (chem-svg-parity-test--get fixture "atoms")))
+           (fixture-edges (chem-svg-parity-test--list
+                           (chem-svg-parity-test--get fixture "edges"))))
+      (dolist (edge (chem-edges drawing))
+        (let* ((edge-id (chem-edge-id edge))
+               (edge-json (cl-find-if
+                           (lambda (candidate)
+                             (equal (chem-svg-parity-test--number
+                                     (chem-svg-parity-test--get candidate "id"))
+                                    edge-id))
+                           fixture-edges))
+               (a (chem-svg-parity-test--number
+                   (chem-svg-parity-test--get edge-json "a")))
+               (atom-a (gethash a atoms))
+               (fixture-atom-a (cl-find-if
+                                (lambda (candidate)
+                                  (equal (chem-svg-parity-test--number
+                                          (chem-svg-parity-test--get candidate "id"))
+                                         a))
+                                fixture-atoms))
+               (reference-origin
+                (cons (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get fixture-atom-a "x"))
+                      (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get fixture-atom-a "y"))))
+               (native-origin
+                (chem-exp-svg--point state
+                                     (chem-atom-x atom-a)
+                                     (chem-atom-y atom-a)))
+               (reference
+                (chem-svg-parity-test--relative-lines
+                 (chem-svg-parity-test--reference-endpoints fixture edge-id)
+                 reference-origin))
+               (native
+                (chem-svg-parity-test--relative-lines
+                 (chem-svg-parity-test--line-endpoints
+                  (chem-exp-svg--edge-svg state edge))
+                 native-origin)))
+          (should (equal (length reference) (length native)))
+          (dolist (line-pair (cl-mapcar #'cons reference native))
+            (dolist (point-pair (cl-mapcar #'cons (car line-pair)
+                                           (cdr line-pair)))
+              (should (< (chem-svg-parity-test--point-distance
+                          (car point-pair) (cdr point-pair))
+                         0.01)))))))))
 
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."

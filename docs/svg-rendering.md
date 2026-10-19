@@ -34,7 +34,7 @@ and ring-record implementation.
 - Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
   and documentation updates.
 - Org Babel integration is implemented in `chem-babel.el`; see
-  `chem-mode-plans/org.md`.  The suite currently has 491 tests.
+  `chem-mode-plans/org.md`.  The suite currently has 492 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
