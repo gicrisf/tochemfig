@@ -680,10 +680,8 @@ Orient each line along the canonical lower-to-higher atom direction."
                          0.01))))))))))
 
 (defconst chem-svg-parity-test--label-known-gaps
-  '("allene")
-  "Fixtures whose labels are not compared yet.
-SmilesDrawer emits a carbon label for allene that is unrelated to the
-heteroatom labels covered here.")
+  '()
+  "Fixtures whose labels are not compared yet.")
 
 (defun chem-svg-parity-test--label-fixtures ()
   "Return strict fixtures with comparable labels."

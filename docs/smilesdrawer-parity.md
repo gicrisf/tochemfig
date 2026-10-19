@@ -52,8 +52,9 @@ Phase 1 is in progress:
 - An advisory raster and layout report (`tools/svg-raster-report.el`) renders
   reference and native SVGs with Inkscape, compares PNGs, and reports
   bond-length variation.  Raster metrics remain advisory.
-- Known gap: the allene carbon label.  Next parity target is stricter layout
-  metrics and optional raster gates for stable fixtures.
+- Allene centers now render the carbon label used by SmilesDrawer.
+- Renderer parity is complete for the fixture corpus.  Next step is stricter
+  layout metrics and optional raster gates for stable fixtures.
 
 ## Reference version
 

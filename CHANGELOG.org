@@ -103,6 +103,7 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - SVG bond strokes now use SmilesDrawer-compatible radial and linear
   gradients, and labels use per-element tspan colors.
 - Linear carbon atoms now render as carbon dots with matching mask circles.
+- Allene centers now render the carbon labels used by SmilesDrawer.
 - Added an advisory raster and layout report using Inkscape and Pillow.
 - The full ERT suite is now 502 tests.
 

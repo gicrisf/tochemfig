@@ -371,6 +371,19 @@ reads outward from the atom, matching SmilesDrawer."
   (not (or (chem-exp-svg--hidden-atom-p state (chem-edge-a edge))
            (chem-exp-svg--hidden-atom-p state (chem-edge-b edge)))))
 
+(defun chem-exp-svg--allene-center-p (state atom)
+  "Return non-nil when ATOM is an allene center in STATE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (neighbors (chem-atom-neighbors atom)))
+    (and (equal (chem-atom-element atom) "C")
+         (= 2 (length neighbors))
+         (cl-every (lambda (neighbor)
+                     (eq :double
+                         (chem-edge-order
+                          (chem-get-edge drawing (chem-atom-idx atom)
+                                         neighbor))))
+                   neighbors))))
+
 (defun chem-exp-svg--attach-pseudo (table center element hydrogens charge)
   "Attach a pseudo ELEMENT to CENTER in TABLE."
   (let* ((key (format "%s%s%s" hydrogens element charge))
@@ -508,9 +521,10 @@ negative terminal oxygens is drawn as N+O2."
          (groups (and (chem-exp-svg-state-pseudo state)
                       (gethash idx (chem-exp-svg-state-pseudo state))))
          (direction (chem-exp-svg--text-direction-for-state state atom)))
-    (if groups
-        (chem-exp-svg--pseudo-atom-text atom groups direction)
-      (chem-exp-svg--atom-text atom direction))))
+    (cond
+     (groups (chem-exp-svg--pseudo-atom-text atom groups direction))
+     ((chem-exp-svg--allene-center-p state atom) "C")
+     (t (chem-exp-svg--atom-text atom direction)))))
 
 (defun chem-exp-svg--direction-from-svg-angle (angle)
   "Map an SVG text ANGLE in degrees to right, down, left, or up."
@@ -647,9 +661,11 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
   (let* ((idx (chem-atom-idx atom))
          (groups (and (chem-exp-svg-state-pseudo state)
                       (gethash idx (chem-exp-svg-state-pseudo state)))))
-    (if groups
-        (chem-exp-svg--pseudo-text-parts atom groups)
-      (chem-exp-svg--normal-text-parts atom))))
+    (cond
+     (groups (chem-exp-svg--pseudo-text-parts atom groups))
+     ((chem-exp-svg--allene-center-p state atom)
+      (list (cons "C" "C")))
+     (t (chem-exp-svg--normal-text-parts atom)))))
 
 (defun chem-exp-svg--ordered-text-parts (parts direction)
   "Return PARTS in drawing order for DIRECTION."
@@ -825,6 +841,7 @@ atom and uses the mask to keep bonds clear."
          (neighbors (chem-atom-neighbors atom)))
     (and (equal (chem-atom-element atom) "C")
          (null (chem-atom-label atom))
+         (not (chem-exp-svg--allene-center-p state atom))
          (= 2 (length neighbors))
          (not (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom)))
          (let* ((a (gethash (car neighbors) atoms))
