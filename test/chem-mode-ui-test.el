@@ -330,6 +330,17 @@
       (should (string-match-p (regexp-quote "\\arrow") (buffer-string)))
       (should (string-match-p (regexp-quote "\\chemfig{") (buffer-string))))))
 
+(ert-deftest chem-mode-ui-reaction-export-svg ()
+  "The reaction export command works with the SVG exporter."
+  (let ((chem-default-exporter 'svg))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-export-reaction))
+      (should (string-match-p "data-reaction-part=\"arrow\""
+                              (buffer-string)))
+      (should-not (string-match-p "schemestart" (buffer-string))))))
+
 (ert-deftest chem-mode-ui-reaction-copy ()
   "The reaction copy command puts the scheme on the kill ring."
   (let ((chem-default-exporter 'chemfig))
@@ -349,6 +360,17 @@
                  (lambda (&rest _) path)))
         (chem-export-reaction t))
       (should (string-prefix-p "\\schemestart" (buffer-string))))))
+
+(ert-deftest chem-mode-ui-reaction-copy-file-input ()
+  "The copy command accepts an RXN file with a prefix argument."
+  (let* ((chem-default-exporter 'chemfig)
+         (path (expand-file-name "corpus/reactions/simple.rxn"
+                                 chem-mode-ui-test--root)))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-file-name)
+                 (lambda (&rest _) path)))
+        (chem-copy-reaction t))
+      (should (string-prefix-p "\\schemestart" (current-kill 0))))))
 
 (ert-deftest chem-mode-ui-reaction-ignores-auto-wrap ()
   "Reaction commands use the scheme wrapper, not the molecule wrapper."
@@ -385,6 +407,57 @@
         (chem-dispatch-reaction-generate))
       (should (string-prefix-p "\\schemestart" (buffer-string)))
       (should (string-match-p "heat" (buffer-string))))))
+
+(ert-deftest chem-mode-ui-reaction-transient-guards ()
+  "Reaction transient options follow the selected exporter."
+  (with-temp-buffer
+    (setq chem-dispatch--edit-buffer (current-buffer))
+    (setq-local chem-default-exporter 'svg)
+    (let* ((spacing (get 'chem-dispatch-option-reaction-spacing
+                         'transient--suffix))
+           (wrap (get 'chem-dispatch-toggle-reaction-wrap
+                      'transient--suffix)))
+      (should (funcall (eieio-oref spacing 'if)))
+      (should-not (funcall (eieio-oref wrap 'if))))
+    (setq-local chem-default-exporter 'chemfig)
+    (let* ((spacing (get 'chem-dispatch-option-reaction-spacing
+                         'transient--suffix))
+           (wrap (get 'chem-dispatch-toggle-reaction-wrap
+                      'transient--suffix)))
+      (should-not (funcall (eieio-oref spacing 'if)))
+      (should (funcall (eieio-oref wrap 'if))))))
+
+(ert-deftest chem-mode-ui-reaction-describe-options ()
+  "Reaction options appear in the effective options buffer."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (chem-mode 1)
+    (set (make-local-variable 'chem-default-reaction-above) "heat")
+    (chem-describe-options)
+    (with-current-buffer "*chem options*"
+      (goto-char (point-min))
+      (should (search-forward "chem-default-reaction-above" nil t))
+      (should (search-forward "heat" nil t)))))
+
+(ert-deftest chem-mode-ui-reaction-save-reload-options ()
+  "Reaction options round-trip through save and reload."
+  (let ((chem-options-file (make-temp-file "tochemfig-reaction-options"
+                                           nil ".el")))
+    (unwind-protect
+        (progn
+          (with-temp-buffer
+            (emacs-lisp-mode)
+            (chem-mode 1)
+            (set (make-local-variable 'chem-default-reaction-arrow)
+                 'reverse)
+            (chem-save-options))
+          (should (eq (default-value 'chem-default-reaction-arrow)
+                      'reverse))
+          (set-default 'chem-default-reaction-arrow 'forward)
+          (chem-reload-options)
+          (should (eq chem-default-reaction-arrow 'reverse)))
+      (set-default 'chem-default-reaction-arrow 'forward)
+      (delete-file chem-options-file))))
 
 ;;; Options introspection and persistence
 

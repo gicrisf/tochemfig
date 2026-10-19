@@ -49,10 +49,10 @@ those are covered by the molecule parity corpus.  The reaction parity test
 compares composition only: component placement, plus/arrow/text boxes, text
 content, and viewBox coverage.
 
-The advisory raster report also covers all reaction fixtures.  Three curated
-fixtures are hard raster gates: esterification, Diels-Alder, and stereo.
-Agent/condition fixtures remain advisory until text rendering is stable enough
-for raster thresholds.  The reaction fixtures are also used by the =chem-rxn=
+The advisory raster report also covers all reaction fixtures.  Five curated
+fixtures are hard raster gates: esterification, Diels-Alder, two products,
+stereo, and an agent/condition fixture.  `charged_salt` remains advisory as a
+charged-text canary.  The reaction fixtures are also used by the `chem-rxn`
 Babel tests.
 
 ## Coverage report

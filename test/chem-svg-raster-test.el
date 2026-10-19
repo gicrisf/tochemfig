@@ -148,7 +148,9 @@ reveals text that the reference viewBox would otherwise clip."
 (defconst chem-svg-raster-test--reaction-limits
   '(("esterification" 2.0 18.0 2.8)
     ("diels_alder" 3.7 27.0 4.8)
-    ("stereo" 5.1 30.0 8.0))
+    ("two_products" 2.8 25.0 3.2)
+    ("stereo" 5.1 30.0 8.0)
+    ("agent_above" 2.4 23.0 3.7))
   "Maximum (MAE RMS EDGE) for curated reaction raster fixtures.")
 
 (ert-deftest chem-svg-raster-reaction-metadata ()

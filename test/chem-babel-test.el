@@ -239,6 +239,55 @@ CCO>>CC=O
       (should (string-match-p "data-reaction-part=\"arrow\""
                               (chem-babel-test--contents path))))))
 
+(ert-deftest chem-babel-rxn-svg-options ()
+  "SVG reaction options reach the generated document."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :results file :reaction-arrow reverse :reaction-above heat
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (let* ((link (chem-babel-test--link))
+           (path (chem-babel-test--path link))
+           (contents (chem-babel-test--contents path)))
+      (should (string-match-p "data-reaction-part=\"arrow\"" contents))
+      (should (string-match-p "heat" contents))
+      (should (string-match-p "<polygon " contents)))))
+
+(ert-deftest chem-babel-rxn-deterministic ()
+  "Executing the same reaction block twice produces identical bytes."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :results file
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (let* ((link (chem-babel-test--link))
+           (path (chem-babel-test--path link))
+           (contents (chem-babel-test--contents path)))
+      (chem-babel-test--execute-first)
+      (should (equal link (chem-babel-test--link)))
+      (should (equal contents
+                     (chem-babel-test--contents
+                      (chem-babel-test--path (chem-babel-test--link))))))))
+
+(ert-deftest chem-babel-rxn-clean-cache ()
+  "Cache cleanup handles reaction-generated files."
+  (chem-babel-test--with-org
+      "#+begin_src chem-rxn :results file
+CCO>>CC=O
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (let* ((link (chem-babel-test--link))
+           (path (chem-babel-test--path link))
+           (extra (expand-file-name "chem-deadbeef.svg"
+                                    (chem-babel--cache-directory))))
+      (with-temp-file extra (insert "unreferenced"))
+      (chem-org-clean-cache)
+      (should (file-exists-p path))
+      (should-not (file-exists-p extra)))))
+
 (ert-deftest chem-babel-rxn-chemfig ()
   "A chem-rxn block can return chemfig source."
   (chem-babel-test--with-org

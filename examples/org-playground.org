@@ -16,7 +16,8 @@ This file exercises the SVG exporter and the Org Babel integration.
   (after! org
     (require 'chem-babel)
     (add-to-list 'org-babel-load-languages '(chem-smiles . t))
-    (add-to-list 'org-babel-load-languages '(chem-mol . t)))
+    (add-to-list 'org-babel-load-languages '(chem-mol . t))
+    (add-to-list 'org-babel-load-languages '(chem-rxn . t)))
   #+end_example
 
 *How to use this file*
@@ -36,12 +37,13 @@ relative to it.  Add =.chem-cache/= to your project's ignore rules if needed.
 
 * Setup check
 
-Run this block once.  It should report =t= for =chem-babel= and =chem-smiles=.
+Run this block once.  It should report =t= for =chem-babel=, =chem-smiles=, =chem-mol=, and =chem-rxn=.
 
 #+begin_src emacs-lisp :results value replace
 (list :chem-babel (featurep 'chem-babel)
       :chem-smiles (fboundp 'org-babel-execute:chem-smiles)
       :chem-mol (fboundp 'org-babel-execute:chem-mol)
+      :chem-rxn (fboundp 'org-babel-execute:chem-rxn)
       :indigo-version (and (fboundp 'indigo-version)
                            (ignore-errors (indigo-version))))
 #+end_src
@@ -308,13 +310,47 @@ CCO
 [CH3]
 #+end_src
 
+* Reactions
+
+Reaction blocks accept reaction SMILES.  Agents are rendered as text formulas,
+and conditions are plain text.  SVG blocks require =:results file=; chemfig
+blocks require =:results value= or =raw=.
+
+** Esterification as SVG
+
+#+begin_src chem-rxn :results file
+CC(=O)O.OCC>>CC(=O)OCC.O
+#+end_src
+
+** Esterification as chemfig
+
+#+begin_src chem-rxn :renderer chemfig :results value
+CC(=O)O.OCC>>CC(=O)OCC.O
+#+end_src
+
+** Reverse arrow with conditions
+
+#+begin_src chem-rxn :renderer chemfig :results value :reaction-arrow reverse :reaction-above heat :reaction-below cat.
+CCO>>CC=O
+#+end_src
+
+** SVG reaction layout options
+
+#+begin_src chem-rxn :results file :reaction-arrow equilibrium :reaction-spacing 0.5 :reaction-arrow-length 4.5 :reaction-plus-size 0.4
+CCO.O>>CC=O.O
+#+end_src
+
+Reaction scope is intentionally single-step.  Multi-step schemes, atom
+mapping, stoichiometric coefficients, and structured agent drawings are not
+supported.
+
 * One-off images and cache commands
 
 - =M-x chem-insert-image= (=C-c m i= when =chem-mode= is active) writes a
   one-off image link using =chem-image-directory=.  It is not the reproducible
   Org Babel path.
-- =M-x chem-org-regenerate-buffer= re-executes every =chem-smiles= and
-  =chem-mol= block in the buffer.
+- =M-x chem-org-regenerate-buffer= re-executes every =chem-smiles=,
+  =chem-mol=, and =chem-rxn= block in the buffer.
 - =M-x chem-org-clean-cache= deletes generated SVGs that are not linked from
   the current buffer.
 - Export this file to HTML with =C-c C-e h h=.  With the default
@@ -328,3 +364,5 @@ Known v1 limits:
 - Text metrics are approximate; stereo labels do not avoid collisions yet.
 - SVG IDs are fixed; one rendered SVG per image file is the intended use.
 - Org Babel sessions and asynchronous execution are not supported.
+- Reactions are single-step; multi-step schemes, atom mapping, and structured
+  agents are deferred.

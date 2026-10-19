@@ -29,9 +29,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   and an /Insert image/ action.
 - Generic exporter option merging in =chem-options.el=.
 - A 1000-molecule SVG corpus smoke test in =test/chem-exp-svg-test.el=.
-- =chem-babel.el=: optional Org Babel support for =chem-smiles= and
-  =chem-mol=, with deterministic =.chem-cache= SVG results, header
-  validation, and SVG/chemfig result handling.
+- =chem-babel.el=: optional Org Babel support for =chem-smiles=,
+  =chem-mol=, and =chem-rxn=, with deterministic =.chem-cache= SVG results,
+  header validation, and SVG/chemfig result handling.
 - =chem-from-mol-string= for MOL text loaded directly from Org blocks.
 - =chem-babel-cache-directory=, =chem-org-regenerate-buffer=, and
   =chem-org-clean-cache=.
@@ -62,7 +62,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - =test/chem-svg-reaction-parity-test.el=: composition parity for component
   placement, plus signs, arrows, text, and viewBox coverage.
 - Reaction raster reporting and curated hard gates for esterification,
-  Diels-Alder, and stereo fixtures; agent/condition fixtures remain advisory.
+  Diels-Alder, two-product, stereo, and agent/condition fixtures;
+  `charged_salt` remains advisory.
 - =chem-export-reaction= and =chem-copy-reaction=, with reaction SMILES by
   default and RXN file input with a prefix argument.
 - A Reaction group in the transient menu and =C-c m r= for reaction export.

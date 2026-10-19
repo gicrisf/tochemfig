@@ -91,10 +91,11 @@ the reaction corpus; the molecule parity suite already covers those.  The
 reaction viewBox check is containment-based because native text bounds can be
 larger than SmilesDrawer's clipped estimates.
 
-The advisory raster report covers all six reaction fixtures.  Three curated
-fixtures are hard raster gates: esterification, Diels-Alder, and stereo.  The
-agent/condition fixtures stay fast-suite only until text rendering proves
-stable enough for raster thresholds.
+The advisory raster report covers all six reaction fixtures.  Five curated
+fixtures are hard raster gates: esterification, Diels-Alder, two products,
+stereo, and an agent/condition fixture.  `charged_salt` remains advisory as a
+charged-text canary; repeated runs showed stable metrics before the other text
+fixture was promoted.
 
 ## Text bounds and viewBox divergence
 
