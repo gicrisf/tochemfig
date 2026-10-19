@@ -76,6 +76,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - Option-variant fixtures for dark theme, fixed output dimensions, large labels,
   and zero padding, with native option overrides separated from SmilesDrawer
   reference options.
+- Hard raster gates now cover seventeen fixtures, adding spiro, fused
+  heteroaromatic, charged heteroatom, multiple-stereocenter, and terminal
+  alkyne cases.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected

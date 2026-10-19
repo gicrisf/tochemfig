@@ -37,7 +37,12 @@
     ("butene_e"         1.10 12.0  1.9)
     ("bicyclic"         2.10 18.0  3.2)
     ("allene"           2.80 23.0  3.0)
-    ("nitrobenzene"     2.30 19.0  4.0))
+    ("nitrobenzene"     2.30 19.0  4.0)
+    ("spiro_decane"     1.80 16.0  3.2)
+    ("quinoline"        3.50 23.5  6.5)
+    ("tetramethylammonium" 1.20 12.0 2.5)
+    ("two_stereocenters" 1.60 15.5 3.4)
+    ("terminal_alkyne"  1.60 15.5  3.0))
   "Maximum (MAE RMS EDGE) for curated raster fixtures.")
 
 (defun chem-svg-raster-test--write (path content)

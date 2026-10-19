@@ -54,7 +54,7 @@ Phase 1 is in progress:
 - An advisory raster and layout report (`tools/svg-raster-report.el`) renders
   reference and native SVGs with Inkscape, compares PNGs, and reports
   bond-length variation.
-- Hard raster gates cover a curated shared-coordinate subset in
+- Hard raster gates cover seventeen curated shared-coordinate fixtures in
   `test/chem-svg-raster-test.el`.  They skip without Inkscape/Pillow and run in
   the Nix development shell.
 - Allene centers now render the carbon label used by SmilesDrawer.

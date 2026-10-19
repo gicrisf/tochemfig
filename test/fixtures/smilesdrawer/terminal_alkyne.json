@@ -14,7 +14,7 @@
     "triple-bond",
     "terminal-label"
   ],
-  "raster": false,
+  "raster": true,
   "chem_options": {},
   "known_gap": null,
   "atoms": [

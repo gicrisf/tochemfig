@@ -237,7 +237,7 @@
         "ring",
         "carbon-dot"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "adamantane",
@@ -269,7 +269,7 @@
         "shared-edge",
         "ring-circle"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "purine",
@@ -301,7 +301,7 @@
         "nitrogen-heteroatom",
         "gradient"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "phosphate",
@@ -344,7 +344,7 @@
         "multiple-stereocenters",
         "terminal-label"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "substituted_allene",
@@ -364,7 +364,7 @@
         "triple-bond",
         "terminal-label"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "naphthalene_kekule",

@@ -11,11 +11,11 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
-- Implementation status: Batches 0, 1, 2, 3, and 4 are complete.
+- Implementation status: Batches 0, 1, 2, 3, 4, and 5 are complete.
 - Branch: `svg`
 - Fixture count: **41**
 - Fast suite: **506 tests**
-- Hard raster gates: **12 curated fixtures**
+- Hard raster gates: **17 curated fixtures**
 - Known fixture gaps: none currently declared
 - Fixture generator: `tools/smilesdrawer/render.mjs`
 - Manifest: `test/fixtures/smilesdrawer/manifest.json`
@@ -392,18 +392,20 @@ Expected renderer risk:
 
 Do this only after the new fast fixtures are green.
 
-Current raster gates: 12.
+Current raster gates: 17.
 
-Target: 15–18 stable fixtures, not the whole corpus.
+Added in this pass:
 
-Recommended additions, one at a time:
+- `spiro_decane`
+- `quinoline`
+- `tetramethylammonium`
+- `two_stereocenters`
+- `terminal_alkyne`
 
-- one spiro or cage fixture
-- one fused heteroaromatic fixture
-- one charged fixture
-- one multiple-stereocenter fixture
-- one terminal-edge fixture
-- optionally one dark-theme fixture
+The dark-theme fixture is not raster-gated because its background rendering is
+not comparable at the current settings. `benzene_wide`, `ethanol_large_font`,
+and `benzene_zero_padding` exercise option paths but are validated by the fast
+parity suite instead.
 
 Process:
 

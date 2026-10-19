@@ -104,7 +104,7 @@
   (dolist (entry (chem-svg-parity-test--strict-fixtures))
     (let* ((name (chem-svg-parity-test--get entry "name"))
            (fixture (chem-svg-parity-test--load name))
-           (options (chem-svg-parity-test--viewbox-options))
+           (options (chem-svg-parity-test--viewbox-options entry))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (native-svg (chem-render drawing 'svg options))
            (reference-svg (chem-svg-parity-test--get fixture "svg"))
