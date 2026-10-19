@@ -11,7 +11,7 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
-- Implementation status: Batches 0, 1, 2, 3, 4, and 5 are complete.
+- Implementation status: Batches 0 through 6 are complete.
 - Branch: `svg`
 - Fixture count: **41**
 - Fast suite: **506 tests**
@@ -219,7 +219,9 @@ Recommended policy:
 - optionally omit `svg` for fast-only fixtures
 - keep all structured reference data for fast tests
 
-Do not remove `svg` until the raster test reads the metadata flag.
+Decision: all fixtures keep the reference SVG for now. At 41 fixtures the
+corpus is small enough to keep the generator and raster report simple. Revisit
+if fixture size becomes a problem.
 
 ### 0.5 Add a coverage report
 
@@ -421,16 +423,34 @@ to Inkscape version, font availability, anti-aliasing, and Pillow version.
 
 ## Batch 6 — coverage audit
 
-After the batches above:
+Status: complete.
 
-- print feature coverage
-- identify features with only one fixture
-- identify renderer branches with no fixture
-- compare fixture coverage against `chem-exp-svg.el`
-- add only missing high-value cases
-- remove duplicate fixtures that exercise the same code path
+The audit used `tools/smilesdrawer/coverage.mjs` and a review of
+`chem-exp-svg.el`.
 
-Suggested audit targets:
+Results:
+
+- 41 fixtures, all with feature tags
+- 17 raster-gated fixtures
+- no duplicate names or missing tags
+- 19 singleton features, all deliberate specialized cases: amine, cage,
+  exocyclic double bond, hydroxyl, large ring, multiple oxygens, multiple
+  stereocenters, nitro, the four option variants, oxygen/sulfur/phosphorus
+  heteroatoms, positive charge, pseudo group, spiro, and triple bond
+- no additional high-value molecule fixtures were needed
+
+Branches not represented by fixtures are handled elsewhere:
+
+- alternating aromatic display and stereo-off are covered by native SVG unit
+  tests
+- radicals are covered by a native unit test; SmilesDrawer does not expose a
+  radical field for the fixture builder
+- isotope, metal, E/Z label, reaction, and multi-fragment cases remain out of
+  scope
+- sulfonate, acetate, and boronic acid pseudo-group behavior is deferred until
+  the native pseudo-group layout matches SmilesDrawer
+
+Suggested audit targets for future changes:
 
 - every branch in `chem-exp-svg--edge-svg`
 - every `chem-exp-svg--ring-aromatic-display` outcome

@@ -33,6 +33,7 @@ console.log(`raster: ${raster.length} (${raster.map((fixture) => fixture.name).j
 console.log(`known gaps: ${gaps.length}`);
 console.log(`missing feature tags: ${noFeatures.length}`);
 console.log(`duplicate names: ${duplicateNames.length}`);
+console.log(`raster coverage: ${raster.length}/${fixtures.length}`);
 console.log("");
 console.log("feature counts:");
 
@@ -41,6 +42,15 @@ for (const [feature, count] of [...featureCounts.entries()].sort((a, b) =>
 )) {
   console.log(`  ${feature}: ${count}`);
 }
+
+const singletons = [...featureCounts.entries()]
+  .filter(([, count]) => count === 1)
+  .map(([feature]) => feature)
+  .sort();
+
+console.log("");
+console.log(`singleton features: ${singletons.length}`);
+console.log(`  ${singletons.join(", ")}`);
 
 if (noFeatures.length > 0) {
   console.log("");

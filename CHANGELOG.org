@@ -79,6 +79,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - Hard raster gates now cover seventeen fixtures, adding spiro, fused
   heteroaromatic, charged heteroatom, multiple-stereocenter, and terminal
   alkyne cases.
+- The fixture coverage report now reports raster coverage and singleton
+  features; the completed audit found no missing high-value molecule cases.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected

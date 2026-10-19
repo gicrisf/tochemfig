@@ -22,7 +22,7 @@ regression detection, not as the primary oracle.
 
 ## Status
 
-Phase 1 is in progress:
+Renderer parity is complete for the current corpus:
 
 - The development-only reference generator and normalizer live in
   `tools/smilesdrawer/`.
@@ -50,7 +50,7 @@ Phase 1 is in progress:
 - Bond colors now match SmilesDrawer's solid/radial/linear gradient rules, and
   labels use per-part tspan colors with the same theme palette.
 - Linear carbon atoms now render as SmilesDrawer-style carbon dots, including
-  mask circles.
+  mask circles; sp carbons next to triple bonds do not receive dots.
 - An advisory raster and layout report (`tools/svg-raster-report.el`) renders
   reference and native SVGs with Inkscape, compares PNGs, and reports
   bond-length variation.
@@ -67,8 +67,7 @@ Phase 1 is in progress:
 
 - SmilesDrawer `2.4.1` from the local `smilesDrawer/` checkout.
 - The checkout is development-only and remains excluded from the repository.
-- Reference metadata must record the version, checkout commit, options, and
-  generated fixture hash.
+- Reference metadata records the version, checkout commit, theme, and options.
 - SmilesDrawer is a test oracle only. Production rendering stays pure Elisp.
 
 ## Key observation: randomness
