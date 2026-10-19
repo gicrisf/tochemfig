@@ -30,6 +30,18 @@
                                svg))
     (user-error "Inkscape failed for %s" svg)))
 
+(defun svg-raster-report--match-viewbox (reference native)
+  "Return REFERENCE with NATIVE's viewBox.
+Native text bounds can intentionally exceed SmilesDrawer's.  Rasterizing the
+reference with the native viewBox keeps both drawings at the same scale and
+reveals text that the reference viewBox would otherwise clip."
+  (if (string-match "viewBox=\"\\([^\"]*\\)\"" native)
+      (replace-regexp-in-string "viewBox=\"[^\"]*\""
+                                (format "viewBox=\"%s\""
+                                        (match-string 1 native))
+                                reference)
+    reference))
+
 (defun svg-raster-report--compare (reference native output)
   "Compare REFERENCE and NATIVE PNG, writing OUTPUT."
   (let ((python (or (executable-find "python3")
@@ -107,7 +119,9 @@
            (options (chem-svg-parity-test--viewbox-options entry))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (native-svg (chem-render drawing 'svg options))
-           (reference-svg (chem-svg-parity-test--get fixture "svg"))
+           (reference-svg
+            (svg-raster-report--match-viewbox
+             (chem-svg-parity-test--get fixture "svg") native-svg))
            (reference-png (expand-file-name (concat name "-reference.png")
                                             svg-raster-report--directory))
            (native-png (expand-file-name (concat name "-native.png")

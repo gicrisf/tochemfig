@@ -665,6 +665,24 @@
   (let ((svg (chem-exp-svg-test--render "[NH4+]")))
     (should (string-match-p "N⁺H₄" (chem-exp-svg-test--text-content svg)))))
 
+(ert-deftest chem-exp-svg-text-bounds-include-all-parts ()
+  "Text-inclusive bounds include every part of a charged label."
+  (let* ((chem-default-exporter 'svg)
+         (options (chem--build-options nil))
+         (drawing (chem-from-string "[NH4+]" options))
+         (state (chem-exp-svg--make-state drawing options))
+         (atom (gethash 0 (chem-drawing-atoms drawing)))
+         (layout (chem-exp-svg--text-layout state atom))
+         (parts (plist-get layout :parts))
+         (text-x (plist-get layout :x))
+         (total-width
+          (cl-loop for part in parts
+                   sum (car (chem-exp-svg--text-size state (car part)))))
+         (viewbox (chem-exp-svg--viewbox state))
+         (viewbox-max-x (+ (nth 0 viewbox) (nth 2 viewbox))))
+    (should (<= (nth 0 viewbox) (+ text-x 1e-6)))
+    (should (<= (+ text-x total-width) (+ viewbox-max-x 1e-6)))))
+
 (ert-deftest chem-exp-svg-radical ()
   "Radicals are rendered as superscript dots."
   (let ((svg (chem-exp-svg-test--render "[CH3]")))

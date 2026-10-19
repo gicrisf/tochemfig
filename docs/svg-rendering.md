@@ -507,7 +507,20 @@ Compute bounds from:
 
 Text bounds are approximate because Emacs does not provide consistent font
 metrics across platforms.  Use a deterministic estimate based on
-`:svg-font-size` and label length, then add a safety margin.
+`:svg-font-size` and label parts.
+
+Measure every label part, not just the first one.  For left/right labels, sum
+the part widths; for stacked labels, use the widest part.  Expand
+`chem-exp-svg--text-bounds` from the text layout anchor, and never shrink the
+existing bounds.
+
+Native bounds can therefore exceed SmilesDrawer's.  SmilesDrawer estimates a
+horizontal label as the first part's width multiplied by the part count, which
+clips wide charged or subscripted labels such as `[NH4+]` (`N⁺H₄`).  The
+viewBox parity test checks exact equality for unaffected fixtures and
+containment for the fixtures whose native bounds are intentionally larger.
+Raster tests normalize the reference viewBox to the native one before
+comparison.
 
 ### ViewBox and dimensions
 

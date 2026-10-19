@@ -40,14 +40,24 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - =examples/org-playground.org=: an executable tour of SVG options,
   stereochemistry, aromatic display, MOL/chemfig input, and Org caching.
 - A SmilesDrawer SVG parity harness in =tools/smilesdrawer/= with pinned
-  =jsdom= dependencies, forty-one reference fixtures, and development plans in
+  =jsdom= dependencies, forty-four reference fixtures, and development plans in
   =docs/smilesdrawer-parity.md= and =docs/smilesdrawer-fixture-plan.md=.
 - =test/chem-svg-parity-test.el=: shared-coordinate renderer parity tests for
   edge geometry, absolute line placement, aromatic circle radii, label text,
   label placement, and deterministic rendering.
 - SVG pseudo-element grouping for terminal heteroatom groups such as COOH and
   NO2.  Hidden atoms and their bonds are omitted, group text is attached to the
-  center atom, and nitro groups render as N+O2.
+  center atom, and nitro groups render as N+O2.  All degree-one neighbors,
+  including terminal carbons, are folded into the group; pseudo labels now use
+  SmilesDrawer's right/down/left direction rules.
+- Reference fixtures for sulfonate, acetate, and boronic acid pseudo groups,
+  covering hidden methyl bonds, `SO₂O⁻CH₃` / `COO⁻CH₃` / `BO₃H₃` labels, and
+  down/right pseudo-label directions.
+- SVG text bounds now measure every label part, so wide charged or subscripted
+  labels such as `[NH4+]` are not clipped.  Native viewBoxes intentionally
+  exceed SmilesDrawer's where the oracle clips; viewBox parity checks
+  containment for those fixtures, and raster gates normalize the reference
+  viewBox to the native one.
 - A hashed-wedge parity fixture and shared-coordinate checks for solid-wedge
   polygons, label masks, label mask radii, and viewBox bounds.
 - SVG text layout now uses SmilesDrawer's measured text extents and tspan

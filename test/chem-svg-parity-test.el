@@ -1092,8 +1092,16 @@ SOURCE supplies optional native exporter overrides."
         ("svg-show-stereo" . t))
       (chem-svg-parity-test--chem-options source)))))
 
+(defconst chem-svg-parity-test--oversized-text-viewboxes
+  '("alanine" "alanine_down" "aniline" "acetate" "formaldehyde"
+    "nitrobenzene")
+  "Fixtures whose native viewBox intentionally exceeds SmilesDrawer's.
+SmilesDrawer estimates a label's width from its first part and truncates wide
+charged or subscripted labels.  Native bounds include every part, so these
+viewBoxes are supersets of the reference viewBoxes.")
+
 (ert-deftest chem-svg-parity-viewbox ()
-  "Native square viewBox matches SmilesDrawer."
+  "Native square viewBox matches or contains SmilesDrawer's."
   (dolist (entry (chem-svg-parity-test--strict-fixtures))
     (let* ((name (chem-svg-parity-test--get entry "name"))
            (fixture (chem-svg-parity-test--load name))
@@ -1105,8 +1113,22 @@ SOURCE supplies optional native exporter overrides."
                                (chem-svg-parity-test--get fixture "viewBox"))))
            (native (chem-exp-svg--viewbox state)))
       (should (= (length reference) (length native)))
-      (dolist (pair (cl-mapcar #'cons reference native))
-        (should (< (abs (- (car pair) (cdr pair))) 0.01))))))
+      (if (member name chem-svg-parity-test--oversized-text-viewboxes)
+          (let ((ref-x (nth 0 reference))
+                (ref-y (nth 1 reference))
+                (ref-w (nth 2 reference))
+                (ref-h (nth 3 reference))
+                (native-x (nth 0 native))
+                (native-y (nth 1 native))
+                (native-w (nth 2 native))
+                (native-h (nth 3 native)))
+            (should (< (abs (- native-w native-h)) 0.01))
+            (should (<= native-x (+ ref-x 0.01)))
+            (should (<= native-y (+ ref-y 0.01)))
+            (should (>= (+ native-x native-w) (- (+ ref-x ref-w) 0.01)))
+            (should (>= (+ native-y native-h) (- (+ ref-y ref-h) 0.01))))
+        (dolist (pair (cl-mapcar #'cons reference native))
+          (should (< (abs (- (car pair) (cdr pair))) 0.01)))))))
 
 (ert-deftest chem-svg-parity-size-options ()
   "Native output dimensions match fixture size options."

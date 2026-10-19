@@ -556,7 +556,8 @@ Do not add fixtures for unsupported features merely to make the count larger:
 - isotopes
 - metals and coordination compounds
 - E/Z text labels
-- reaction arrows or reaction schemes
+- reaction arrows or reaction schemes (reaction fixtures live in a separate
+  reaction corpus)
 - layout-only parity cases
 - huge polymers or structures that make raster tests slow
 
@@ -631,6 +632,7 @@ extend smilesdrawer fixtures with charged heteroatoms
 extend smilesdrawer fixtures with stereo edge cases
 add smilesdrawer option-variant fixtures
 expand smilesdrawer raster gates
+extend smilesdrawer fixtures with pseudo-group parity
 ```
 
 ## Acceptance criteria
@@ -658,6 +660,13 @@ A batch is complete when:
   raster gates curated and document the environment.
 - **False confidence:** shared-coordinate parity proves the renderer, not the
   Indigo layout. Do not describe it as end-to-end visual parity.
+- **Oracle text bounds:** SmilesDrawer estimates horizontal label extents from
+  the first part's width times the part count, which clips wide charged or
+  subscripted labels such as `[NH4+]` (`N⁺H₄`).  Native measures every part and
+  expands the viewBox from the text layout anchor, so its bounds are a superset
+  of the oracle's for the affected fixtures.  The viewBox parity test permits
+  containment for those fixtures, and raster tests normalize the reference
+  viewBox to the native one.
 - **Manual JSON edits:** never edit generated fixtures by hand. Change the
   manifest or generator and regenerate.
 
@@ -666,4 +675,6 @@ A batch is complete when:
 - Porting SmilesDrawer’s layout engine
 - Exact coordinate parity for the Indigo pipeline
 - Rasterizing the full 1000-molecule corpus
-- Reaction depictions, isotopes, and metals until explicitly supported
+- Reaction depictions in the molecule corpus; reaction schemes have separate
+  local planning notes
+- Isotopes and metals until explicitly supported

@@ -723,6 +723,16 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
         (setq bbox (chem-exp-svg--text-size state display)))
       bbox)))
 
+(defun chem-exp-svg--text-parts-widths (state parts)
+  "Return (TOTAL . WIDEST) estimated widths for PARTS in STATE."
+  (let ((total 0.0)
+        (widest 0.0))
+    (dolist (part parts)
+      (let ((width (car (chem-exp-svg--text-size state (car part)))))
+        (setq total (+ total width))
+        (setq widest (max widest width))))
+    (cons total widest)))
+
 (defun chem-exp-svg--text-layout (state atom)
   "Return SmilesDrawer-compatible text layout information for ATOM."
   (let* ((direction (chem-exp-svg--text-direction-for-state state atom))
@@ -1850,8 +1860,6 @@ ring's side."
 (defun chem-exp-svg--text-bounds (state bounds)
   "Expand BOUNDS with the text layout of visible atoms in STATE."
   (let* ((drawing (chem-exp-svg-state-drawing state))
-         (single-vertex (= 1 (hash-table-count
-                              (chem-drawing-atoms drawing))))
          (min-x (nth 0 bounds))
          (min-y (nth 1 bounds))
          (max-x (nth 2 bounds))
@@ -1868,26 +1876,31 @@ ring's side."
                    (point (plist-get layout :mask-center))
                    (x (car point))
                    (y (cdr point))
-                   (count (length parts)))
-              (if single-vertex
-                  (progn
-                    (setq max-x (max max-x (+ x (* width count))))
-                    (setq min-x (min min-x (- x (/ width 2.0))))
-                    (setq min-y (min min-y (- y height)))
-                    (setq max-y (max max-y (+ y height))))
-                (if (not (eq direction 'right))
-                    (progn
-                      (setq max-x (max max-x (+ x (* width count))))
-                      (setq min-x (min min-x (- x (* width count)))))
-                  (progn
-                    (setq max-x (max max-x (+ x (* width count))))
-                    (setq min-x (min min-x (- x (/ width 2.0))))))
-                (setq min-y (min min-y (- y height)))
-                (setq max-y (max max-y (+ y height)))
-                (when (eq direction 'down)
-                  (setq max-y (max max-y (+ y (* 0.8 height count)))))
-                (when (eq direction 'up)
-                  (setq min-y (min min-y (- y (* 0.8 height count)))))))))))
+                   (count (length parts))
+                   (text-x (plist-get layout :x))
+                   (widths (chem-exp-svg--text-parts-widths state parts))
+                   (total (car widths))
+                   (widest (cdr widths))
+                   (old-min (if (eq direction 'right)
+                                (- x (/ width 2.0))
+                              (- x (* width count))))
+                   (old-max (+ x (* width count)))
+                   (actual-min (pcase direction
+                                 ('right text-x)
+                                 ('left (- text-x total))
+                                 (_ text-x)))
+                   (actual-max (pcase direction
+                                 ('right (+ text-x total))
+                                 ('left text-x)
+                                 (_ (+ text-x widest)))))
+              (setq min-x (min min-x old-min actual-min))
+              (setq max-x (max max-x old-max actual-max))
+              (setq min-y (min min-y (- y height)))
+              (setq max-y (max max-y (+ y height)))
+              (when (eq direction 'down)
+                (setq max-y (max max-y (+ y (* 0.8 height count)))))
+              (when (eq direction 'up)
+                (setq min-y (min min-y (- y (* 0.8 height count))))))))))
     (list min-x min-y max-x max-y)))
 
 (defun chem-exp-svg--compute-bounds (state)

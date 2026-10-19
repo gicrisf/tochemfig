@@ -59,12 +59,54 @@ Renderer parity is complete for the current corpus:
   bond-length variation.
 - Hard raster gates cover seventeen curated shared-coordinate fixtures in
   `test/chem-svg-raster-test.el`.  They skip without Inkscape/Pillow and run in
-  the Nix development shell.
+  the Nix development shell.  The reference SVG is rasterized with the native
+  viewBox so drawings with intentionally different text bounds stay aligned.
+  The three Batch 7 pseudo-group fixtures are fast-suite only because
+  label-only pseudo groups rasterize inconsistently under Inkscape.
 - Allene centers now render the carbon label used by SmilesDrawer.
 - Renderer parity is complete for the fixture corpus.  Remaining parity work is
   optional layout metrics and exact layout-engine porting.
 - Fixture-corpus expansion is planned in
   `docs/smilesdrawer-fixture-plan.md`.
+
+## Text bounds and viewBox divergence
+
+SmilesDrawer estimates a horizontal label's extent as the first text part's
+width multiplied by the number of parts.  That estimate is too small because it
+uses the first part's *element* width for every part, while each part's
+*display* text can be wider due to charges and subscripts.  For example,
+`[NH4+]` is rendered as `N⁺H₄`: the first element (`N`) is about 0.68 em wide,
+but the display parts `N⁺` and `H₄` are each about 1.13 em in the deterministic
+estimator.  SmilesDrawer clips the trailing `₄`.
+
+Native bounds now measure every part with `chem-exp-svg--text-size` and expand
+from the text layout anchor:
+
+- `right`: the right edge uses the sum of all part widths;
+- `left`: the left edge uses the sum of all part widths;
+- `down`/`up`: the horizontal edge uses the widest part.
+
+Native bounds never shrink relative to the old SmilesDrawer-compatible bounds.
+For the affected fixtures the native viewBox is therefore a superset of the
+reference viewBox:
+
+- `alanine`
+- `alanine_down`
+- `aniline`
+- `acetate`
+- `formaldehyde`
+- `nitrobenzene`
+
+`chem-svg-parity-viewbox` checks exact equality for all other fixtures and
+containment for this list.  Raster gates rasterize the reference SVG with the
+native viewBox so intentionally different bounds do not change the comparison
+scale.  The advisory raster report uses the same normalization.
+
+The correction is padding-neutral: `:svg-padding` is unchanged, and the old
+bounds remain a floor.  Only the six fixtures above change; the other 38 are
+unchanged.  The viewBox side changes by 1.18–2.38% for four of them, 5.99% for
+`nitrobenzene`, and 13.00% for the small `acetate` box.  The increase is the
+previously clipped text, not extra margin.
 
 ## Reference version
 

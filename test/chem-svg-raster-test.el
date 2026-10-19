@@ -61,6 +61,18 @@
                                svg))
     (error "Inkscape failed for %s" svg)))
 
+(defun chem-svg-raster-test--match-viewbox (reference native)
+  "Return REFERENCE with NATIVE's viewBox.
+Native text bounds can intentionally exceed SmilesDrawer's.  Rasterizing the
+reference with the native viewBox keeps both drawings at the same scale and
+reveals text that the reference viewBox would otherwise clip."
+  (if (string-match "viewBox=\"\\([^\"]*\\)\"" native)
+      (replace-regexp-in-string "viewBox=\"[^\"]*\""
+                                (format "viewBox=\"%s\""
+                                        (match-string 1 native))
+                                reference)
+    reference))
+
 (defun chem-svg-raster-test--compare (reference native)
   "Return (MAE RMS EDGE) for REFERENCE and NATIVE PNGs."
   (let ((output (expand-file-name "comparison.png"
@@ -103,7 +115,8 @@
                   (chem-render drawing 'svg
                                (chem-svg-parity-test--viewbox-options fixture)))
                  (reference-svg
-                  (chem-svg-parity-test--get fixture "svg"))
+                  (chem-svg-raster-test--match-viewbox
+                   (chem-svg-parity-test--get fixture "svg") native-svg))
                  (reference-svg-path
                   (expand-file-name (concat name "-reference.svg") directory))
                  (native-svg-path
