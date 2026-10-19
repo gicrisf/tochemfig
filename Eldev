@@ -32,4 +32,5 @@
         "test/chem-graph-test.el"
         "test/chem-exp-svg-test.el"
         "test/chem-svg-parity-test.el"
+        "test/chem-svg-raster-test.el"
         "test/chem-babel-test.el"))

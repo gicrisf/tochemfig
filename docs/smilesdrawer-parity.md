@@ -51,10 +51,13 @@ Phase 1 is in progress:
   mask circles.
 - An advisory raster and layout report (`tools/svg-raster-report.el`) renders
   reference and native SVGs with Inkscape, compares PNGs, and reports
-  bond-length variation.  Raster metrics remain advisory.
+  bond-length variation.
+- Hard raster gates cover a curated shared-coordinate subset in
+  `test/chem-svg-raster-test.el`.  They skip without Inkscape/Pillow and run in
+  the Nix development shell.
 - Allene centers now render the carbon label used by SmilesDrawer.
-- Renderer parity is complete for the fixture corpus.  Next step is stricter
-  layout metrics and optional raster gates for stable fixtures.
+- Renderer parity is complete for the fixture corpus.  Remaining parity work is
+  optional layout metrics and exact layout-engine porting.
 
 ## Reference version
 

@@ -56,6 +56,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   carbon dots.
 - =tools/svg-raster-report.el= and =tools/compare-png.py=: advisory Inkscape
   raster comparison and native-vs-reference bond-length variation report.
+- =test/chem-svg-raster-test.el=: hard raster parity gates for a curated
+  shared-coordinate fixture set.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -104,8 +106,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   gradients, and labels use per-element tspan colors.
 - Linear carbon atoms now render as carbon dots with matching mask circles.
 - Allene centers now render the carbon labels used by SmilesDrawer.
-- Added an advisory raster and layout report using Inkscape and Pillow.
-- The full ERT suite is now 502 tests.
+- Added an advisory raster and layout report plus hard raster gates for a
+  curated renderer fixture set.
+- The full ERT suite is now 503 tests.
 
 ** Migration
 =chem-mode= makes a clean break; the old =tochemfig= commands and variables

@@ -449,7 +449,7 @@ guard against regressions:
    coordinates.  =tools/svg-raster-report.el= adds an advisory Inkscape raster
    and bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 502 tests.
+The full ERT suite currently has 503 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.
