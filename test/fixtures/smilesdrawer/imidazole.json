@@ -218,6 +218,16 @@
     {
       "atom": 2,
       "text": "NH",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        },
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
       "direction": "right",
       "x": 72.425246,
       "y": -15.000021,
@@ -226,6 +236,12 @@
     {
       "atom": 4,
       "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
       "direction": "left",
       "x": 33.74,
       "y": 0,
@@ -242,6 +258,42 @@
       "cx": 30,
       "cy": 0,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 30,
+      "cy": 0,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-1",
+      "cx": 76.165246,
+      "cy": -15.000021,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

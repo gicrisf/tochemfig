@@ -160,6 +160,10 @@ function labelFor(atom, group) {
   return {
     atom,
     text: text.textContent,
+    parts: [...text.querySelectorAll("tspan")].map((part) => ({
+      text: part.textContent,
+      fill: attribute(part, "fill"),
+    })),
     direction: attribute(text, "data-direction"),
     x: number(point.x),
     y: number(point.y),
@@ -217,6 +221,18 @@ function renderReference(entry) {
     cy: number(mask.getAttribute("cy")),
     r: number(mask.getAttribute("r")),
   }));
+  const gradients = drawer.svgWrapper.gradients.map((gradient) => {
+    const entry = { kind: gradient.tagName.toLowerCase(), id: gradient.getAttribute("id") };
+    for (const attr of ["x1", "y1", "x2", "y2", "cx", "cy", "r"]) {
+      const value = gradient.getAttribute(attr);
+      if (value !== null) entry[attr] = number(value);
+    }
+    entry.stops = [...gradient.querySelectorAll("stop")].map((stop) => ({
+      offset: stop.getAttribute("offset"),
+      color: stop.getAttribute("stop-color"),
+    }));
+    return entry;
+  });
   const viewBox = (svg.getAttribute("viewBox") ?? "").trim().split(/\s+/).map(Number);
   return {
     reference: {
@@ -234,6 +250,7 @@ function renderReference(entry) {
     primitives,
     labels,
     masks,
+    gradients,
     viewBox,
     width: number(svg.getAttribute("width")),
     height: number(svg.getAttribute("height")),

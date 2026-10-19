@@ -289,6 +289,16 @@
     {
       "atom": 0,
       "text": "OH",
+      "parts": [
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        },
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
       "direction": "right",
       "x": 149.202337,
       "y": 70.980675,
@@ -300,6 +310,25 @@
       "cx": 152.942337,
       "cy": 70.980675,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 152.942337,
+      "cy": 70.980675,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

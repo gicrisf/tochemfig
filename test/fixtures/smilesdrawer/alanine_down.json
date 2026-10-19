@@ -314,6 +314,16 @@
     {
       "atom": 0,
       "text": "NH₂",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        },
+        {
+          "text": "H₂",
+          "fill": "#666666"
+        }
+      ],
       "direction": "right",
       "x": 138.221631,
       "y": 29.999668,
@@ -322,6 +332,12 @@
     {
       "atom": 2,
       "text": "H",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        }
+      ],
       "direction": "right",
       "x": 127.240723,
       "y": -10.981055,
@@ -330,6 +346,24 @@
     {
       "atom": 4,
       "text": "HOOC",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        },
+        {
+          "text": "C",
+          "fill": "#222222"
+        }
+      ],
       "direction": "left",
       "x": 93.74,
       "y": -0.000147,
@@ -351,6 +385,42 @@
       "cx": 90,
       "cy": -0.000147,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 141.961631,
+      "cy": 29.999668,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-1",
+      "cx": 130.980723,
+      "cy": -10.981055,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#666666"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

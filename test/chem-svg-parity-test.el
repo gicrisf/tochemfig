@@ -764,6 +764,142 @@ heteroatom labels covered here.")
                 (< (cadr a) (cadr b))
               (< (car a) (car b)))))))
 
+(defun chem-svg-parity-test--parse-native-gradient (svg)
+  "Parse one native gradient SVG string."
+  (when (string-match "<\\(radial\\|linear\\)Gradient id=\"\\([^\"]+\\)\"" svg)
+    (let* ((kind (intern (match-string 1 svg)))
+           (id (match-string 2 svg))
+           (attrs nil)
+           (stops nil)
+           (start 0))
+      (if (eq kind 'radial)
+          (when (string-match
+                 "cx=\"\\([^\"]+\\)\" cy=\"\\([^\"]+\\)\" r=\"\\([^\"]+\\)\""
+                 svg)
+            (setq attrs (list :cx (string-to-number (match-string 1 svg))
+                              :cy (string-to-number (match-string 2 svg))
+                              :r (string-to-number (match-string 3 svg)))))
+        (when (string-match
+               "x1=\"\\([^\"]+\\)\" y1=\"\\([^\"]+\\)\" x2=\"\\([^\"]+\\)\" y2=\"\\([^\"]+\\)\""
+               svg)
+          (setq attrs (list :x1 (string-to-number (match-string 1 svg))
+                            :y1 (string-to-number (match-string 2 svg))
+                            :x2 (string-to-number (match-string 3 svg))
+                            :y2 (string-to-number (match-string 4 svg))))))
+      (while (string-match "offset=\"\\([^\"]+\\)\" stop-color=\"\\([^\"]+\\)\"" svg start)
+        (push (cons (match-string 1 svg) (match-string 2 svg)) stops)
+        (setq start (match-end 0)))
+      (cons id (list :kind kind :attrs attrs :stops (nreverse stops))))))
+
+(defun chem-svg-parity-test--reference-gradients (fixture)
+  "Return an alist of reference gradients in FIXTURE."
+  (mapcar
+   (lambda (gradient)
+     (cons (chem-svg-parity-test--get gradient "id")
+           (list :kind (intern
+                        (string-remove-suffix
+                         "gradient"
+                         (chem-svg-parity-test--get gradient "kind")))
+                 :attrs (list :cx (chem-svg-parity-test--get gradient "cx")
+                              :cy (chem-svg-parity-test--get gradient "cy")
+                              :r (chem-svg-parity-test--get gradient "r")
+                              :x1 (chem-svg-parity-test--get gradient "x1")
+                              :y1 (chem-svg-parity-test--get gradient "y1")
+                              :x2 (chem-svg-parity-test--get gradient "x2")
+                              :y2 (chem-svg-parity-test--get gradient "y2"))
+                 :stops (mapcar (lambda (stop)
+                                  (cons (chem-svg-parity-test--get stop "offset")
+                                        (chem-svg-parity-test--get stop "color")))
+                                (chem-svg-parity-test--list
+                                 (chem-svg-parity-test--get gradient "stops"))))))
+   (chem-svg-parity-test--list
+    (chem-svg-parity-test--get fixture "gradients"))))
+
+(ert-deftest chem-svg-parity-gradients ()
+  "Native bond strokes and gradients match SmilesDrawer."
+  (dolist (entry (chem-svg-parity-test--strict-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--viewbox-options)))
+           (reference-gradients (chem-svg-parity-test--reference-gradients fixture))
+           (native-gradients
+            (progn
+              (chem-exp-svg--prepare-gradients state)
+              (delq nil
+                    (mapcar #'chem-svg-parity-test--parse-native-gradient
+                            (chem-exp-svg-state-gradients state))))))
+      (dolist (edge (chem-edges drawing))
+        (when (chem-exp-svg--edge-visible-p state edge)
+          (let* ((edge-id (chem-edge-id edge))
+                 (reference-stroke
+                  (catch 'found
+                    (dolist (primitive (chem-svg-parity-test--list
+                                        (chem-svg-parity-test--get fixture "primitives")))
+                      (when (and (equal (chem-svg-parity-test--get primitive "kind") "line")
+                                 (equal (chem-svg-parity-test--number
+                                         (chem-svg-parity-test--get primitive "edge"))
+                                        edge-id))
+                        (throw 'found (chem-svg-parity-test--get primitive "stroke"))))
+                    nil))
+                 (native-stroke (chem-exp-svg--edge-color state edge)))
+            (when reference-stroke
+              (if (string-prefix-p "url(#" reference-stroke)
+                  (let* ((reference-id (substring reference-stroke 5 -1))
+                         (reference (cdr (assoc reference-id reference-gradients)))
+                         (native (cdr (assoc (substring native-stroke 5 -1)
+                                             native-gradients))))
+                    (should reference)
+                    (should native)
+                    (should (equal (plist-get reference :kind)
+                                   (plist-get native :kind)))
+                    (dolist (key '(:cx :cy :r :x1 :y1 :x2 :y2))
+                      (let ((ref-value (plist-get (plist-get reference :attrs) key))
+                            (native-value (plist-get (plist-get native :attrs) key)))
+                        (when (and ref-value native-value)
+                          (should (< (abs (- (chem-svg-parity-test--number ref-value)
+                                             (chem-svg-parity-test--number native-value)))
+                                     0.01)))))
+                    (should (equal (plist-get reference :stops)
+                                   (plist-get native :stops))))
+                (should (equal reference-stroke native-stroke))))))))))
+
+(defun chem-svg-parity-test--tspan-parts (svg)
+  "Return (TEXT . FILL) pairs from SVG tspans."
+  (let ((start 0)
+        (parts nil))
+    (while (string-match "<tspan fill=\"\\([^\"]+\\)\"[^>]*>\\([^<]*\\)</tspan>"
+                         svg start)
+      (push (cons (match-string 2 svg) (match-string 1 svg)) parts)
+      (setq start (match-end 0)))
+    (nreverse parts)))
+
+(ert-deftest chem-svg-parity-text-colors ()
+  "Native tspan text and colors match SmilesDrawer."
+  (dolist (entry (chem-svg-parity-test--label-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
+           (atoms (chem-drawing-atoms drawing)))
+      (dolist (label (chem-svg-parity-test--list
+                      (chem-svg-parity-test--get fixture "labels")))
+        (let* ((idx (chem-svg-parity-test--number
+                     (chem-svg-parity-test--get label "atom")))
+               (atom (gethash idx atoms)))
+          (unless (chem-exp-svg--hidden-atom-p state idx)
+            (let* ((reference
+                    (mapcar (lambda (part)
+                              (cons (chem-svg-parity-test--get part "text")
+                                    (chem-svg-parity-test--get part "fill")))
+                            (chem-svg-parity-test--list
+                             (chem-svg-parity-test--get label "parts"))))
+                   (native (chem-svg-parity-test--tspan-parts
+                            (chem-exp-svg--atom-svg state atom))))
+              (should (equal reference native)))))))))
+
 (ert-deftest chem-svg-parity-masks ()
   "Native label masks match SmilesDrawer's mask circles."
   (dolist (entry (chem-svg-parity-test--label-fixtures))

@@ -102,6 +102,16 @@
     {
       "atom": 2,
       "text": "HO",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
       "direction": "left",
       "x": 78.74,
       "y": 25.980689,
@@ -113,6 +123,25 @@
       "cx": 75,
       "cy": 25.980689,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 75,
+      "cy": 25.980689,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

@@ -218,6 +218,12 @@
     {
       "atom": 3,
       "text": "S",
+      "parts": [
+        {
+          "text": "S",
+          "fill": "#f1c40f"
+        }
+      ],
       "direction": "up",
       "x": 43.893547,
       "y": -24.270518,
@@ -229,6 +235,25 @@
       "cx": 47.633547,
       "cy": -24.270518,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 47.633547,
+      "cy": -24.270518,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#f1c40f"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

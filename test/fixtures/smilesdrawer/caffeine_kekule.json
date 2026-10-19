@@ -607,6 +607,12 @@
     {
       "atom": 1,
       "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
       "direction": "down",
       "x": 198.503306,
       "y": -66.539929,
@@ -615,6 +621,12 @@
     {
       "atom": 3,
       "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
       "direction": "up",
       "x": 178.759855,
       "y": -110.884339,
@@ -623,6 +635,12 @@
     {
       "atom": 7,
       "text": "O",
+      "parts": [
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
       "direction": "right",
       "x": 163.23624,
       "y": -11.72717,
@@ -631,6 +649,12 @@
     {
       "atom": 8,
       "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
       "direction": "right",
       "x": 121.198456,
       "y": -42.26935,
@@ -639,6 +663,12 @@
     {
       "atom": 10,
       "text": "O",
+      "parts": [
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
       "direction": "left",
       "x": 86.640673,
       "y": -72.811529,
@@ -647,6 +677,12 @@
     {
       "atom": 11,
       "text": "N",
+      "parts": [
+        {
+          "text": "N",
+          "fill": "#3498db"
+        }
+      ],
       "direction": "up",
       "x": 126.629868,
       "y": -93.946228,
@@ -683,6 +719,110 @@
       "cx": 130.369868,
       "cy": -93.946228,
       "r": 8.25
+    }
+  ],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 202.243306,
+      "cy": -66.539929,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-1",
+      "cx": 182.499855,
+      "cy": -110.884339,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-2",
+      "cx": 130.369868,
+      "cy": -93.946228,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-3",
+      "cx": 166.97624,
+      "cy": -11.72717,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-4",
+      "cx": 124.938456,
+      "cy": -42.26935,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#3498db"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    },
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-5",
+      "cx": 82.900673,
+      "cy": -72.811529,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
     }
   ],
   "viewBox": [

@@ -45,8 +45,10 @@ Phase 1 is in progress:
 - Label mask centers and radii now match SmilesDrawer for text labels.
 - Square viewBox, 500x500 default output, text measurement, and text-inclusive
   bounds now match SmilesDrawer.
+- Bond colors now match SmilesDrawer's solid/radial/linear gradient rules, and
+  labels use per-part tspan colors with the same theme palette.
 - Known gaps: the allene carbon label and the dot used for linear carbon
-  atoms.  Next parity target is bond gradients and per-part text colors.
+  atoms.  Next parity target is layout metrics and raster comparison.
 
 ## Reference version
 

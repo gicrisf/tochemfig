@@ -202,7 +202,9 @@ and `alternating' draws dashed inner lines."
   theme
   bounds
   hidden
-  pseudo)
+  pseudo
+  gradients
+  edge-colors)
 
 ;;; Option and theme helpers
 
@@ -852,7 +854,10 @@ atom and uses the mask to keep bonds clear."
                      (chem-exp-svg--sorted-atoms
                       (chem-exp-svg-state-drawing state))
                      "")))
-    (format "<defs>\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
+    (format "<defs>\n%s\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
+            (mapconcat #'identity
+                       (nreverse (chem-exp-svg-state-gradients state))
+                       "")
             (chem-exp-svg--escape (chem-exp-svg--mask-id))
             (chem-exp-svg--number (nth 0 viewbox))
             (chem-exp-svg--number (nth 1 viewbox))
@@ -868,21 +873,94 @@ atom and uses the mask to keep bonds clear."
   "Return STATE's bond color."
   (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state)))
 
-(defun chem-exp-svg--line (state x1 y1 x2 y2 &optional dash)
+(defun chem-exp-svg--theme-element-color (state element)
+  "Return the theme color for ELEMENT."
+  (chem-exp-svg--theme-color (chem-exp-svg-state-theme state) element))
+
+(defun chem-exp-svg--gradient-stops (color-a color-b)
+  "Return gradient stop SVG for COLOR-A and COLOR-B."
+  (format "<stop offset=\"20%%\" stop-color=\"%s\"/><stop offset=\"80%%\" stop-color=\"%s\"/>"
+          (chem-exp-svg--escape color-a)
+          (chem-exp-svg--escape color-b)))
+
+(defun chem-exp-svg--edge-color (state edge)
+  "Return the SVG stroke for EDGE, creating a gradient if needed."
+  (or (gethash (chem-edge-id edge) (chem-exp-svg-state-edge-colors state))
+      (let* ((drawing (chem-exp-svg-state-drawing state))
+             (atoms (chem-drawing-atoms drawing))
+             (atom-a (gethash (chem-edge-a edge) atoms))
+             (atom-b (gethash (chem-edge-b edge) atoms))
+             (element-a (chem-atom-element atom-a))
+             (element-b (chem-atom-element atom-b))
+             (color-a (chem-exp-svg--theme-element-color state element-a))
+             (color-b (chem-exp-svg--theme-element-color state element-b))
+             (point-a (chem-exp-svg--point state
+                                            (chem-atom-x atom-a)
+                                            (chem-atom-y atom-a)))
+             (point-b (chem-exp-svg--point state
+                                            (chem-atom-x atom-b)
+                                            (chem-atom-y atom-b)))
+             (id (format "chem-exp-svg-bond-%s" (chem-edge-id edge)))
+             (url (format "url(#%s)" id)))
+        (cond
+         ((equal color-a color-b)
+          color-a)
+         (t
+          (let* ((dx (- (car point-b) (car point-a)))
+                 (dy (- (cdr point-b) (cdr point-a)))
+                 (length (sqrt (+ (* dx dx) (* dy dy))))
+                 (carbon-a (equal element-a "C"))
+                 (carbon-b (equal element-b "C"))
+                 (radial-p (and (or carbon-a carbon-b)
+                                (not (and carbon-a carbon-b))
+                                (>= length 27.0)
+                                (<= length 33.0)))
+                 (gradient
+                  (if radial-p
+                      (let* ((hetero-point (if carbon-a point-b point-a))
+                             (hetero-color (if carbon-a color-b color-a))
+                             (carbon-color (if carbon-a color-a color-b)))
+                        (format "<radialGradient id=\"%s\" gradientUnits=\"userSpaceOnUse\" cx=\"%s\" cy=\"%s\" r=\"30\">%s</radialGradient>"
+                                (chem-exp-svg--escape id)
+                                (chem-exp-svg--number (car hetero-point))
+                                (chem-exp-svg--number (cdr hetero-point))
+                                (chem-exp-svg--gradient-stops
+                                 hetero-color carbon-color)))
+                    (format "<linearGradient id=\"%s\" gradientUnits=\"userSpaceOnUse\" x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\">%s</linearGradient>"
+                            (chem-exp-svg--escape id)
+                            (chem-exp-svg--number (car point-a))
+                            (chem-exp-svg--number (cdr point-a))
+                            (chem-exp-svg--number (car point-b))
+                            (chem-exp-svg--number (cdr point-b))
+                            (chem-exp-svg--gradient-stops color-a color-b)))))
+            (push gradient (chem-exp-svg-state-gradients state))
+            (puthash (chem-edge-id edge) url
+                     (chem-exp-svg-state-edge-colors state))
+            url))))))
+
+(defun chem-exp-svg--prepare-gradients (state)
+  "Create all gradients needed by STATE's visible edges."
+  (dolist (edge (cl-remove-if-not
+                 (lambda (edge)
+                   (chem-exp-svg--edge-visible-p state edge))
+                 (chem-visible-edges (chem-exp-svg-state-drawing state))))
+    (chem-exp-svg--edge-color state edge)))
+
+(defun chem-exp-svg--line (state x1 y1 x2 y2 &optional dash color)
   "Return a line element for STATE, optionally with DASH."
   (format "<line x1=\"%s\" y1=\"%s\" x2=\"%s\" y2=\"%s\" stroke=\"%s\" stroke-width=\"%s\" stroke-linecap=\"round\"%s/>\n"
           (chem-exp-svg--number x1)
           (chem-exp-svg--number y1)
           (chem-exp-svg--number x2)
           (chem-exp-svg--number y2)
-          (chem-exp-svg--escape (chem-exp-svg--bond-color state))
+          (chem-exp-svg--escape (or color (chem-exp-svg--bond-color state)))
           (chem-exp-svg--number
            (chem-exp-svg--option state :svg-bond-thickness))
           (if dash
               (format " stroke-dasharray=\"%s\"" dash)
             "")))
 
-(defun chem-exp-svg--parallel-lines (state point-a point-b offsets)
+(defun chem-exp-svg--parallel-lines (state point-a point-b offsets &optional color)
   "Return parallel lines from POINT-A to POINT-B at OFFSETS."
   (let* ((x1 (car point-a))
          (y1 (cdr point-a))
@@ -892,7 +970,7 @@ atom and uses the mask to keep bonds clear."
          (dy (- y2 y1))
          (length (sqrt (+ (* dx dx) (* dy dy)))))
     (if (< length 1e-9)
-        (chem-exp-svg--line state x1 y1 x2 y2)
+        (chem-exp-svg--line state x1 y1 x2 y2 nil color)
       (let ((normal-x (/ (- dy) length))
             (normal-y (/ dx length)))
         (mapconcat
@@ -901,7 +979,8 @@ atom and uses the mask to keep bonds clear."
                                (+ x1 (* normal-x offset))
                                (+ y1 (* normal-y offset))
                                (+ x2 (* normal-x offset))
-                               (+ y2 (* normal-y offset))))
+                               (+ y2 (* normal-y offset))
+                               nil color))
          offsets "")))))
 
 (defun chem-exp-svg--edge-normals (point-a point-b)
@@ -1012,9 +1091,10 @@ and center-double-bond cases."
          (ring (chem-exp-svg--edge-ring state edge))
          (stereo (chem-edge-stereo edge))
          (show-stereo (chem-exp-svg--option state :svg-show-stereo))
+         (color (chem-exp-svg--edge-color state edge))
          (lines
           (if (and show-stereo (memq stereo '(:up :down :either)))
-              (chem-exp-svg--stereo-edge-svg state edge point-a point-b)
+              (chem-exp-svg--stereo-edge-svg state edge point-a point-b color)
             (pcase (chem-edge-order edge)
               (:double
                (let* ((drawing (chem-exp-svg-state-drawing state))
@@ -1031,7 +1111,8 @@ and center-double-bond cases."
                          ring))
                       (base (chem-exp-svg--line state
                                                 (car point-a) (cdr point-a)
-                                                (car point-b) (cdr point-b))))
+                                                (car point-b) (cdr point-b)
+                                                nil color)))
                  (cond
                   ((and circle-ring (null target-ring)) base)
                   (target-ring
@@ -1042,7 +1123,8 @@ and center-double-bond cases."
                          (concat
                           base
                           (chem-exp-svg--ring-inner-line
-                           state point-a point-b short-fraction offset nil))
+                           state point-a point-b short-fraction offset nil
+                           color))
                        base)))
                   (t
                    (let ((side (chem-exp-svg--double-side state edge)))
@@ -1055,14 +1137,17 @@ and center-double-bond cases."
                            (concat
                             base
                             (chem-exp-svg--ring-inner-line
-                             state point-a point-b short-fraction offset nil)))
+                             state point-a point-b short-fraction offset nil
+                             color)))
                        (let ((half (/ spacing 2.0)))
                          (chem-exp-svg--parallel-lines
-                          state point-a point-b (list (- half) half)))))))))
+                          state point-a point-b (list (- half) half)
+                          color))))))))
               (:triple
                (let ((offset (/ spacing 1.5)))
                  (chem-exp-svg--parallel-lines
-                  state point-a point-b (list (- offset) 0.0 offset))))
+                  state point-a point-b (list (- offset) 0.0 offset)
+                  color)))
               (:aromatic
                (if (eq 'alternating
                        (chem-exp-svg--edge-aromatic-display state edge))
@@ -1074,20 +1159,24 @@ and center-double-bond cases."
                          (concat
                           (chem-exp-svg--line state
                                               (car point-a) (cdr point-a)
-                                              (car point-b) (cdr point-b))
+                                              (car point-b) (cdr point-b)
+                                              nil color)
                           (chem-exp-svg--ring-inner-line
                            state point-a point-b short-fraction offset
-                           (chem-exp-svg--dash-pattern state)))
+                           (chem-exp-svg--dash-pattern state) color))
                        (chem-exp-svg--line state
                                            (car point-a) (cdr point-a)
-                                           (car point-b) (cdr point-b))))
+                                           (car point-b) (cdr point-b)
+                                           nil color)))
                  (chem-exp-svg--line state
                                      (car point-a) (cdr point-a)
-                                     (car point-b) (cdr point-b))))
+                                     (car point-b) (cdr point-b)
+                                     nil color)))
               (_
                (chem-exp-svg--line state
                                    (car point-a) (cdr point-a)
-                                   (car point-b) (cdr point-b))))))
+                                   (car point-b) (cdr point-b)
+                                   nil color)))))
          (attributes (chem-exp-svg--marker-attributes
                       (chem-edge-marker edge))))
     (if attributes
@@ -1237,7 +1326,7 @@ and center-double-bond cases."
          (cons (+ (car point-wide) (* nx wide-half))
                (+ (cdr point-wide) (* ny wide-half))))))))
 
-(defun chem-exp-svg--solid-wedge-svg (state point-narrow point-wide)
+(defun chem-exp-svg--solid-wedge-svg (state point-narrow point-wide &optional color)
   "Return a filled wedge from POINT-NARROW to POINT-WIDE."
   (let ((points (chem-exp-svg--wedge-points state point-narrow point-wide)))
     (if points
@@ -1248,12 +1337,13 @@ and center-double-bond cases."
                            (chem-exp-svg--number (car point))
                            (chem-exp-svg--number (cdr point))))
                  points " ")
-                (chem-exp-svg--escape (chem-exp-svg--bond-color state)))
+                (chem-exp-svg--escape (or color (chem-exp-svg--bond-color state))))
       (chem-exp-svg--line state
                           (car point-narrow) (cdr point-narrow)
-                          (car point-wide) (cdr point-wide)))))
+                          (car point-wide) (cdr point-wide)
+                          nil color))))
 
-(defun chem-exp-svg--hashed-wedge-svg (state point-narrow point-wide)
+(defun chem-exp-svg--hashed-wedge-svg (state point-narrow point-wide &optional color)
   "Return a hashed wedge from POINT-NARROW to POINT-WIDE."
   (let* ((dx (- (car point-wide) (car point-narrow)))
          (dy (- (cdr point-wide) (cdr point-narrow)))
@@ -1261,7 +1351,8 @@ and center-double-bond cases."
     (if (< length 1e-9)
         (chem-exp-svg--line state
                             (car point-narrow) (cdr point-narrow)
-                            (car point-wide) (cdr point-wide))
+                            (car point-wide) (cdr point-wide)
+                            nil color)
       (let* ((ux (/ dx length))
              (uy (/ dy length))
              (nx (- uy))
@@ -1279,7 +1370,8 @@ and center-double-bond cases."
                    (- base-x (* nx width))
                    (- base-y (* ny width))
                    (+ base-x (* nx width))
-                   (+ base-y (* ny width)))
+                   (+ base-y (* ny width))
+                   nil color)
                   lines))
           (setq progress (+ progress step)))
         (let* ((width (* 0.5 font-size))
@@ -1290,7 +1382,8 @@ and center-double-bond cases."
                  (- base-x (* nx width))
                  (- base-y (* ny width))
                  (+ base-x (* nx width))
-                 (+ base-y (* ny width)))
+                 (+ base-y (* ny width))
+                 nil color)
                 lines))
         (mapconcat #'identity (nreverse lines) "")))))
 
@@ -1306,29 +1399,31 @@ and center-double-bond cases."
         (chem-stereocenter-wedge-up-p atoms center edge configuration)
       (eq :up (chem-edge-stereo-directed edge center)))))
 
-(defun chem-exp-svg--stereo-edge-svg (state edge point-a point-b)
+(defun chem-exp-svg--stereo-edge-svg (state edge point-a point-b &optional color)
   "Return EDGE's stereochemical SVG."
   (pcase (chem-edge-stereo edge)
     (:either
      (chem-exp-svg--line state
                          (car point-a) (cdr point-a)
                          (car point-b) (cdr point-b)
-                         (chem-exp-svg--dash-pattern state)))
+                         (chem-exp-svg--dash-pattern state) color))
     ((or :up :down)
      (let ((center (chem-edge-stereo-center edge)))
        (if (null center)
            (chem-exp-svg--line state
                                (car point-a) (cdr point-a)
-                               (car point-b) (cdr point-b))
+                               (car point-b) (cdr point-b)
+                               nil color)
          (let* ((wide (if (= center (chem-edge-a edge)) point-a point-b))
                 (narrow (if (= center (chem-edge-a edge)) point-b point-a)))
            (if (chem-exp-svg--stereo-wedge-up-p state edge center)
-               (chem-exp-svg--solid-wedge-svg state narrow wide)
-             (chem-exp-svg--hashed-wedge-svg state narrow wide))))))
+               (chem-exp-svg--solid-wedge-svg state narrow wide color)
+             (chem-exp-svg--hashed-wedge-svg state narrow wide color))))))
     (_
      (chem-exp-svg--line state
                          (car point-a) (cdr point-a)
-                         (car point-b) (cdr point-b)))))
+                         (car point-b) (cdr point-b)
+                         nil color))))
 
 (defun chem-exp-svg--stereo-label-text (state center)
   "Return the stereochemistry label text for CENTER."
@@ -1538,7 +1633,7 @@ ring's side."
             (chem-exp-svg--number (* 3.0 thickness))
             (chem-exp-svg--number (* 2.0 thickness)))))
 
-(defun chem-exp-svg--ring-inner-line (state point-a point-b fraction offset dash)
+(defun chem-exp-svg--ring-inner-line (state point-a point-b fraction offset dash &optional color)
   "Return a shortened, offset inner line."
   (let* ((short (chem-exp-svg--shortened-line point-a point-b fraction))
          (start (chem-exp-svg--offset-point (nth 0 short) offset))
@@ -1546,7 +1641,7 @@ ring's side."
     (chem-exp-svg--line state
                         (car start) (cdr start)
                         (car end) (cdr end)
-                        dash)))
+                        dash color)))
 
 (defun chem-exp-svg--rings (state)
   "Return the ring SVG for STATE."
@@ -1678,7 +1773,9 @@ ring's side."
                  :options options
                  :hidden hidden
                  :pseudo groups
-                 :bounds nil)))
+                 :bounds nil
+                 :gradients nil
+                 :edge-colors (make-hash-table :test 'eql))))
     (setf (chem-exp-svg-state-theme state)
           (chem-exp-svg--theme state))
     (setf (chem-exp-svg-state-bounds state)
@@ -1688,6 +1785,7 @@ ring's side."
 (defun chem-exp-svg-render (drawing options)
   "Render DRAWING to an SVG string using OPTIONS."
   (let* ((state (chem-exp-svg--make-state drawing options))
+         (_ (chem-exp-svg--prepare-gradients state))
          (body (concat (chem-exp-svg--defs state)
                        (chem-exp-svg--background state)
                        (chem-exp-svg--masked-content state)
