@@ -567,32 +567,24 @@
       (should (= 1 (chem-exp-svg-test--line-count
                     (chem-exp-svg--edge-svg state edge)))))))
 
-(ert-deftest chem-exp-svg-terminal-label-on-bond-axis ()
-  "One-bond labels stay centered on the outward bond axis."
+(ert-deftest chem-exp-svg-labels-centered-on-atoms ()
+  "Atom labels are centered on their atoms, as in SmilesDrawer."
   (let* ((chem-default-exporter 'svg)
          (options (chem--build-options '(("svg-aromatic" . circle))))
          (drawing (chem-from-string "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" options))
          (state (chem-exp-svg--make-state drawing options))
          (checked 0))
     (dolist (atom (chem-exp-svg--sorted-atoms drawing))
-      (let ((angles (chem-atom-bond-angles atom))
-            (text (chem-exp-svg--atom-text atom)))
-        (when (and text (= 1 (length angles)))
+      (let ((text (chem-exp-svg--atom-text atom)))
+        (when text
           (setq checked (1+ checked))
           (let* ((point (chem-exp-svg--point state
-                                              (chem-atom-x atom)
-                                              (chem-atom-y atom)))
-                 (center (chem-exp-svg--label-center state atom text))
-                 (radians (* (car angles) (/ float-pi 180.0)))
-                 (bond-x (cos radians))
-                 (bond-y (- (sin radians)))
-                 (label-x (- (car center) (car point)))
-                 (label-y (- (cadr center) (cdr point)))
-                 (dot (+ (* bond-x label-x) (* bond-y label-y)))
-                 (cross (- (* bond-x label-y) (* bond-y label-x))))
-            (should (< dot 0.0))
-            (should (< (abs cross) 1e-6))))))
-    (should (= 2 checked))))
+                                             (chem-atom-x atom)
+                                             (chem-atom-y atom)))
+                 (center (chem-exp-svg--label-center state atom text)))
+            (should (< (abs (- (car center) (car point))) 1e-6))
+            (should (< (abs (- (cadr center) (cdr point))) 1e-6))))))
+    (should (> checked 0))))
 
 (ert-deftest chem-exp-svg-atom-numbers ()
   "Atom numbers replace hydrogen and charge annotations."

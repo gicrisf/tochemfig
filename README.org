@@ -448,7 +448,7 @@ guard against regressions:
    primitives against generated SmilesDrawer fixtures using shared
    coordinates.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 492 tests.
+The full ERT suite currently has 494 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

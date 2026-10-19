@@ -35,8 +35,10 @@ Phase 1 is in progress:
   `apothem - bondSpacing` formula.
 - Acyclic double-bond side selection, shortening, and absolute line placement
   now match the butene fixtures.
-- Known next gap: attached pseudo-element labels (alanine and nitrobenzene
-  fixtures).
+- Heteroatom label text, left-direction ordering, and atom-centered placement
+  now match the shared-coordinate fixtures.
+- Known next gaps: attached pseudo-element labels (alanine and nitrobenzene)
+  and the allene carbon label.
 
 ## Reference version
 

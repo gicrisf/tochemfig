@@ -326,20 +326,28 @@ and `alternating' draws dashed inner lines."
    ((= hydrogens 1) "H")
    (t (concat "H" (chem-exp-svg--subscript hydrogens)))))
 
-(defun chem-exp-svg--atom-text (atom)
-  "Return ATOM's display text, or nil when it has no label."
+(defun chem-exp-svg--atom-text (atom &optional direction)
+  "Return ATOM's display text, or nil when it has no label.
+For left-directed text, put hydrogens before the element so the label
+reads outward from the atom, matching SmilesDrawer."
   (let ((label (chem-atom-label atom))
-        (number (chem-atom-number atom)))
+        (number (chem-atom-number atom))
+        (direction (or direction (chem-exp-svg--text-direction atom))))
     (cond
      (number
       (if label
           (concat label (number-to-string number))
         (number-to-string number)))
      (label
-      (concat label
-              (chem-exp-svg--hydrogen-text (chem-atom-hydrogens atom))
-              (chem-exp-svg--charge-text (or (chem-atom-charge atom) 0))
-              (chem-exp-svg--radical-text (chem-atom-radical atom))))
+      (let ((hydrogens (chem-exp-svg--hydrogen-text
+                        (chem-atom-hydrogens atom)))
+            (charge (chem-exp-svg--charge-text
+                     (or (chem-atom-charge atom) 0)))
+            (radical (chem-exp-svg--radical-text
+                      (chem-atom-radical atom))))
+        (if (eq direction 'left)
+            (concat hydrogens label charge radical)
+          (concat label hydrogens charge radical))))
      (t nil))))
 
 (defun chem-exp-svg--atom-text-color (state atom)
@@ -349,61 +357,52 @@ and `alternating' draws dashed inner lines."
                                  (chem-atom-element atom))
     (chem-exp-svg--theme-foreground (chem-exp-svg-state-theme state))))
 
-(defun chem-exp-svg--direction-from-angle (angle)
-  "Return the cardinal text direction for ANGLE in degrees."
+(defun chem-exp-svg--direction-from-svg-angle (angle)
+  "Map an SVG text ANGLE in degrees to right, down, left, or up."
   (let ((angle (mod angle 360.0)))
     (cond
      ((or (< angle 45.0) (>= angle 315.0)) 'right)
-     ((< angle 135.0) 'up)
+     ((< angle 135.0) 'down)
      ((< angle 225.0) 'left)
-     (t 'down))))
+     (t 'up))))
 
 (defun chem-exp-svg--text-direction (atom)
-  "Return ATOM's preferred text direction."
-  (let ((angles (mapcar (lambda (angle) (mod angle 360.0))
+  "Return ATOM's preferred text direction.
+This follows SmilesDrawer: use the mean direction from the neighbours
+to the atom, then round terminal labels to horizontal and other labels
+to a cardinal direction."
+  (let ((angles (mapcar (lambda (angle)
+                          (mod (- 180.0 angle) 360.0))
                         (chem-atom-bond-angles atom))))
     (cond
      ((null angles) 'right)
      ((null (cdr angles))
-      (chem-exp-svg--direction-from-angle (+ (car angles) 180.0)))
+      (let* ((angle (car angles))
+             (angle (if (< (abs (- angle 90.0)) 0.5)
+                        (- angle 11.4591559026)
+                      angle))
+             (rounded (* 180.0 (round (/ angle 180.0)))))
+        (if (= 0 (mod (round rounded) 360)) 'right 'left)))
      (t
       (let* ((radians (mapcar (lambda (angle)
                                 (* angle (/ float-pi 180.0)))
                               angles))
              (x (apply #'+ (mapcar #'cos radians)))
-             (y (apply #'+ (mapcar #'sin radians))))
-        (if (< (sqrt (+ (* x x) (* y y))) 1e-6)
-            'up
-          (let* ((mean (mod (* (atan y x) (/ 180.0 float-pi)) 360.0))
-                 (opposite (mod (+ mean 180.0) 360.0)))
-            (chem-exp-svg--direction-from-angle opposite))))))))
+             (y (apply #'+ (mapcar #'sin radians)))
+             (mean (if (< (sqrt (+ (* x x) (* y y))) 1e-9)
+                       0.0
+                     (* (atan y x) (/ 180.0 float-pi))))
+             (rounded (* 90.0 (round (/ mean 90.0)))))
+        (chem-exp-svg--direction-from-svg-angle rounded))))))
 
-(defun chem-exp-svg--text-position (state atom direction &optional text)
-  "Return (X Y ANCHOR) for ATOM's text in DIRECTION.
-For atoms with one bond, place TEXT along the outward extension of
-that bond so terminal labels stay centered on the bond axis."
-  (let* ((point (chem-exp-svg--point state
+(defun chem-exp-svg--text-position (state atom _direction &optional _text)
+  "Return (X Y ANCHOR) for ATOM's text, centered on the atom.
+The anchor is always `middle'; SmilesDrawer centers each label over its
+atom and uses the mask to keep bonds clear."
+  (let ((point (chem-exp-svg--point state
                                     (chem-atom-x atom)
-                                    (chem-atom-y atom)))
-         (font-size (chem-exp-svg--option state :svg-font-size))
-         (offset (* 0.5 font-size))
-         (angles (mapcar (lambda (angle) (mod angle 360.0))
-                         (chem-atom-bond-angles atom))))
-    (if (= 1 (length angles))
-        (let* ((radians (* (car angles) (/ float-pi 180.0)))
-               (distance (+ offset
-                            (* 0.3 font-size (length (or text "")))))
-               (dx (* (cos radians) distance))
-               (dy (* (sin radians) distance)))
-          ;; The label goes opposite the bond; SVG Y grows downward.
-          (list (- (car point) dx)
-                (+ (cdr point) dy)
-                "middle"))
-      (pcase direction
-        ('right (list (+ (car point) offset) (cdr point) "start"))
-        ('left (list (- (car point) offset) (cdr point) "end"))
-        ('up (list (car point) (- (cdr point) offset) "middle"))
-        (_ (list (car point) (+ (cdr point) offset) "middle"))))))
+                                    (chem-atom-y atom))))
+    (list (car point) (cdr point) "middle")))
 
 (defun chem-exp-svg--label-radius (state text)
   "Return an approximate mask radius for TEXT."

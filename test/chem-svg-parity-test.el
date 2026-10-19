@@ -571,6 +571,70 @@ Alanine and nitrobenzene use attached pseudo-element labels.")
                           (car point-pair) (cdr point-pair))
                          0.01)))))))))
 
+(defconst chem-svg-parity-test--label-known-gaps
+  '("allene")
+  "Fixtures whose labels are not compared yet.
+SmilesDrawer emits a carbon label for allene that is unrelated to the
+heteroatom labels covered here.")
+
+(defun chem-svg-parity-test--label-fixtures ()
+  "Return strict fixtures with comparable labels."
+  (cl-remove-if
+   (lambda (entry)
+     (member (chem-svg-parity-test--get entry "name")
+             chem-svg-parity-test--label-known-gaps))
+   (chem-svg-parity-test--strict-fixtures)))
+
+(ert-deftest chem-svg-parity-label-text ()
+  "Native label text matches SmilesDrawer."
+  (dolist (entry (chem-svg-parity-test--label-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (atoms (chem-drawing-atoms drawing))
+           (labels (chem-svg-parity-test--list
+                    (chem-svg-parity-test--get fixture "labels"))))
+      (should (= (length labels)
+                 (cl-count-if
+                  (lambda (atom)
+                    (chem-exp-svg--atom-text atom))
+                  (mapcar (lambda (idx) (gethash idx atoms))
+                          (mapcar (lambda (label)
+                                    (chem-svg-parity-test--number
+                                     (chem-svg-parity-test--get label "atom")))
+                                  labels)))))
+      (dolist (label labels)
+        (let* ((idx (chem-svg-parity-test--number
+                     (chem-svg-parity-test--get label "atom")))
+               (atom (gethash idx atoms))
+               (reference (chem-svg-parity-test--get label "text"))
+               (native (chem-exp-svg--atom-text atom)))
+          (should atom)
+          (should (equal reference native)))))))
+
+(ert-deftest chem-svg-parity-label-placement ()
+  "Native labels are centered on atoms like SmilesDrawer labels."
+  (dolist (entry (chem-svg-parity-test--label-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
+           (atoms (chem-drawing-atoms drawing))
+           (labels (chem-svg-parity-test--list
+                    (chem-svg-parity-test--get fixture "labels"))))
+      (dolist (label labels)
+        (let* ((idx (chem-svg-parity-test--number
+                     (chem-svg-parity-test--get label "atom")))
+               (atom (gethash idx atoms))
+               (text (chem-exp-svg--atom-text atom))
+               (point (chem-exp-svg--point state
+                                            (chem-atom-x atom)
+                                            (chem-atom-y atom)))
+               (center (chem-exp-svg--label-center state atom text)))
+          (should (< (abs (- (car center) (car point))) 1e-6))
+          (should (< (abs (- (cadr center) (cdr point))) 1e-6)))))))
+
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."
   (dolist (entry (chem-svg-parity-test--strict-fixtures))

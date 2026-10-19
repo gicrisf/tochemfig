@@ -34,7 +34,7 @@ and ring-record implementation.
 - Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
   and documentation updates.
 - Org Babel integration is implemented in `chem-babel.el`; see
-  `chem-mode-plans/org.md`.  The suite currently has 492 tests.
+  `chem-mode-plans/org.md`.  The suite currently has 494 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -712,15 +712,15 @@ helper and test it.
 
 ### Text direction
 
-Use the mean angle of the atom's visible neighbors
-(`chem-atom-bond-angles`):
+Use the mean angle from the atom's visible neighbors to the atom:
 
 - terminal atoms or no visible neighbors: horizontal text;
-- otherwise choose right, left, up, or down based on the mean angle;
-- use `text-anchor` and `dominant-baseline` to keep the text near the atom.
+- otherwise choose right, down, left, or up based on the rounded angle;
+- center the label on the atom and use the mask to keep bonds clear;
+- reverse the element/hydrogen order for left-directed labels.
 
-This is a simplified version of SmilesDrawer's text-direction logic.  It does
-not need to be perfect in v1, but it must be deterministic.
+This mirrors SmilesDrawer's text-direction logic.  Degenerate mean angles are
+handled deterministically.
 
 ### Text bounds and masks
 
