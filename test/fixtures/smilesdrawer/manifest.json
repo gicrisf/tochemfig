@@ -395,6 +395,76 @@
         "terminal-label"
       ],
       "raster": false
+    },
+    {
+      "name": "caffeine_dark",
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "heteroaromatic",
+        "carbonyl",
+        "n-methyl",
+        "option-dark-theme"
+      ],
+      "raster": false,
+      "reference_theme": "dark",
+      "chem_options": {
+        "svg-theme": "dark"
+      }
+    },
+    {
+      "name": "benzene_wide",
+      "smiles": "c1ccccc1",
+      "features": [
+        "aromatic",
+        "ring-circle",
+        "six-membered-ring",
+        "option-fixed-size"
+      ],
+      "raster": false,
+      "reference_options": {
+        "width": 900,
+        "height": 400
+      },
+      "chem_options": {
+        "svg-width": 900,
+        "svg-height": 400
+      }
+    },
+    {
+      "name": "ethanol_large_font",
+      "smiles": "CCO",
+      "features": [
+        "acyclic",
+        "carbon-dot",
+        "terminal-label",
+        "option-large-font"
+      ],
+      "raster": false,
+      "reference_options": {
+        "fontSizeLarge": 16
+      },
+      "chem_options": {
+        "svg-font-size": 16
+      }
+    },
+    {
+      "name": "benzene_zero_padding",
+      "smiles": "c1ccccc1",
+      "features": [
+        "aromatic",
+        "ring-circle",
+        "six-membered-ring",
+        "option-zero-padding"
+      ],
+      "raster": false,
+      "reference_options": {
+        "padding": 0
+      },
+      "chem_options": {
+        "svg-padding": 0
+      }
     }
   ]
 }

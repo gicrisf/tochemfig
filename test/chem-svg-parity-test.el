@@ -223,21 +223,35 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
        :exit-node nil
        :root nil))))
 
-(defun chem-svg-parity-test--options ()
-  "Return renderer options matching SmilesDrawer's coordinate units."
+(defun chem-svg-parity-test--chem-options (source)
+  "Return SOURCE's native exporter option overrides."
+  (let ((options (and source
+                      (chem-svg-parity-test--get source "chem_options"))))
+    (mapcar (lambda (option)
+              (cons (if (symbolp (car option))
+                        (symbol-name (car option))
+                      (car option))
+                    (cdr option)))
+            options)))
+
+(defun chem-svg-parity-test--options (&optional source)
+  "Return renderer options matching SmilesDrawer's coordinate units.
+SOURCE supplies optional native exporter overrides."
   (let ((chem-default-exporter 'svg))
     (chem--build-options
-     '(("svg-scale" . 1.0)
-       ("svg-padding" . 0.0)
-       ("svg-width" . nil)
-       ("svg-height" . nil)
-       ("svg-font-size" . 11.0)
-       ("svg-bond-spacing" . 5.1)
-       ("svg-bond-thickness" . 1.0)
-       ("svg-short-bond-length" . 0.8)
-       ("svg-theme" . light)
-       ("svg-aromatic" . circle)
-       ("svg-show-stereo" . t)))))
+     (append
+      '(("svg-scale" . 1.0)
+        ("svg-padding" . 0.0)
+        ("svg-width" . nil)
+        ("svg-height" . nil)
+        ("svg-font-size" . 11.0)
+        ("svg-bond-spacing" . 5.1)
+        ("svg-bond-thickness" . 1.0)
+        ("svg-short-bond-length" . 0.8)
+        ("svg-theme" . light)
+        ("svg-aromatic" . circle)
+        ("svg-show-stereo" . t))
+      (chem-svg-parity-test--chem-options source)))))
 
 (defun chem-svg-parity-test--line-elements (svg)
   "Return line endpoint vectors from SVG."
@@ -401,7 +415,7 @@ Orient each line along the canonical lower-to-higher atom direction."
              (fixture (chem-svg-parity-test--load name))
              (drawing (chem-svg-parity-test--build-drawing fixture))
              (state (chem-exp-svg--make-state drawing
-                                              (chem-svg-parity-test--options))))
+                                              (chem-svg-parity-test--options entry))))
         (dolist (edge (chem-edges drawing))
           (let* ((edge-id (chem-edge-id edge))
                  (reference (chem-svg-parity-test--reference-lines
@@ -543,7 +557,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options))))
+                   drawing (chem-svg-parity-test--options entry))))
       (dolist (edge (chem-edges drawing))
         (when (chem-exp-svg--edge-visible-p state edge)
           (let* ((reference
@@ -612,7 +626,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (atoms (chem-drawing-atoms drawing))
            (fixture-atoms (chem-svg-parity-test--list
                            (chem-svg-parity-test--get fixture "atoms")))
@@ -679,7 +693,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (atoms (chem-drawing-atoms drawing))
            (fixture-atoms (chem-svg-parity-test--list
                            (chem-svg-parity-test--get fixture "atoms")))
@@ -748,7 +762,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (atoms (chem-drawing-atoms drawing))
            (labels (chem-svg-parity-test--list
                     (chem-svg-parity-test--get fixture "labels"))))
@@ -777,7 +791,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (atoms (chem-drawing-atoms drawing))
            (labels (chem-svg-parity-test--list
                     (chem-svg-parity-test--get fixture "labels"))))
@@ -870,7 +884,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--viewbox-options)))
+                   drawing (chem-svg-parity-test--viewbox-options entry)))
            (reference-gradients (chem-svg-parity-test--reference-gradients fixture))
            (native-gradients
             (progn
@@ -930,7 +944,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (atoms (chem-drawing-atoms drawing)))
       (dolist (label (chem-svg-parity-test--list
                       (chem-svg-parity-test--get fixture "labels")))
@@ -982,7 +996,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--viewbox-options)))
+                   drawing (chem-svg-parity-test--viewbox-options entry)))
            (reference
             (sort (mapcar
                    (lambda (point)
@@ -1016,7 +1030,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (reference
             (sort
              (mapcar
@@ -1059,21 +1073,24 @@ Orient each line along the canonical lower-to-higher atom direction."
                        0.01))
             (should (< (abs (- (caddr expected) (caddr actual))) 0.01))))))))
 
-(defun chem-svg-parity-test--viewbox-options ()
-  "Return shared-coordinate options matching SmilesDrawer's padding."
+(defun chem-svg-parity-test--viewbox-options (&optional source)
+  "Return shared-coordinate options matching SmilesDrawer's padding.
+SOURCE supplies optional native exporter overrides."
   (let ((chem-default-exporter 'svg))
     (chem--build-options
-     '(("svg-scale" . 1.0)
-       ("svg-padding" . 10.0)
-       ("svg-width" . nil)
-       ("svg-height" . nil)
-       ("svg-font-size" . 11.0)
-       ("svg-bond-spacing" . 5.1)
-       ("svg-bond-thickness" . 1.0)
-       ("svg-short-bond-length" . 0.8)
-       ("svg-theme" . light)
-       ("svg-aromatic" . circle)
-       ("svg-show-stereo" . t)))))
+     (append
+      '(("svg-scale" . 1.0)
+        ("svg-padding" . 10.0)
+        ("svg-width" . nil)
+        ("svg-height" . nil)
+        ("svg-font-size" . 11.0)
+        ("svg-bond-spacing" . 5.1)
+        ("svg-bond-thickness" . 1.0)
+        ("svg-short-bond-length" . 0.8)
+        ("svg-theme" . light)
+        ("svg-aromatic" . circle)
+        ("svg-show-stereo" . t))
+      (chem-svg-parity-test--chem-options source)))))
 
 (ert-deftest chem-svg-parity-viewbox ()
   "Native square viewBox matches SmilesDrawer."
@@ -1082,7 +1099,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--viewbox-options)))
+                   drawing (chem-svg-parity-test--viewbox-options entry)))
            (reference (mapcar #'chem-svg-parity-test--number
                               (chem-svg-parity-test--list
                                (chem-svg-parity-test--get fixture "viewBox"))))
@@ -1091,6 +1108,23 @@ Orient each line along the canonical lower-to-higher atom direction."
       (dolist (pair (cl-mapcar #'cons reference native))
         (should (< (abs (- (car pair) (cdr pair))) 0.01))))))
 
+(ert-deftest chem-svg-parity-size-options ()
+  "Native output dimensions match fixture size options."
+  (let* ((manifest (chem-svg-parity-test--manifest))
+         (fixtures (chem-svg-parity-test--list
+                    (chem-svg-parity-test--get manifest "fixtures")))
+         (entry (cl-find-if
+                 (lambda (candidate)
+                   (equal (chem-svg-parity-test--get candidate "name")
+                          "benzene_wide"))
+                 fixtures))
+         (fixture (chem-svg-parity-test--load "benzene_wide"))
+         (drawing (chem-svg-parity-test--build-drawing fixture))
+         (svg (chem-render drawing 'svg
+                           (chem-svg-parity-test--viewbox-options entry))))
+    (should (string-match-p "width=\"900\"" svg))
+    (should (string-match-p "height=\"400\"" svg))))
+
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."
   (dolist (entry (chem-svg-parity-test--strict-fixtures))
@@ -1098,7 +1132,7 @@ Orient each line along the canonical lower-to-higher atom direction."
            (fixture (chem-svg-parity-test--load name))
            (drawing (chem-svg-parity-test--build-drawing fixture))
            (state (chem-exp-svg--make-state
-                   drawing (chem-svg-parity-test--options)))
+                   drawing (chem-svg-parity-test--options entry)))
            (reference (chem-svg-parity-test--reference-circles fixture))
            (native (chem-svg-parity-test--native-circles state)))
       (should (equal (length reference) (length native)))
@@ -1109,7 +1143,7 @@ Orient each line along the canonical lower-to-higher atom direction."
   "Shared-coordinate rendering is deterministic."
   (let* ((fixture (chem-svg-parity-test--load "benzene"))
          (drawing (chem-svg-parity-test--build-drawing fixture))
-         (options (chem-svg-parity-test--options))
+         (options (chem-svg-parity-test--options fixture))
          (state-a (chem-exp-svg--make-state drawing options))
          (state-b (chem-exp-svg--make-state drawing options)))
     (should (equal (mapconcat

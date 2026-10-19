@@ -26,10 +26,10 @@ Phase 1 is in progress:
 
 - The development-only reference generator and normalizer live in
   `tools/smilesdrawer/`.
-- Thirty-seven fixtures cover aromatic rings, fused rings, heterocycles,
+- Forty-one fixtures cover aromatic rings, fused rings, heterocycles,
   acyclic chains, stereochemistry, bridged and spiro rings, large rings,
   charged heteroatoms, cumulated double bonds, terminal alkynes, small
-  molecules, and allenes.
+  molecules, allenes, and exporter option variants.
 - `test/chem-svg-parity-test.el` builds test-only IR from SmilesDrawer
   coordinates and runs fast shared-coordinate checks for edge geometry,
   absolute line placement, aromatic circle radii, and determinism.

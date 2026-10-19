@@ -40,7 +40,7 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - =examples/org-playground.org=: an executable tour of SVG options,
   stereochemistry, aromatic display, MOL/chemfig input, and Org caching.
 - A SmilesDrawer SVG parity harness in =tools/smilesdrawer/= with pinned
-  =jsdom= dependencies, thirty-seven reference fixtures, and development plans in
+  =jsdom= dependencies, forty-one reference fixtures, and development plans in
   =docs/smilesdrawer-parity.md= and =docs/smilesdrawer-fixture-plan.md=.
 - =test/chem-svg-parity-test.el=: shared-coordinate renderer parity tests for
   edge geometry, absolute line placement, aromatic circle radii, label text,
@@ -73,6 +73,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - No carbon dot is drawn for an sp carbon adjacent to a triple bond.
 - Duplicate terminal hash line removed from hashed wedges when the final dash
   lands on the wide end.
+- Option-variant fixtures for dark theme, fixed output dimensions, large labels,
+  and zero padding, with native option overrides separated from SmilesDrawer
+  reference options.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected

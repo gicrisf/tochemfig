@@ -1,0 +1,179 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
+    "theme": "light",
+    "options": {
+      "fontSizeLarge": 16
+    }
+  },
+  "name": "ethanol_large_font",
+  "smiles": "CCO",
+  "features": [
+    "acyclic",
+    "carbon-dot",
+    "terminal-label",
+    "option-large-font"
+  ],
+  "raster": false,
+  "chem_options": {
+    "svg-font-size": 16
+  },
+  "known_gap": null,
+  "atoms": [
+    {
+      "id": 0,
+      "x": 126.961487,
+      "y": 25.980683,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 100.980745,
+      "y": 40.980718,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 75,
+      "y": 25.980689,
+      "element": "O",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "stereocenter": false,
+      "forcePositioned": false,
+      "neighbours": [
+        1
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 100.980745,
+      "y1": 40.980718,
+      "x2": 126.961487,
+      "y2": 25.980683,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 75,
+      "y1": 25.980689,
+      "x2": 100.980745,
+      "y2": 40.980718,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 2,
+      "text": "HO",
+      "parts": [
+        {
+          "text": "H",
+          "fill": "#666666"
+        },
+        {
+          "text": "O",
+          "fill": "#e74c3c"
+        }
+      ],
+      "direction": "left",
+      "x": 80.44,
+      "y": 25.980689,
+      "transform": "transform: translateX(80.43999999991004px) translateY(25.980688649431098px)"
+    }
+  ],
+  "masks": [
+    {
+      "cx": 75,
+      "cy": 25.980689,
+      "r": 12
+    }
+  ],
+  "points": [],
+  "gradients": [
+    {
+      "kind": "radialgradient",
+      "id": "G66O4-atom-0",
+      "cx": 75,
+      "cy": 25.980689,
+      "r": 30,
+      "stops": [
+        {
+          "offset": "20%",
+          "color": "#e74c3c"
+        },
+        {
+          "offset": "80%",
+          "color": "#222222"
+        }
+      ]
+    }
+  ],
+  "viewBox": [
+    53.23999999991004,
+    -11.380040522743624,
+    83.72148749497607,
+    83.72148749497607
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 53.24,
+  "minY": 9.980689,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"500\" height=\"500\" viewBox=\"53.23999999991004 -11.380040522743624 83.72148749497607 83.72148749497607\"><style>\n                .element {\n                    font: 16pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"53.23999999991004\" y=\"9.980688649431098\" width=\"83.72148749497607\" height=\"41.00002915062663\"><rect x=\"53.23999999991004\" y=\"9.980688649431098\" width=\"83.72148749497607\" height=\"41.00002915062663\" fill=\"white\"></rect><circle cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"12\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"100.98074528329926\" y1=\"40.98071780005773\" x2=\"126.96148749488611\" y2=\"25.98068332892836\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"0\"></line><line x1=\"74.99999999991005\" y1=\"25.980688649431098\" x2=\"100.98074528329926\" y2=\"40.98071780005773\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\" data-edge=\"1\"></line></g><g><g style=\"transform: translateX(80.43999999991004px) translateY(25.980688649431098px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg>"
+}

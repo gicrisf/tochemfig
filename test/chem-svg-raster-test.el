@@ -96,7 +96,7 @@
                  (drawing (chem-svg-parity-test--build-drawing fixture))
                  (native-svg
                   (chem-render drawing 'svg
-                               (chem-svg-parity-test--viewbox-options)))
+                               (chem-svg-parity-test--viewbox-options fixture)))
                  (reference-svg
                   (chem-svg-parity-test--get fixture "svg"))
                  (reference-svg-path
