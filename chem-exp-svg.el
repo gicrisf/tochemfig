@@ -818,6 +818,67 @@ atom and uses the mask to keep bonds clear."
                       (chem-exp-svg--number (cdr point))))
           "")))))
 
+(defun chem-exp-svg--linear-carbon-p (state atom)
+  "Return non-nil when ATOM is a linear carbon dot in STATE."
+  (let* ((drawing (chem-exp-svg-state-drawing state))
+         (atoms (chem-drawing-atoms drawing))
+         (neighbors (chem-atom-neighbors atom)))
+    (and (equal (chem-atom-element atom) "C")
+         (null (chem-atom-label atom))
+         (= 2 (length neighbors))
+         (not (chem-exp-svg--hidden-atom-p state (chem-atom-idx atom)))
+         (let* ((a (gethash (car neighbors) atoms))
+                (b (gethash (cadr neighbors) atoms))
+                (vax (- (chem-atom-x a) (chem-atom-x atom)))
+                (vay (- (chem-atom-y a) (chem-atom-y atom)))
+                (vbx (- (chem-atom-x b) (chem-atom-x atom)))
+                (vby (- (chem-atom-y b) (chem-atom-y atom)))
+                (dot (+ (* vax vbx) (* vay vby)))
+                (la (sqrt (+ (* vax vax) (* vay vay))))
+                (lb (sqrt (+ (* vbx vbx) (* vby vby))))
+                (cosine (if (or (< la 1e-9) (< lb 1e-9))
+                            1.0
+                          (/ dot (* la lb))))
+                (angle (acos (max -1.0 (min 1.0 cosine)))))
+           (< (abs (- float-pi angle)) 0.1)))))
+
+(defun chem-exp-svg--linear-carbons (state)
+  "Return STATE's atoms represented by a carbon dot."
+  (cl-remove-if-not
+   (lambda (atom) (chem-exp-svg--linear-carbon-p state atom))
+   (chem-exp-svg--sorted-atoms (chem-exp-svg-state-drawing state))))
+
+(defun chem-exp-svg--point-svg (state atom)
+  "Return ATOM's carbon-dot SVG in STATE."
+  (let ((point (chem-exp-svg--point state
+                                    (chem-atom-x atom)
+                                    (chem-atom-y atom))))
+    (format "<circle cx=\"%s\" cy=\"%s\" r=\"0.75\" fill=\"%s\"/>\n"
+            (chem-exp-svg--number (car point))
+            (chem-exp-svg--number (cdr point))
+            (chem-exp-svg--escape
+             (chem-exp-svg--theme-color
+              (chem-exp-svg-state-theme state) "C")))))
+
+(defun chem-exp-svg--points (state)
+  "Return the carbon-dot SVG for STATE."
+  (mapconcat (lambda (atom) (chem-exp-svg--point-svg state atom))
+             (chem-exp-svg--linear-carbons state)
+             ""))
+
+(defun chem-exp-svg--point-mask-circles (state)
+  "Return mask circles for STATE's carbon dots."
+  (mapconcat
+   (lambda (atom)
+     (let ((point (chem-exp-svg--point state
+                                        (chem-atom-x atom)
+                                        (chem-atom-y atom))))
+       (format "<circle cx=\"%s\" cy=\"%s\" r=\"1.5\" fill=\"black\"/>\n"
+               (chem-exp-svg--number (car point))
+               (chem-exp-svg--number (cdr point)))))
+   (chem-exp-svg--linear-carbons state)
+   ""))
+
 (defun chem-exp-svg--atoms (state)
   "Return the atom label SVG for STATE."
   (mapconcat
@@ -853,7 +914,8 @@ atom and uses the mask to keep bonds clear."
                        (or (chem-exp-svg--label-mask-circle state atom) ""))
                      (chem-exp-svg--sorted-atoms
                       (chem-exp-svg-state-drawing state))
-                     "")))
+                     ""))
+          (points (chem-exp-svg--point-mask-circles state)))
     (format "<defs>\n%s\n<mask id=\"%s\" maskUnits=\"userSpaceOnUse\" x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\">\n<rect x=\"%s\" y=\"%s\" width=\"%s\" height=\"%s\" fill=\"white\"/>\n%s</mask>\n</defs>\n"
             (mapconcat #'identity
                        (nreverse (chem-exp-svg-state-gradients state))
@@ -865,7 +927,7 @@ atom and uses the mask to keep bonds clear."
             (chem-exp-svg--number (nth 0 viewbox))
             (chem-exp-svg--number (nth 1 viewbox))
             width height
-            circles)))
+            (concat circles points))))
 
 ;;; Bonds
 
@@ -1710,6 +1772,14 @@ ring's side."
            (setq max-x (if max-x (max max-x x) x))
            (setq max-y (if max-y (max max-y y) y)))))
      (chem-drawing-atoms drawing))
+    (dolist (atom (chem-exp-svg--linear-carbons state))
+      (let ((point (chem-exp-svg--point state
+                                        (chem-atom-x atom)
+                                        (chem-atom-y atom))))
+        (setq min-x (min min-x (- (car point) 0.75)))
+        (setq min-y (min min-y (- (cdr point) 0.75)))
+        (setq max-x (max max-x (+ (car point) 0.75)))
+        (setq max-y (max max-y (+ (cdr point) 0.75)))))
     (list (- (or min-x 0.0) padding)
           (- (or min-y 0.0) padding)
           (+ (or max-x 0.0) padding)
@@ -1789,6 +1859,7 @@ ring's side."
          (body (concat (chem-exp-svg--defs state)
                        (chem-exp-svg--background state)
                        (chem-exp-svg--masked-content state)
+                       (chem-exp-svg--points state)
                        (chem-exp-svg--atoms state)
                        (chem-exp-svg--stereo-labels state))))
     (chem-exp-svg--document state body)))

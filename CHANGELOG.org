@@ -52,7 +52,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   polygons, label masks, label mask radii, and viewBox bounds.
 - SVG text layout now uses SmilesDrawer's measured text extents and tspan
   parts; the default SVG output is 500x500 with a square viewBox.
-- Shared-coordinate parity tests for gradients and per-part text colors.
+- Shared-coordinate parity tests for gradients, per-part text colors, and
+  carbon dots.
 
 ** Changed
 - The transient menu now shows chemfig or SVG options based on the selected
@@ -99,7 +100,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   dimensions.
 - SVG bond strokes now use SmilesDrawer-compatible radial and linear
   gradients, and labels use per-element tspan colors.
-- The full ERT suite is now 500 tests.
+- Linear carbon atoms now render as carbon dots with matching mask circles.
+- The full ERT suite is now 502 tests.
 
 ** Migration
 =chem-mode= makes a clean break; the old =tochemfig= commands and variables

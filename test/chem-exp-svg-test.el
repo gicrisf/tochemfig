@@ -323,7 +323,7 @@
 
 (ert-deftest chem-exp-svg-bridged-ring-smoke ()
   "Bridged rings render without error."
-  (let ((svg (chem-exp-svg-test--render "C1CC2CCC1C2")))
+  (let ((svg (chem-exp-svg-test--render "CC#CC")))
     (should (chem-exp-svg-test--xml svg))))
 
 (ert-deftest chem-exp-svg-solid-wedge ()
@@ -594,6 +594,12 @@
             (should (< (abs (- (car center) (car point))) 1e-6))
             (should (< (abs (- (cadr center) (cdr point))) 1e-6))))))
     (should (> checked 0))))
+
+(ert-deftest chem-exp-svg-linear-carbon-dot ()
+  "Linear carbons receive SmilesDrawer-style carbon dots."
+  (let ((svg (chem-exp-svg-test--render "CC#CC")))
+    (should (string-match-p "<circle[^>]*r=\"0.75\"" svg))
+    (should (string-match-p "<circle[^>]*r=\"1.5\" fill=\"black\"" svg))))
 
 (ert-deftest chem-exp-svg-pseudo-elements ()
   "Terminal pseudo-element groups are combined into one label."

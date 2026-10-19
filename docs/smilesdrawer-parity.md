@@ -47,8 +47,10 @@ Phase 1 is in progress:
   bounds now match SmilesDrawer.
 - Bond colors now match SmilesDrawer's solid/radial/linear gradient rules, and
   labels use per-part tspan colors with the same theme palette.
-- Known gaps: the allene carbon label and the dot used for linear carbon
-  atoms.  Next parity target is layout metrics and raster comparison.
+- Linear carbon atoms now render as SmilesDrawer-style carbon dots, including
+  mask circles.
+- Known gap: the allene carbon label.  Next parity target is layout metrics
+  and raster comparison.
 
 ## Reference version
 

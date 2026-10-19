@@ -221,6 +221,14 @@ function renderReference(entry) {
     cy: number(mask.getAttribute("cy")),
     r: number(mask.getAttribute("r")),
   }));
+  const points = drawer.svgWrapper.vertices
+    .filter((element) => element.tagName.toLowerCase() === "circle")
+    .map((element) => ({
+      cx: number(element.getAttribute("cx")),
+      cy: number(element.getAttribute("cy")),
+      r: number(element.getAttribute("r")),
+      fill: attribute(element, "fill"),
+    }));
   const gradients = drawer.svgWrapper.gradients.map((gradient) => {
     const entry = { kind: gradient.tagName.toLowerCase(), id: gradient.getAttribute("id") };
     for (const attr of ["x1", "y1", "x2", "y2", "cx", "cy", "r"]) {
@@ -250,6 +258,7 @@ function renderReference(entry) {
     primitives,
     labels,
     masks,
+    points,
     gradients,
     viewBox,
     width: number(svg.getAttribute("width")),
