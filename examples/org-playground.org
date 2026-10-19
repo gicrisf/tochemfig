@@ -9,8 +9,8 @@ This file exercises the SVG exporter and the Org Babel integration.
 *Prerequisites*
 
 - Emacs 29.1+ with SVG image support.
-- `chem-mode` from the `svg` branch on the load path.
-- `emacs-indigo` 0.13.0 or newer, with its dynamic module installed.
+- `chem-mode` from the `reactions` branch on the load path.
+- `emacs-indigo` 0.14.0 or newer, with its dynamic module installed.
 - Org Babel integration loaded in your config:
   #+begin_example emacs-lisp
   (after! org

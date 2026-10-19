@@ -34,13 +34,15 @@
 (declare-function indigo-iterate-catalysts "indigo-module" (reaction))
 
 (unless (macrop 'indigo-with-allene-centers-iterator)
-  (error "chem-mode requires emacs-indigo (>= 0.13.0), but the \
+  (error "chem-mode requires emacs-indigo (>= 0.14.0), but the \
 `indigo-with-allene-centers-iterator' macro is unavailable.  Install or upgrade \
 emacs-indigo (e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') \
 and rebuild chem-mode"))
 
 (unless (macrop 'indigo-with-catalysts-iterator)
-  (error "chem-mode requires emacs-indigo with reaction catalyst support"))
+  (error "chem-mode requires emacs-indigo (>= 0.14.0), but the \
+`indigo-with-catalysts-iterator' macro is unavailable.  Install or upgrade \
+emacs-indigo and rebuild chem-mode"))
 
 ;;; Parsing
 

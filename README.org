@@ -14,7 +14,7 @@ images directly.
 * Requirements
 
 - Emacs 29.1+ with dynamic module support
-- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.13.0 or newer
+- [[https://github.com/gicrisf/emacs-indigo][emacs-indigo]] (Emacs bindings for the Indigo cheminformatics library), version 0.14.0 or newer
 - LaTeX with chemfig and TiKZ packages (chemfig output only)
 
 The package generates chemfig or SVG natively in Elisp using =emacs-indigo= for
