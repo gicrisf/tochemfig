@@ -58,6 +58,8 @@ Phase 1 is in progress:
 - Allene centers now render the carbon label used by SmilesDrawer.
 - Renderer parity is complete for the fixture corpus.  Remaining parity work is
   optional layout metrics and exact layout-engine porting.
+- Fixture-corpus expansion is planned in
+  `docs/smilesdrawer-fixture-plan.md`.
 
 ## Reference version
 
