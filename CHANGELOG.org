@@ -56,6 +56,7 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - Native single-step reaction support: reaction IR, reaction SMILES and RXN
   ingestion, renderer-neutral layout, chemfig reaction rendering, and SVG
   reaction rendering with arrows, plus signs, agents, and conditions.
+- Requires =emacs-indigo= 0.14.0 for reaction catalyst iterator support.
 - =tools/smilesdrawer/render-reactions.mjs= and
   =test/fixtures/smilesdrawer-reactions/=: a separate SmilesDrawer reaction
   composition corpus.
