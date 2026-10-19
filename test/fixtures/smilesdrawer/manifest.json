@@ -2,87 +2,232 @@
   "fixtures": [
     {
       "name": "benzene",
-      "smiles": "c1ccccc1"
+      "smiles": "c1ccccc1",
+      "features": [
+        "aromatic",
+        "ring-circle",
+        "six-membered-ring"
+      ],
+      "raster": true
     },
     {
       "name": "naphthalene",
-      "smiles": "c1ccc2ccccc2c1"
+      "smiles": "c1ccc2ccccc2c1",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "ring-circle",
+        "shared-edge"
+      ],
+      "raster": true
     },
     {
       "name": "indole",
-      "smiles": "c1ccc2[nH]ccc2c1"
+      "smiles": "c1ccc2[nH]ccc2c1",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "heteroaromatic",
+        "five-membered-ring",
+        "six-membered-ring",
+        "n-hydrogen"
+      ],
+      "raster": true
     },
     {
       "name": "pyridine",
-      "smiles": "c1ccncc1"
+      "smiles": "c1ccncc1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "six-membered-ring",
+        "ring-circle"
+      ],
+      "raster": false
     },
     {
       "name": "pyrrole",
-      "smiles": "c1cc[nH]c1"
+      "smiles": "c1cc[nH]c1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "five-membered-ring",
+        "n-hydrogen",
+        "ring-circle"
+      ],
+      "raster": false
     },
     {
       "name": "caffeine_aromatic",
-      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C"
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+      "features": [
+        "aromatic",
+        "fused-ring",
+        "heteroaromatic",
+        "carbonyl",
+        "n-methyl",
+        "shared-edge"
+      ],
+      "raster": true
     },
     {
       "name": "caffeine_kekule",
-      "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+      "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+      "features": [
+        "explicit-kekule",
+        "fused-ring",
+        "heteroaromatic",
+        "carbonyl",
+        "n-methyl",
+        "shared-edge"
+      ],
+      "raster": true
     },
     {
       "name": "ethanol",
-      "smiles": "CCO"
+      "smiles": "CCO",
+      "features": [
+        "acyclic",
+        "carbon-dot",
+        "terminal-label"
+      ],
+      "raster": true
     },
     {
       "name": "alanine",
-      "smiles": "N[C@@H](C)C(=O)O"
+      "smiles": "N[C@@H](C)C(=O)O",
+      "features": [
+        "stereocenter",
+        "wedge",
+        "amino-acid",
+        "carbonyl",
+        "terminal-label"
+      ],
+      "raster": true
     },
     {
       "name": "butene_e",
-      "smiles": "C/C=C/C"
+      "smiles": "C/C=C/C",
+      "features": [
+        "acyclic",
+        "double-bond",
+        "cis-trans-input"
+      ],
+      "raster": true
     },
     {
       "name": "butene_z",
-      "smiles": "C/C=C\\C"
+      "smiles": "C/C=C\\C",
+      "features": [
+        "acyclic",
+        "double-bond",
+        "cis-trans-input"
+      ],
+      "raster": false
     },
     {
       "name": "cyclohexane",
-      "smiles": "C1CCCCC1"
+      "smiles": "C1CCCCC1",
+      "features": [
+        "ring",
+        "six-membered-ring"
+      ],
+      "raster": false
     },
     {
       "name": "bicyclic",
-      "smiles": "C1CC2CCC1C2"
+      "smiles": "C1CC2CCC1C2",
+      "features": [
+        "bridged-ring",
+        "carbon-dot"
+      ],
+      "raster": true
     },
     {
       "name": "nitrobenzene",
-      "smiles": "O=[N+]([O-])c1ccccc1"
+      "smiles": "O=[N+]([O-])c1ccccc1",
+      "features": [
+        "aromatic",
+        "pseudo-group",
+        "nitro",
+        "charge-separation"
+      ],
+      "raster": true
     },
     {
       "name": "phenol",
-      "smiles": "Oc1ccccc1"
+      "smiles": "Oc1ccccc1",
+      "features": [
+        "aromatic",
+        "terminal-label",
+        "hydroxyl"
+      ],
+      "raster": false
     },
     {
       "name": "aniline",
-      "smiles": "Nc1ccccc1"
+      "smiles": "Nc1ccccc1",
+      "features": [
+        "aromatic",
+        "terminal-label",
+        "amine"
+      ],
+      "raster": false
     },
     {
       "name": "allene",
-      "smiles": "C=C=C"
+      "smiles": "C=C=C",
+      "features": [
+        "allene",
+        "cumulated-double-bond",
+        "terminal-label"
+      ],
+      "raster": true
     },
     {
       "name": "furan",
-      "smiles": "c1ccoc1"
+      "smiles": "c1ccoc1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "five-membered-ring",
+        "oxygen-heterocycle"
+      ],
+      "raster": false
     },
     {
       "name": "thiophene",
-      "smiles": "c1ccsc1"
+      "smiles": "c1ccsc1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "five-membered-ring",
+        "sulfur-heterocycle"
+      ],
+      "raster": false
     },
     {
       "name": "imidazole",
-      "smiles": "c1c[nH]cn1"
+      "smiles": "c1c[nH]cn1",
+      "features": [
+        "aromatic",
+        "heteroaromatic",
+        "five-membered-ring",
+        "n-hydrogen"
+      ],
+      "raster": false
     },
     {
       "name": "alanine_down",
-      "smiles": "N[C@H](C)C(=O)O"
+      "smiles": "N[C@H](C)C(=O)O",
+      "features": [
+        "stereocenter",
+        "wedge",
+        "amino-acid",
+        "carbonyl",
+        "terminal-label"
+      ],
+      "raster": true
     }
   ]
 }

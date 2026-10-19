@@ -7,6 +7,7 @@
  * dependency installed in this directory.
  */
 
+import { execFileSync } from "node:child_process";
 import { JSDOM } from "jsdom";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -16,6 +17,7 @@ import SmilesDrawer from "../../smilesDrawer/dist/smiles-drawer.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
+const checkout = resolve(root, "smilesDrawer");
 const fixtureDir = resolve(root, "test/fixtures/smilesdrawer");
 const manifestPath = resolve(fixtureDir, "manifest.json");
 
@@ -171,11 +173,41 @@ function labelFor(atom, group) {
   };
 }
 
+function oracleCommit() {
+  try {
+    return execFileSync("git", ["-C", checkout, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+
+function referenceOptions(entry) {
+  return entry.reference_options ?? entry.options ?? {};
+}
+
+function referenceTheme(entry) {
+  return entry.reference_theme ?? entry.theme ?? "light";
+}
+
+function validationError(entry) {
+  if (!entry.name || typeof entry.name !== "string") return "missing name";
+  if (!entry.smiles || typeof entry.smiles !== "string") return "missing smiles";
+  if (!Array.isArray(entry.features) || entry.features.length === 0) {
+    return "missing features";
+  }
+  if (typeof entry.raster !== "boolean") return "missing raster flag";
+  return null;
+}
+
 function renderReference(entry) {
   resetRandom(0x12345678);
   const data = SmilesDrawer.Parser.parse(entry.smiles);
-  const drawer = new SmilesDrawer.SvgDrawer(entry.options ?? {});
-  const svg = drawer.draw(data, "svg", entry.theme ?? "light");
+  const options = referenceOptions(entry);
+  const theme = referenceTheme(entry);
+  const drawer = new SmilesDrawer.SvgDrawer(options);
+  const svg = drawer.draw(data, "svg", theme);
   const processor = drawer.preprocessor;
   const atoms = processor.graph.vertices.map((vertex) => ({
     id: vertex.id,
@@ -247,11 +279,16 @@ function renderReference(entry) {
       name: "smiles-drawer",
       version: SmilesDrawer.Version,
       source: "smilesDrawer/dist/smiles-drawer.mjs",
-      theme: entry.theme ?? "light",
-      options: entry.options ?? {},
+      commit: oracleCommit(),
+      theme,
+      options,
     },
     name: entry.name,
     smiles: entry.smiles,
+    features: entry.features,
+    raster: entry.raster,
+    chem_options: entry.chem_options ?? {},
+    known_gap: entry.known_gap ?? null,
     atoms,
     edges,
     rings,
@@ -272,6 +309,10 @@ function renderReference(entry) {
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 mkdirSync(fixtureDir, { recursive: true });
 for (const entry of manifest.fixtures) {
+  const error = validationError(entry);
+  if (error) {
+    throw new Error(`${entry.name ?? "<unnamed>"}: ${error}`);
+  }
   const reference = renderReference(entry);
   const path = resolve(fixtureDir, `${entry.name}.json`);
   writeFileSync(path, `${JSON.stringify(reference, null, 2)}\n`);

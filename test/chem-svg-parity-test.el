@@ -459,9 +459,39 @@ Orient each line along the canonical lower-to-higher atom direction."
                     (chem-svg-parity-test--get manifest "fixtures"))))
     (cl-remove-if
      (lambda (entry)
-       (member (chem-svg-parity-test--get entry "name")
-               chem-svg-parity-test--known-gaps))
+       (or (chem-svg-parity-test--get entry "known_gap")
+           (member (chem-svg-parity-test--get entry "name")
+                   chem-svg-parity-test--known-gaps)))
      fixtures)))
+
+(ert-deftest chem-svg-parity-fixture-metadata ()
+  "Manifest metadata and generated fixture metadata agree."
+  (let* ((manifest (chem-svg-parity-test--manifest))
+         (fixtures (chem-svg-parity-test--list
+                    (chem-svg-parity-test--get manifest "fixtures")))
+         (names nil))
+    (dolist (entry fixtures)
+      (let* ((name (chem-svg-parity-test--get entry "name"))
+             (fixture (chem-svg-parity-test--load name))
+             (reference (chem-svg-parity-test--get fixture "reference")))
+        (should-not (member name names))
+        (push name names)
+        (should (stringp (chem-svg-parity-test--get entry "smiles")))
+        (should (chem-svg-parity-test--list
+                 (chem-svg-parity-test--get entry "features")))
+        (should (memq (chem-svg-parity-test--get entry "raster") '(t :false)))
+        (should (equal (chem-svg-parity-test--get entry "smiles")
+                       (chem-svg-parity-test--get fixture "smiles")))
+        (should (equal (chem-svg-parity-test--get entry "features")
+                       (chem-svg-parity-test--get fixture "features")))
+        (should (eq (chem-svg-parity-test--get entry "raster")
+                    (chem-svg-parity-test--get fixture "raster")))
+        (should (equal (or (chem-svg-parity-test--get entry "chem_options") '())
+                       (or (chem-svg-parity-test--get fixture "chem_options") '())))
+        (should (stringp (chem-svg-parity-test--get reference "version")))
+        (should (stringp (chem-svg-parity-test--get reference "commit")))
+        (when (eq t (chem-svg-parity-test--get entry "raster"))
+          (should (stringp (chem-svg-parity-test--get fixture "svg"))))))))
 
 (defun chem-svg-parity-test--reference-circles (fixture)
   "Return reference circle radii for FIXTURE."

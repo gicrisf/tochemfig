@@ -72,6 +72,14 @@
             (string-to-number (match-string 2 (buffer-string)))
             (string-to-number (match-string 3 (buffer-string)))))))
 
+(ert-deftest chem-svg-raster-metadata ()
+  "Raster gate names have metadata and reference SVGs."
+  (dolist (entry chem-svg-raster-test--limits)
+    (let* ((name (car entry))
+           (fixture (chem-svg-parity-test--load name)))
+      (should (eq t (chem-svg-parity-test--get fixture "raster")))
+      (should (stringp (chem-svg-parity-test--get fixture "svg"))))))
+
 (ert-deftest chem-svg-raster-gates ()
   "Curated raster parity gates for the SVG renderer."
   (unless (and (executable-find "inkscape")

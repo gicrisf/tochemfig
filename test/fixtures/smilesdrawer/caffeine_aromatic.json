@@ -3,11 +3,23 @@
     "name": "smiles-drawer",
     "version": "2.4.1",
     "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
     "theme": "light",
     "options": {}
   },
   "name": "caffeine_aromatic",
   "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+  "features": [
+    "aromatic",
+    "fused-ring",
+    "heteroaromatic",
+    "carbonyl",
+    "n-methyl",
+    "shared-edge"
+  ],
+  "raster": true,
+  "chem_options": {},
+  "known_gap": null,
   "atoms": [
     {
       "id": 0,

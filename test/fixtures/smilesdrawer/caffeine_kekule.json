@@ -3,11 +3,23 @@
     "name": "smiles-drawer",
     "version": "2.4.1",
     "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
     "theme": "light",
     "options": {}
   },
   "name": "caffeine_kekule",
   "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+  "features": [
+    "explicit-kekule",
+    "fused-ring",
+    "heteroaromatic",
+    "carbonyl",
+    "n-methyl",
+    "shared-edge"
+  ],
+  "raster": true,
+  "chem_options": {},
+  "known_gap": null,
   "atoms": [
     {
       "id": 0,

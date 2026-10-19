@@ -3,11 +3,21 @@
     "name": "smiles-drawer",
     "version": "2.4.1",
     "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "8dd92b9525c0f46e539306ef99dff46eec98659e",
     "theme": "light",
     "options": {}
   },
   "name": "nitrobenzene",
   "smiles": "O=[N+]([O-])c1ccccc1",
+  "features": [
+    "aromatic",
+    "pseudo-group",
+    "nitro",
+    "charge-separation"
+  ],
+  "raster": true,
+  "chem_options": {},
+  "known_gap": null,
   "atoms": [
     {
       "id": 0,

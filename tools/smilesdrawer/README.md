@@ -24,7 +24,20 @@ node render.mjs
 The generator reads `test/fixtures/smilesdrawer/manifest.json` and writes one
 JSON file per fixture next to it.  Fixtures contain SmilesDrawer coordinates,
 the molecular graph, ring membership, and the normalized SVG primitives emitted
-while drawing.
+while drawing.  Every manifest entry must have `name`, `smiles`, non-empty
+`features`, and a boolean `raster` flag.  Optional `reference_options`,
+`reference_theme`, `chem_options`, and `known_gap` fields are copied into the
+generated fixture metadata.  The generator records the oracle commit from the
+local checkout.
+
+## Coverage report
+
+```sh
+node tools/smilesdrawer/coverage.mjs
+```
+
+This reads only the manifest and reports feature counts, raster-gated
+fixtures, missing feature tags, duplicate names, and declared known gaps.
 
 ## Raster and layout report
 
