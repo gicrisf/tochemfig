@@ -167,7 +167,7 @@ compilation so source edits are loaded on the next restart:
 #+begin_src emacs-lisp
 (package! chem-mode
   :recipe (:local-repo "~/Projects/tochemfig"
-           :branch "svg"
+           :branch "reactions"
            :build (:not compile native-compile)))
 
 (package! indigo
@@ -179,7 +179,9 @@ compilation so source edits are loaded on the next restart:
 
 Run =doom sync -U= once, then restart Emacs.  Existing =.el= files are read
 from the local checkouts on every restart.  Adding or removing files, or
-changing autoload cookies, still requires another =doom sync=.
+changing autoload cookies, still requires another =doom sync=.  If you switch
+branches, delete stale =.elc= files in the local checkout and run
+=doom sync -U= so Emacs does not load code from the previous branch.
 
 * Usage
 
