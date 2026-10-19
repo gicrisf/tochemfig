@@ -2148,19 +2148,34 @@ ID-PREFIX namespaces generated SVG IDs when non-nil."
          (chem-exp-svg--reaction-arrow-head x2 y :right font-size color)))
        (_ line)))))
 
-(defun chem-exp-svg--reaction-text-svg (state info)
-  "Return text SVG for INFO in STATE."
-  (format "<text data-reaction-part=\"text\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"middle\" dominant-baseline=\"central\" x=\"%s\" y=\"%s\">%s</text>\n"
-          (chem-exp-svg--escape
-           (chem-exp-svg--theme-foreground
-            (chem-exp-svg-state-theme state)))
-          (chem-exp-svg--escape
-           (chem-exp-svg--option state :svg-font-family))
-          (chem-exp-svg--number
-           (* 0.8 (chem-exp-svg--option state :svg-font-size)))
-          (chem-exp-svg--number (plist-get info :center-x))
-          (chem-exp-svg--number (plist-get info :center-y))
-          (chem-exp-svg--escape (plist-get info :text))))
+(defun chem-exp-svg--reaction-text-block-key (part)
+  "Return the text block key for reaction PART."
+  (pcase (chem-reaction-part-role part)
+    ((or :agent-label :above :above-line) :above)
+    ((or :below :below-line) :below)
+    (_ nil)))
+
+(defun chem-exp-svg--reaction-text-block-svg (state infos)
+  "Return one text SVG block for INFOs in STATE."
+  (let ((first (car infos)))
+    (format "<text data-reaction-part=\"text\" fill=\"%s\" font-family=\"%s\" font-size=\"%s\" text-anchor=\"middle\" dominant-baseline=\"central\" x=\"%s\" y=\"%s\">%s</text>\n"
+            (chem-exp-svg--escape
+             (chem-exp-svg--theme-foreground
+              (chem-exp-svg-state-theme state)))
+            (chem-exp-svg--escape
+             (chem-exp-svg--option state :svg-font-family))
+            (chem-exp-svg--number
+             (* 0.8 (chem-exp-svg--option state :svg-font-size)))
+            (chem-exp-svg--number (plist-get first :center-x))
+            (chem-exp-svg--number (plist-get first :center-y))
+            (mapconcat
+             (lambda (info)
+               (format "<tspan x=\"%s\" y=\"%s\">%s</tspan>"
+                       (chem-exp-svg--number (plist-get info :center-x))
+                       (chem-exp-svg--number (plist-get info :center-y))
+                       (chem-exp-svg--escape (plist-get info :text))))
+             infos
+             ""))))
 
 (defun chem-exp-svg--reaction-include-box (box min-x min-y max-x max-y)
   "Return (MIN-X MIN-Y MAX-X MAX-Y) expanded by BOX."
@@ -2180,82 +2195,108 @@ ID-PREFIX namespaces generated SVG IDs when non-nil."
          (first-state nil)
          (defs nil)
          (bodies nil)
+         (text-parts nil)
          (min-x nil)
          (min-y nil)
          (max-x nil)
          (max-y nil))
-    (dolist (part layout)
-      (pcase (chem-reaction-part-kind part)
-        ((or :reactant :product)
-         (let* ((drawing (chem-reaction-part-drawing part))
-                (prefix (format "r%d" molecule-index))
-                (state (chem-exp-svg--make-state drawing options prefix))
-                (_ (chem-exp-svg--prepare-gradients state))
-                (content (chem-exp-svg--content state))
-                (local (chem-drawing-bounds drawing))
-                (dx (- (chem-reaction-part-x part) (nth 0 local)))
-                (dy (- (chem-reaction-part-y part) (nth 1 local)))
-                (dx-svg (* dx scale))
-                (dy-svg (* (- dy) scale))
-                (viewbox (chem-exp-svg--viewbox state))
-                (box (list (+ dx-svg (nth 0 viewbox))
-                           (+ dy-svg (nth 1 viewbox))
-                           (+ dx-svg (nth 0 viewbox) (nth 2 viewbox))
-                           (+ dy-svg (nth 1 viewbox) (nth 3 viewbox)))))
-           (unless first-state (setq first-state state))
-           (push (car content) defs)
-           (push (format "<g data-reaction-part=\"molecule\" transform=\"translate(%s,%s)\">\n%s</g>\n"
-                         (chem-exp-svg--number dx-svg)
-                         (chem-exp-svg--number dy-svg)
-                         (cdr content))
-                 bodies)
-           (setq molecule-index (1+ molecule-index))
-           (let ((included (chem-exp-svg--reaction-include-box
-                            box min-x min-y max-x max-y)))
-             (setq min-x (nth 0 included)
-                   min-y (nth 1 included)
-                   max-x (nth 2 included)
-                   max-y (nth 3 included)))))
-        (:plus
-         (let ((box (chem-exp-svg--reaction-part-box part scale))
-               (included nil))
-           (push (chem-exp-svg--reaction-plus-svg first-state part scale)
-                 bodies)
-           (setq included (chem-exp-svg--reaction-include-box
-                           box min-x min-y max-x max-y))
-           (setq min-x (nth 0 included)
-                 min-y (nth 1 included)
-                 max-x (nth 2 included)
-                 max-y (nth 3 included))))
-        (:arrow
-         (let ((box (chem-exp-svg--reaction-part-box part scale))
-               (included nil))
-           (push (chem-exp-svg--reaction-arrow-svg
-                  first-state part scale reaction)
-                 bodies)
-           (setq included (chem-exp-svg--reaction-include-box
-                           box min-x min-y max-x max-y))
-           (setq min-x (nth 0 included)
-                 min-y (nth 1 included)
-                 max-x (nth 2 included)
-                 max-y (nth 3 included))))
-        (:text
-         (let ((info (chem-exp-svg--reaction-text-info
-                      first-state part reaction scale)))
-           (when info
-             (push (chem-exp-svg--reaction-text-svg first-state info)
+    (cl-labels
+        ((flush-text ()
+           (when text-parts
+             (let* ((parts (nreverse text-parts))
+                    (infos
+                     (delq nil
+                           (mapcar
+                            (lambda (text-part)
+                              (chem-exp-svg--reaction-text-info
+                               first-state text-part reaction scale))
+                            parts))))
+               (setq text-parts nil)
+               (when infos
+                 (push (chem-exp-svg--reaction-text-block-svg first-state infos)
+                       bodies)
+                 (dolist (info infos)
+                   (let ((included
+                          (chem-exp-svg--reaction-include-box
+                           (list (plist-get info :min-x)
+                                 (plist-get info :min-y)
+                                 (plist-get info :max-x)
+                                 (plist-get info :max-y))
+                           min-x min-y max-x max-y)))
+                     (setq min-x (nth 0 included)
+                           min-y (nth 1 included)
+                           max-x (nth 2 included)
+                           max-y (nth 3 included)))))))))
+      (dolist (part layout)
+        (pcase (chem-reaction-part-kind part)
+          ((or :reactant :product)
+           (flush-text)
+           (let* ((drawing (chem-reaction-part-drawing part))
+                  (prefix (format "r%d" molecule-index))
+                  (state (chem-exp-svg--make-state drawing options prefix))
+                  (_ (chem-exp-svg--prepare-gradients state))
+                  (content (chem-exp-svg--content state))
+                  (local (chem-drawing-bounds drawing))
+                  (dx (- (chem-reaction-part-x part) (nth 0 local)))
+                  (dy (- (chem-reaction-part-y part) (nth 1 local)))
+                  (dx-svg (* dx scale))
+                  (dy-svg (* (- dy) scale))
+                  (viewbox (chem-exp-svg--viewbox state))
+                  (box (list (+ dx-svg (nth 0 viewbox))
+                             (+ dy-svg (nth 1 viewbox))
+                             (+ dx-svg (nth 0 viewbox) (nth 2 viewbox))
+                             (+ dy-svg (nth 1 viewbox) (nth 3 viewbox)))))
+             (unless first-state (setq first-state state))
+             (push (car content) defs)
+             (push (format "<g data-reaction-part=\"molecule\" transform=\"translate(%s,%s)\">\n%s</g>\n"
+                           (chem-exp-svg--number dx-svg)
+                           (chem-exp-svg--number dy-svg)
+                           (cdr content))
                    bodies)
-             (let ((included
-                    (chem-exp-svg--reaction-include-box
-                     (list (plist-get info :min-x)
-                           (plist-get info :min-y)
-                           (plist-get info :max-x)
-                           (plist-get info :max-y))
-                     min-x min-y max-x max-y)))
+             (setq molecule-index (1+ molecule-index))
+             (let ((included (chem-exp-svg--reaction-include-box
+                              box min-x min-y max-x max-y)))
                (setq min-x (nth 0 included)
                      min-y (nth 1 included)
                      max-x (nth 2 included)
-                     max-y (nth 3 included))))))))
+                     max-y (nth 3 included)))))
+          (:plus
+           (flush-text)
+           (let ((box (chem-exp-svg--reaction-part-box part scale))
+                 (included nil))
+             (push (chem-exp-svg--reaction-plus-svg first-state part scale)
+                   bodies)
+             (setq included (chem-exp-svg--reaction-include-box
+                             box min-x min-y max-x max-y))
+             (setq min-x (nth 0 included)
+                   min-y (nth 1 included)
+                   max-x (nth 2 included)
+                   max-y (nth 3 included))))
+          (:arrow
+           (flush-text)
+           (let ((box (chem-exp-svg--reaction-part-box part scale))
+                 (included nil))
+             (push (chem-exp-svg--reaction-arrow-svg
+                    first-state part scale reaction)
+                   bodies)
+             (setq included (chem-exp-svg--reaction-include-box
+                             box min-x min-y max-x max-y))
+             (setq min-x (nth 0 included)
+                   min-y (nth 1 included)
+                   max-x (nth 2 included)
+                   max-y (nth 3 included))))
+          (:text
+           (let ((info (chem-exp-svg--reaction-text-info
+                        first-state part reaction scale)))
+             (when info
+               (let ((key (chem-exp-svg--reaction-text-block-key part)))
+                 (when (and text-parts
+                            (not (eq key
+                                     (chem-exp-svg--reaction-text-block-key
+                                      (car text-parts)))))
+                   (flush-text))
+                 (push part text-parts)))))))
+      (flush-text))
     (unless (and first-state min-x)
       (user-error "Cannot render an empty reaction"))
     (let* ((min-x (- min-x padding))

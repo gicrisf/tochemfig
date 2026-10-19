@@ -94,12 +94,18 @@
     (nreverse xs)))
 
 (defun chem-exp-svg-test--plain-text (svg)
-  "Return plain reaction text elements from SVG."
+  "Return plain reaction text lines from SVG."
   (let ((start 0)
         (texts nil))
-    (while (string-match "<text[^>]*>\\([^<]*\\)</text>" svg start)
-      (push (match-string 1 svg) texts)
-      (setq start (match-end 0)))
+    (while (string-match "<text data-reaction-part=\"text\"[^>]*>" svg start)
+      (let* ((body-start (match-end 0))
+             (body-end (string-match "</text>" svg body-start))
+             (body (substring svg body-start body-end))
+             (line-start 0))
+        (while (string-match "<tspan[^>]*>\\([^<]*\\)</tspan>" body line-start)
+          (push (match-string 1 body) texts)
+          (setq line-start (match-end 0)))
+        (setq start (+ body-end (length "</text>")))))
     (nreverse texts)))
 
 (defun chem-exp-svg-test--xml (string)
@@ -837,6 +843,7 @@
     (should (= 2 (chem-exp-svg-test--reaction-part-count svg "plus")))
     (should (= 1 (chem-exp-svg-test--reaction-part-count svg "arrow")))
     (should (= 2 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (= 2 (length texts)))
     (should (= 4 (length xs)))
     (should (equal xs (sort (copy-sequence xs) #'<)))
     (should (> (nth 2 viewbox) (nth 3 viewbox)))
@@ -876,18 +883,21 @@
     (should (string-match-p "H⁺" text))))
 
 (ert-deftest chem-exp-svg-reaction-multiline-conditions ()
-  "Multiline and wrapped conditions produce one text element per line."
+  "Multiline conditions use one text block with one tspan per line."
   (let ((svg (chem-exp-svg-test--render-reaction
               "CCO>>CC=O"
               '(("reaction-above" . "first line\\nsecond line")))))
-    (should (= 2 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (= 1 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (equal '("first line" "second line")
+                   (chem-exp-svg-test--plain-text svg)))
     (should (string-match-p (regexp-quote "first line") svg))
     (should (string-match-p (regexp-quote "second line") svg)))
   (let ((svg (chem-exp-svg-test--render-reaction
               "CCO>>CC=O"
               '(("reaction-above"
                  . "alpha beta gamma delta epsilon zeta eta theta")))))
-    (should (> (chem-exp-svg-test--reaction-part-count svg "text") 1))))
+    (should (= 1 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (> (length (chem-exp-svg-test--plain-text svg)) 1))))
 
 (ert-deftest chem-exp-svg-reaction-text-escaping ()
   "Reaction condition text is XML-escaped."

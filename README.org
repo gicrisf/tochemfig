@@ -260,8 +260,11 @@ for a custom wrap width.  The chemfig exporter wraps schemes in
 =\schemestart...\schemestop=; the SVG exporter writes a non-square standalone
 document.
 
-Agents are rendered as text formulas, and conditions are plain text.  Current
-scope is one reaction step with forward, reverse, or equilibrium arrows.
+Agents are rendered as text formulas with their total formal charge, and
+conditions are plain text.  This intentionally differs from SmilesDrawer, which
+maps some formulas to common names and omits charges.  Multi-line conditions
+are emitted as one SVG text block with one =tspan= per line.  Current scope is
+one reaction step with forward, reverse, or equilibrium arrows.
 Multi-step schemes, atom mapping, stoichiometric coefficients, and structured
 agent drawings are not supported.
 
@@ -499,11 +502,11 @@ guard against regressions:
    primitives against generated SmilesDrawer fixtures using shared
    coordinates.  =test/chem-svg-reaction-parity-test.el= compares reaction
    composition against a separate SmilesDrawer reaction corpus, and
-   =test/chem-svg-raster-test.el= gates six curated reaction fixtures.
+   =test/chem-svg-raster-test.el= gates seven curated reaction fixtures.
    =tools/svg-raster-report.el= adds an advisory Inkscape raster and
    bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 578 tests.
+The full ERT suite currently has 579 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

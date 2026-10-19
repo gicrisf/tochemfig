@@ -38,6 +38,9 @@
 (defconst chem-svg-reaction-parity-test--viewbox-tolerance 3.0
   "Maximum viewBox difference for composition parity.")
 
+(defconst chem-svg-reaction-parity-test--layout-scale 30.0
+  "SVG units per IR unit for layout parity.")
+
 (defun chem-svg-reaction-parity-test--manifest ()
   "Return the reaction fixture manifest."
   (with-temp-buffer
@@ -100,10 +103,12 @@
             id))
    atoms))
 
-(defun chem-svg-reaction-parity-test--build-drawing (component)
+(defun chem-svg-reaction-parity-test--build-drawing (component &optional scale)
   "Build a test-only `chem-drawing' from reaction COMPONENT.
-SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
-  (let* ((atoms-json (chem-svg-reaction-parity-test--list
+SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up.
+SCALE converts the reference coordinate units to IR units."
+  (let* ((scale (or scale 1.0))
+         (atoms-json (chem-svg-reaction-parity-test--list
                       (chem-svg-reaction-parity-test--get component "atoms")))
          (edges-json (chem-svg-reaction-parity-test--list
                       (chem-svg-reaction-parity-test--get component "edges")))
@@ -125,10 +130,12 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
                           (chem-svg-reaction-parity-test--get json "neighbours")))
              (atom (chem-atom-create
                     :idx idx
-                    :x (chem-svg-reaction-parity-test--number
-                        (chem-svg-reaction-parity-test--get json "x"))
-                    :y (- (chem-svg-reaction-parity-test--number
-                           (chem-svg-reaction-parity-test--get json "y")))
+                    :x (/ (chem-svg-reaction-parity-test--number
+                           (chem-svg-reaction-parity-test--get json "x"))
+                          scale)
+                    :y (- (/ (chem-svg-reaction-parity-test--number
+                              (chem-svg-reaction-parity-test--get json "y"))
+                             scale))
                     :element element
                     :hydrogens hydrogens
                     :charge charge
@@ -380,6 +387,255 @@ come from the reference component graphs."
        :arrow (list :style :forward)
        :layout (nreverse parts)))))
 
+(defun chem-svg-reaction-parity-test--layout-options ()
+  "Return layout options in IR units."
+  (chem--build-reaction-options
+   '(("svg-scale" . 30.0)
+     ("reaction-spacing" . 0.3333333333333333)
+     ("reaction-arrow-length" . 4.0)
+     ("reaction-plus-size" . 0.3)
+     ("reaction-condition-width" . 4.0))
+   'svg))
+
+(defun chem-svg-reaction-parity-test--fixture-conditions (fixture)
+  "Return reaction conditions from FIXTURE."
+  (let ((above "")
+        (below ""))
+    (dolist (part (chem-svg-reaction-parity-test--list
+                   (chem-svg-reaction-parity-test--get fixture "flow")))
+      (when (equal (chem-svg-reaction-parity-test--get part "kind") "text")
+        (if (equal (chem-svg-reaction-parity-test--get part "role") "above")
+            (setq above (chem-svg-reaction-parity-test--get part "text"))
+          (setq below (chem-svg-reaction-parity-test--get part "text")))))
+    (list :above above :below below)))
+
+(defun chem-svg-reaction-parity-test--build-layout-reaction (fixture options)
+  "Build FIXTURE's reaction from reference graphs and lay it out with OPTIONS."
+  (let ((reactants nil)
+        (products nil))
+    (dolist (component (chem-svg-reaction-parity-test--list
+                        (chem-svg-reaction-parity-test--get fixture "components")))
+      (let* ((kind (chem-svg-reaction-parity-test--get component "kind"))
+             (drawing (chem-svg-reaction-parity-test--build-drawing
+                       component
+                       chem-svg-reaction-parity-test--layout-scale)))
+        (if (equal kind "reactant")
+            (push drawing reactants)
+          (push drawing products))))
+    (let ((reaction
+           (chem-reaction-create
+            :reactants (nreverse reactants)
+            :agents nil
+            :products (nreverse products)
+            :conditions (chem-svg-reaction-parity-test--fixture-conditions fixture)
+            :arrow (list :style :forward))))
+      (chem-reaction-apply-layout reaction options))))
+
+(defun chem-svg-reaction-parity-test--native-flow-parts (parts)
+  "Return PARTS without text parts."
+  (cl-remove-if (lambda (part)
+                  (eq :text (chem-reaction-part-kind part)))
+                parts))
+
+(defun chem-svg-reaction-parity-test--reference-flow-parts (fixture)
+  "Return FIXTURE's non-text flow parts."
+  (cl-remove-if (lambda (part)
+                  (equal (chem-svg-reaction-parity-test--get part "kind")
+                         "text"))
+                (chem-svg-reaction-parity-test--list
+                 (chem-svg-reaction-parity-test--get fixture "flow"))))
+
+(defun chem-svg-reaction-parity-test--flow-kind (part)
+  "Return the reference flow kind for native PART."
+  (pcase (chem-reaction-part-kind part)
+    (:reactant "reactant")
+    (:product "product")
+    (:plus "plus")
+    (:arrow "arrow")
+    (_ "")))
+
+(defun chem-svg-reaction-parity-test--part-x-px (part)
+  "Return native PART's top-left x in SVG units."
+  (* chem-svg-reaction-parity-test--layout-scale
+     (chem-reaction-part-x part)))
+
+(defun chem-svg-reaction-parity-test--part-y-px (part)
+  "Return native PART's top-left y in SVG units."
+  (* chem-svg-reaction-parity-test--layout-scale
+     (- (+ (chem-reaction-part-y part)
+           (chem-reaction-part-height part)))))
+
+(defun chem-svg-reaction-parity-test--part-width-px (part)
+  "Return native PART's width in SVG units."
+  (* chem-svg-reaction-parity-test--layout-scale
+     (chem-reaction-part-width part)))
+
+(defun chem-svg-reaction-parity-test--part-height-px (part)
+  "Return native PART's height in SVG units."
+  (* chem-svg-reaction-parity-test--layout-scale
+     (chem-reaction-part-height part)))
+
+(defun chem-svg-reaction-parity-test--part-center-x-px (part)
+  "Return native PART's center x in SVG units."
+  (+ (chem-svg-reaction-parity-test--part-x-px part)
+     (/ (chem-svg-reaction-parity-test--part-width-px part) 2.0)))
+
+(defun chem-svg-reaction-parity-test--part-center-y-px (part)
+  "Return native PART's center y in SVG units."
+  (+ (chem-svg-reaction-parity-test--part-y-px part)
+     (/ (chem-svg-reaction-parity-test--part-height-px part) 2.0)))
+
+(defun chem-svg-reaction-parity-test--reference-box (part)
+  "Return reference flow PART's (X Y WIDTH HEIGHT)."
+  (list (chem-svg-reaction-parity-test--number
+         (chem-svg-reaction-parity-test--get part "x"))
+        (chem-svg-reaction-parity-test--number
+         (chem-svg-reaction-parity-test--get part "y"))
+        (chem-svg-reaction-parity-test--number
+         (chem-svg-reaction-parity-test--get part "width"))
+        (chem-svg-reaction-parity-test--number
+         (chem-svg-reaction-parity-test--get part "height"))))
+
+(defun chem-svg-reaction-parity-test--native-text-block (part)
+  "Return the text block for native PART."
+  (pcase (chem-reaction-part-role part)
+    ((or :agent-label :above :above-line) :above)
+    ((or :below :below-line) :below)
+    (_ nil)))
+
+(defun chem-svg-reaction-parity-test--layout-text-lines (reaction block)
+  "Return REACTION's layout text lines for BLOCK."
+  (cl-loop for part in (chem-reaction-layout reaction)
+           when (and (eq :text (chem-reaction-part-kind part))
+                     (eq block
+                         (chem-svg-reaction-parity-test--native-text-block part)))
+           collect (chem-reaction-part-text part)))
+
+(defun chem-svg-reaction-parity-test--reference-text-lines (fixture block)
+  "Return FIXTURE's reference text lines for BLOCK."
+  (cl-loop for text in (chem-svg-reaction-parity-test--list
+                        (chem-svg-reaction-parity-test--get fixture "texts"))
+           when (equal (if (eq block :above) "above" "below")
+                       (chem-svg-reaction-parity-test--get text "role"))
+           append
+           (chem-svg-reaction-parity-test--list
+            (or (chem-svg-reaction-parity-test--get text "lines")
+                (list (chem-svg-reaction-parity-test--get text "text"))))))
+
+(defun chem-svg-reaction-parity-test--check-layout-parity (fixture)
+  "Check FIXTURE's native layout against SmilesDrawer's composition rules."
+  (let* ((options (chem-svg-reaction-parity-test--layout-options))
+         (reaction (chem-svg-reaction-parity-test--build-layout-reaction
+                    fixture options))
+         (layout (chem-reaction-layout reaction))
+         (native-flow (chem-svg-reaction-parity-test--native-flow-parts layout))
+         (reference-flow (chem-svg-reaction-parity-test--reference-flow-parts
+                          fixture))
+         (arrow (cl-find :arrow native-flow
+                         :key #'chem-reaction-part-kind))
+         (reference-arrow
+          (cl-find-if
+           (lambda (part)
+             (equal "arrow"
+                    (chem-svg-reaction-parity-test--get part "kind")))
+           reference-flow))
+         (native-arrow-center (chem-svg-reaction-parity-test--part-center-y-px
+                               arrow))
+         (reference-arrow-box
+          (chem-svg-reaction-parity-test--reference-box reference-arrow))
+         (reference-arrow-center
+          (+ (nth 1 reference-arrow-box)
+             (/ (nth 3 reference-arrow-box) 2.0))))
+    (should (= (length native-flow) (length reference-flow)))
+    (cl-loop for part in native-flow
+             for reference in reference-flow
+             do
+             (should (equal (chem-svg-reaction-parity-test--flow-kind part)
+                            (chem-svg-reaction-parity-test--get
+                             reference "kind"))))
+    (cl-loop for previous in native-flow
+             for part in (cdr native-flow)
+             for reference-previous in reference-flow
+             for reference in (cdr reference-flow)
+             do
+             (let ((native-gap (- (chem-svg-reaction-parity-test--part-x-px part)
+                                  (+ (chem-svg-reaction-parity-test--part-x-px
+                                      previous)
+                                     (chem-svg-reaction-parity-test--part-width-px
+                                      previous))))
+                   (reference-gap
+                    (- (chem-svg-reaction-parity-test--number
+                        (chem-svg-reaction-parity-test--get reference "x"))
+                       (+ (chem-svg-reaction-parity-test--number
+                           (chem-svg-reaction-parity-test--get
+                            reference-previous "x"))
+                          (chem-svg-reaction-parity-test--number
+                           (chem-svg-reaction-parity-test--get
+                            reference-previous "width"))))))
+               (should (chem-svg-reaction-parity-test--close-p
+                        native-gap reference-gap))))
+    (cl-loop for part in native-flow
+             for reference in reference-flow
+             do
+             (should (chem-svg-reaction-parity-test--close-p
+                      (chem-svg-reaction-parity-test--part-center-y-px part)
+                      native-arrow-center))
+             (should (chem-svg-reaction-parity-test--close-p
+                      (+ (chem-svg-reaction-parity-test--number
+                          (chem-svg-reaction-parity-test--get reference "y"))
+                         (/ (chem-svg-reaction-parity-test--number
+                             (chem-svg-reaction-parity-test--get reference "height"))
+                            2.0))
+                      reference-arrow-center))
+             (pcase (chem-reaction-part-kind part)
+               (:plus
+                (should (chem-svg-reaction-parity-test--close-p
+                         (chem-svg-reaction-parity-test--part-width-px part)
+                         (chem-svg-reaction-parity-test--number
+                          (chem-svg-reaction-parity-test--get
+                           reference "width"))))
+                (should (chem-svg-reaction-parity-test--close-p
+                         (chem-svg-reaction-parity-test--part-height-px part)
+                         (chem-svg-reaction-parity-test--number
+                          (chem-svg-reaction-parity-test--get
+                           reference "height")))))
+               (:arrow
+                (should (chem-svg-reaction-parity-test--close-p
+                         (chem-svg-reaction-parity-test--part-width-px part)
+                         (chem-svg-reaction-parity-test--number
+                          (chem-svg-reaction-parity-test--get
+                           reference "width")))))
+               ((or :reactant :product)
+                (let* ((drawing (chem-reaction-part-drawing part))
+                       (bounds (chem-drawing-bounds drawing)))
+                  (should (chem-svg-reaction-parity-test--close-p
+                           (chem-svg-reaction-parity-test--part-width-px part)
+                           (* chem-svg-reaction-parity-test--layout-scale
+                              (- (nth 2 bounds) (nth 0 bounds)))))
+                  (should (chem-svg-reaction-parity-test--close-p
+                           (chem-svg-reaction-parity-test--part-height-px part)
+                           (* chem-svg-reaction-parity-test--layout-scale
+                              (- (nth 3 bounds) (nth 1 bounds)))))))))
+    (dolist (part (cl-remove-if-not
+                   (lambda (part)
+                     (eq :text (chem-reaction-part-kind part)))
+                   layout))
+      (should (chem-svg-reaction-parity-test--close-p
+               (chem-svg-reaction-parity-test--part-center-x-px part)
+               (chem-svg-reaction-parity-test--part-center-x-px arrow)))
+      (pcase (chem-svg-reaction-parity-test--native-text-block part)
+        (:above
+         (should (< (chem-svg-reaction-parity-test--part-center-y-px part)
+                    native-arrow-center)))
+        (:below
+         (should (> (chem-svg-reaction-parity-test--part-center-y-px part)
+                    native-arrow-center)))))
+    (dolist (block '(:above :below))
+      (should (equal (chem-svg-reaction-parity-test--layout-text-lines
+                      reaction block)
+                     (chem-svg-reaction-parity-test--reference-text-lines
+                      fixture block))))))
+
 (defun chem-svg-reaction-parity-test--viewbox (svg)
   "Return the root viewBox from SVG."
   (when (string-match "<svg[^>]* viewBox=\"\\([^\"]+\\)\"" svg)
@@ -452,17 +708,23 @@ come from the reference component graphs."
           (apply #'max (mapcar #'cdr points)))))
 
 (defun chem-svg-reaction-parity-test--texts (svg)
-  "Return reaction text elements from SVG as (X Y CONTENT) lists."
+  "Return reaction text lines from SVG as (X Y CONTENT) lists."
   (let ((start 0)
         (texts nil))
-    (while (string-match
-            "<text data-reaction-part=\"text\"[^>]* x=\"\\([^\"]+\\)\" y=\"\\([^\"]+\\)\">\\([^<]*\\)</text>"
-            svg start)
-      (push (list (string-to-number (match-string 1 svg))
-                  (string-to-number (match-string 2 svg))
-                  (match-string 3 svg))
-            texts)
-      (setq start (match-end 0)))
+    (while (string-match "<text data-reaction-part=\"text\"[^>]*>" svg start)
+      (let* ((body-start (match-end 0))
+             (body-end (string-match "</text>" svg body-start))
+             (body (substring svg body-start body-end))
+             (line-start 0))
+        (while (string-match
+                "<tspan x=\"\\([^\"]+\\)\" y=\"\\([^\"]+\\)\">\\([^<]*\\)</tspan>"
+                body line-start)
+          (push (list (string-to-number (match-string 1 body))
+                      (string-to-number (match-string 2 body))
+                      (match-string 3 body))
+                texts)
+          (setq line-start (match-end 0)))
+        (setq start (+ body-end (length "</text>")))))
     (nreverse texts)))
 
 (defun chem-svg-reaction-parity-test--close-p (a b)
@@ -682,6 +944,16 @@ box only covers the actual components, plus signs, arrow, and text."
 (ert-deftest chem-svg-reaction-parity-long-conditions ()
   "Wrapped and multiline conditions match SmilesDrawer."
   (chem-svg-reaction-parity-test--check-fixture "long_conditions"))
+
+(ert-deftest chem-svg-reaction-layout-parity ()
+  "Native layout follows SmilesDrawer's composition rules."
+  (dolist (entry (chem-svg-reaction-parity-test--list
+                  (chem-svg-reaction-parity-test--get
+                   (chem-svg-reaction-parity-test--manifest) "fixtures")))
+    (let ((name (chem-svg-reaction-parity-test--get entry "name")))
+      (ert-info ((format "fixture: %s" name))
+        (chem-svg-reaction-parity-test--check-layout-parity
+         (chem-svg-reaction-parity-test--load name))))))
 
 (ert-deftest chem-svg-reaction-parity-fixture-metadata ()
   "Reaction fixtures and manifest entries stay in sync."

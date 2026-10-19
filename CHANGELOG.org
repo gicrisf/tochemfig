@@ -61,10 +61,14 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   =test/fixtures/smilesdrawer-reactions/=: a separate SmilesDrawer reaction
   composition corpus.
 - =test/chem-svg-reaction-parity-test.el=: composition parity for component
-  placement, plus signs, arrows, text, and viewBox coverage.
+  placement, plus signs, arrows, text, and viewBox coverage, plus layout
+  algorithm parity for spacing, centering, plus/arrow geometry, ordering, and
+  text wrapping.
+- Reaction text now emits one =<text>= block per above/below region with one
+  =<tspan>= per line, matching SmilesDrawer's line structure.
 - Reaction raster reporting and curated hard gates for esterification,
-  Diels-Alder, two-product, stereo, agent/condition, and charged-salt
-  fixtures; wrapped/multiline conditions remain advisory.
+  Diels-Alder, two-product, stereo, agent/condition, charged-salt, and
+  wrapped/multiline condition fixtures.
 - Reaction conditions now wrap at the arrow length like SmilesDrawer, honor
   explicit newlines, and support =:reaction-condition-width=.
 - =tools/smilesdrawer/coverage-reactions.mjs=: reaction fixture coverage

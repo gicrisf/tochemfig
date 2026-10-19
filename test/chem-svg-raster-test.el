@@ -151,7 +151,8 @@ reveals text that the reference viewBox would otherwise clip."
     ("two_products" 2.8 25.0 3.2)
     ("stereo" 5.1 30.0 8.0)
     ("agent_above" 2.4 23.0 3.7)
-    ("charged_salt" 3.5 28.0 4.2))
+    ("charged_salt" 3.5 28.0 4.2)
+    ("long_conditions" 10.5 45.0 11.5))
   "Maximum (MAE RMS EDGE) for curated reaction raster fixtures.")
 
 (ert-deftest chem-svg-raster-reaction-metadata ()

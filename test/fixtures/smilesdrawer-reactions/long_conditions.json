@@ -19,7 +19,7 @@
     "multiline-conditions",
     "forward-arrow"
   ],
-  "raster": false,
+  "raster": true,
   "known_gap": null,
   "reactant_count": 1,
   "product_count": 1,

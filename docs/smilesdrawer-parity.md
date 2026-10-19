@@ -69,7 +69,7 @@ Renderer parity is complete for the current corpus:
 - Fixture-corpus expansion is planned in
   `docs/smilesdrawer-fixture-plan.md`.
 
-## Reaction composition parity
+## Reaction composition and layout parity
 
 Reaction support uses a separate corpus so the molecule fixtures stay focused
 on renderer parity:
@@ -85,16 +85,37 @@ on renderer parity:
   reference graphs and composition boxes, renders it with the native SVG
   exporter, and checks component placements, plus and arrow geometry, text
   positions and content, wrapped/multiline conditions, and viewBox coverage.
+- A separate layout-parity check builds drawings from the reference component
+  graphs, converts their coordinates to IR units, and runs
+  `chem-reaction-apply-layout`.  It compares the native spacing, plus
+  dimensions, arrow length, vertical centering, text centering, line wrapping,
+  and part ordering against SmilesDrawer's composition rules.  It intentionally
+  does not compare absolute component boxes.
+- Reaction text uses the same line structure as SmilesDrawer: one `<text>`
+  block per above/below region with one `<tspan>` per line.
 
 Per-component SVG primitives, labels, masks, and gradients are not compared in
 the reaction corpus; the molecule parity suite already covers those.  The
 reaction viewBox check is containment-based because native text bounds can be
 larger than SmilesDrawer's clipped estimates.
 
-The advisory raster report covers all seven reaction fixtures.  Six curated
+## Reaction layout divergence
+
+Native reaction components use `chem-drawing-bounds`: rectangular boxes with a
+margin, derived from all atom coordinates.  SmilesDrawer reaction components
+use square, text-aware nested viewBoxes with its own padding and clipping.
+Absolute component-box positions therefore differ, and the layout-parity check
+does not require them to match.  The parity contract covers the composition
+algorithm instead: 10-unit spacing, plus dimensions and arrow length, vertical
+centering, text centering and wrapping, and part order.
+
+Agent text also intentionally diverges.  SmilesDrawer uses a gross formula,
+maps some formulas to common names, and omits charges.  Native output preserves
+the formula and total formal charge, for example `H⁺` rather than `H`.
+
+The advisory raster report covers all seven reaction fixtures.  Seven curated
 fixtures are hard raster gates: esterification, Diels-Alder, two products,
-stereo, an agent/condition fixture, and `charged_salt`.  `long_conditions`
-remains advisory while wrapped/multiline text is validated in the fast suite.
+stereo, an agent/condition fixture, `charged_salt`, and `long_conditions`.
 
 ## Text bounds and viewBox divergence
 

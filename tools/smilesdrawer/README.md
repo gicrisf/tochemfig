@@ -46,13 +46,13 @@ and any text above or below the arrow.
 
 Reaction fixtures intentionally omit per-component SVG primitives and labels;
 those are covered by the molecule parity corpus.  The reaction parity test
-compares composition only: component placement, plus/arrow/text boxes, text
-content, and viewBox coverage.
+compares composition and layout: component placement, plus/arrow/text boxes,
+native layout spacing and centering, text content and wrapping, and viewBox
+coverage.
 
-The advisory raster report also covers all reaction fixtures.  Six curated
+The advisory raster report also covers all reaction fixtures.  Seven curated
 fixtures are hard raster gates: esterification, Diels-Alder, two products,
-stereo, an agent/condition fixture, and `charged_salt`.  `long_conditions`
-remains advisory while wrapped/multiline text is validated in the fast suite.
+stereo, an agent/condition fixture, `charged_salt`, and `long_conditions`.
 The reaction fixtures are also used by the `chem-rxn` Babel tests.
 
 ## Coverage reports

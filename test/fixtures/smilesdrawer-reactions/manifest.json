@@ -78,7 +78,7 @@
         "multiline-conditions",
         "forward-arrow"
       ],
-      "raster": false,
+      "raster": true,
       "text_above": "alpha beta gamma delta epsilon zeta eta theta iota kappa",
       "text_below": "first line\nsecond line"
     }
