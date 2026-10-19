@@ -583,13 +583,15 @@ atom and uses the mask to keep bonds clear."
                                     (chem-atom-y atom))))
     (list (car point) (cdr point) "middle")))
 
-(defun chem-exp-svg--label-radius (state text)
-  "Return an approximate mask radius for TEXT."
+(defun chem-exp-svg--label-radius (state _text &optional atom)
+  "Return the label mask radius for ATOM in STATE."
   (let* ((font-size (chem-exp-svg--option state :svg-font-size))
-         (length (length (or text "")))
-         (base (* 0.75 font-size))
-         (half-width (* 0.3 font-size length)))
-    (+ (max base half-width) (* 0.1 font-size))))
+         (element (if atom
+                      (or (chem-atom-label atom)
+                          (chem-atom-element atom))
+                    ""))
+         (length (length element)))
+    (* font-size (if (> length 1) 1.1 0.75))))
 
 (defun chem-exp-svg--label-center (state atom text)
   "Return the approximate center of ATOM's TEXT in STATE."
@@ -685,7 +687,7 @@ atom and uses the mask to keep bonds clear."
     (let ((text (chem-exp-svg--atom-text-for-state state atom)))
       (when text
         (let ((center (chem-exp-svg--label-center state atom text))
-              (radius (chem-exp-svg--label-radius state text)))
+              (radius (chem-exp-svg--label-radius state text atom)))
           (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"black\"/>\n"
                   (chem-exp-svg--number (car center))
                   (chem-exp-svg--number (cadr center))

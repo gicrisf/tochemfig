@@ -232,6 +232,18 @@
       "transform": "transform: translateX(33.74px) translateY(0px)"
     }
   ],
+  "masks": [
+    {
+      "cx": 76.165246,
+      "cy": -15.000021,
+      "r": 8.25
+    },
+    {
+      "cx": 30,
+      "cy": 0,
+      "r": 8.25
+    }
+  ],
   "viewBox": [
     20,
     -35.56263107678718,

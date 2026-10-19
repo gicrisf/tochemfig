@@ -42,8 +42,9 @@ Phase 1 is in progress:
   is rendered on the center atom.
 - Solid-wedge polygons and dashed-wedge strokes now match SmilesDrawer's
   geometry, including the wide half-width and hashed-wedge step/cap.
-- Known next gap: the allene carbon label.  Next parity target is viewBox,
-  masks, colors, and gradients.
+- Label mask centers and radii now match SmilesDrawer for text labels.
+- Known gaps: the allene carbon label and the dot used for linear carbon
+  atoms.  Next parity target is viewBox, colors, and gradients.
 
 ## Reference version
 

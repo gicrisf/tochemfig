@@ -746,6 +746,79 @@ heteroatom labels covered here.")
               (should (< (abs (- (car center) (car point))) 1e-6))
               (should (< (abs (- (cadr center) (cdr point))) 1e-6)))))))))
 
+(defun chem-svg-parity-test--mask-circles (svg)
+  "Return (CX CY R) for black mask circles in SVG."
+  (let ((start 0)
+        (circles nil))
+    (while (string-match
+            "<circle cx=\"\\([^\"]+\\)\" cy=\"\\([^\"]+\\)\" r=\"\\([^\"]+\\)\" fill=\"black\""
+            svg start)
+      (push (list (string-to-number (match-string 1 svg))
+                  (string-to-number (match-string 2 svg))
+                  (string-to-number (match-string 3 svg)))
+            circles)
+      (setq start (match-end 0)))
+    (sort (nreverse circles)
+          (lambda (a b)
+            (if (= (car a) (car b))
+                (< (cadr a) (cadr b))
+              (< (car a) (car b)))))))
+
+(ert-deftest chem-svg-parity-masks ()
+  "Native label masks match SmilesDrawer's mask circles."
+  (dolist (entry (chem-svg-parity-test--label-fixtures))
+    (let* ((name (chem-svg-parity-test--get entry "name"))
+           (fixture (chem-svg-parity-test--load name))
+           (drawing (chem-svg-parity-test--build-drawing fixture))
+           (state (chem-exp-svg--make-state
+                   drawing (chem-svg-parity-test--options)))
+           (reference
+            (sort
+             (mapcar
+              (lambda (mask)
+                (list (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get mask "cx"))
+                      (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get mask "cy"))
+                      (chem-svg-parity-test--number
+                       (chem-svg-parity-test--get mask "r"))))
+              (cl-remove-if-not
+               (lambda (mask)
+                 (> (chem-svg-parity-test--number
+                     (chem-svg-parity-test--get mask "r"))
+                    5.0))
+               (chem-svg-parity-test--list
+                (chem-svg-parity-test--get fixture "masks"))))
+             (lambda (a b)
+               (if (= (car a) (car b))
+                   (< (cadr a) (cadr b))
+                 (< (car a) (car b))))))
+           (native (chem-svg-parity-test--mask-circles
+                    (chem-exp-svg--defs state))))
+      (should (= (length reference) (length native)))
+      (let* ((ref-origin (car reference))
+             (native-origin (car native))
+             (reference-relative
+              (mapcar (lambda (mask)
+                        (list (- (car mask) (car ref-origin))
+                              (- (cadr mask) (cadr ref-origin))
+                              (caddr mask)))
+                      reference))
+             (native-relative
+              (mapcar (lambda (mask)
+                        (list (- (car mask) (car native-origin))
+                              (- (cadr mask) (cadr native-origin))
+                              (caddr mask)))
+                      native)))
+        (dolist (mask-pair (cl-mapcar #'cons reference-relative native-relative))
+          (let ((expected (car mask-pair))
+                (actual (cdr mask-pair)))
+            (should (< (chem-svg-parity-test--point-distance
+                        (list (car expected) (cadr expected))
+                        (list (car actual) (cadr actual)))
+                       0.01))
+            (should (< (abs (- (caddr expected) (caddr actual))) 0.01))))))))
+
 (ert-deftest chem-svg-parity-ring-radius ()
   "Native aromatic circle radii match SmilesDrawer."
   (dolist (entry (chem-svg-parity-test--strict-fixtures))

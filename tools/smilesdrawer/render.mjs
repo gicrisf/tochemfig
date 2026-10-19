@@ -212,6 +212,11 @@ function renderReference(entry) {
       return labelFor(atom, group);
     })
     .filter(Boolean);
+  const masks = drawer.svgWrapper.maskElements.map((mask) => ({
+    cx: number(mask.getAttribute("cx")),
+    cy: number(mask.getAttribute("cy")),
+    r: number(mask.getAttribute("r")),
+  }));
   const viewBox = (svg.getAttribute("viewBox") ?? "").trim().split(/\s+/).map(Number);
   return {
     reference: {
@@ -228,6 +233,7 @@ function renderReference(entry) {
     rings,
     primitives,
     labels,
+    masks,
     viewBox,
     width: number(svg.getAttribute("width")),
     height: number(svg.getAttribute("height")),
