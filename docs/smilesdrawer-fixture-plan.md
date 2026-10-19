@@ -248,15 +248,15 @@ This makes the handoff less dependent on tribal knowledge.
 Goal: exercise ring construction, fused and bridged geometry, shared edges, and
 aromatic eligibility beyond simple benzene/naphthalene.
 
-Add approximately 6 fixtures:
+Added 6 fixtures:
 
-| Candidate name | SMILES | Features |
+| Name | SMILES | Features |
 |---|---|---|
 | `spiro_decane` | `C1CCC2(CC1)CCCC2` | spiro, ring center, non-fused rings |
 | `adamantane` | `C1C2CC3CC1CC(C2)C3` | bridged cage, carbon dots, non-planar projection |
-| `macrocycle_10` | `C1CCCCCCCCCC1` | large ring, circle eligibility, viewBox |
+| `macrocycle_10` | `C1CCCCCCCCC1` | large ring, circle eligibility, viewBox |
 | `quinoline` | `c1ccc2ncccc2c1` | fused heteroaromatic, shared edge |
-| `purine` | `c1nc2c(n1)ncn2` | fused heteroaromatic, multiple rings |
+| `purine` | `c1ncc2[nH]cnc2n1` | fused heteroaromatic, multiple rings |
 | `cyclohexanone` | `O=C1CCCCC1` | exocyclic double bond, ring side choice |
 
 Validation rules:
@@ -280,7 +280,7 @@ Expected renderer risk:
 Goal: exercise theme colors, gradients, charges, radicals, pseudo groups, and
 non-carbon centers.
 
-Add approximately 7 fixtures:
+Implemented 4 fixtures; the remaining candidates below were deferred:
 
 | Candidate name | SMILES | Features |
 |---|---|---|
@@ -332,7 +332,7 @@ is covered by native tests.
 Goal: exercise wedge/hash geometry, stereocenter configuration, terminal
 labels, cumulated systems, and explicit Kekulé input.
 
-Add approximately 6 fixtures:
+Added 6 fixtures:
 
 | Candidate name | SMILES | Features |
 |---|---|---|
@@ -362,15 +362,20 @@ Expected renderer risk:
 
 Goal: protect option-specific renderer paths that use the same molecule.
 
-Add 4–6 variants after Batch 0 metadata exists:
+Added 4 variants after Batch 0 metadata:
 
-| Candidate | Reference setting | Native setting |
+| Name | Reference setting | Native setting |
 |---|---|---|
 | `caffeine_dark` | SmilesDrawer `dark` theme | `svg-theme dark` |
-| `ethanol_carbons` | SmilesDrawer `showCarbons: all` | `show-carbons t` |
 | `benzene_wide` | SmilesDrawer width/height | `svg-width`, `svg-height` |
-| `alanine_no_stereo` | stereo disabled if comparable | `svg-show-stereo nil` |
-| `phenol_no_hydrogens` | hydrogen handling if comparable | `hydrogens delete` |
+| `ethanol_large_font` | SmilesDrawer `fontSizeLarge` | `svg-font-size` |
+| `benzene_zero_padding` | SmilesDrawer `padding: 0` | `svg-padding: 0` |
+
+Deferred variants:
+
+- `showCarbons`: requires applying common drawing options to the test IR.
+- stereo off: no directly comparable SmilesDrawer fixture option.
+- hydrogen deletion: requires applying common drawing options to the test IR.
 
 Rules:
 
