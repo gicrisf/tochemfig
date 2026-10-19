@@ -26,10 +26,11 @@ Renderer parity is complete for the current corpus:
 
 - The development-only reference generator and normalizer live in
   `tools/smilesdrawer/`.
-- Forty-one fixtures cover aromatic rings, fused rings, heterocycles,
+- Forty-four fixtures cover aromatic rings, fused rings, heterocycles,
   acyclic chains, stereochemistry, bridged and spiro rings, large rings,
-  charged heteroatoms, cumulated double bonds, terminal alkynes, small
-  molecules, allenes, and exporter option variants.
+  charged heteroatoms, pseudo groups with terminal carbons, cumulated double
+  bonds, terminal alkynes, small molecules, allenes, and exporter option
+  variants.
 - `test/chem-svg-parity-test.el` builds test-only IR from SmilesDrawer
   coordinates and runs fast shared-coordinate checks for edge geometry,
   absolute line placement, aromatic circle radii, and determinism.
@@ -41,7 +42,9 @@ Renderer parity is complete for the current corpus:
   now match the shared-coordinate fixtures.
 - Attached pseudo-element groups (COOH, NO2, and related terminal heteroatom
   groups) are detected, hidden atoms and edges are omitted, and the group text
-  is rendered on the center atom.
+  is rendered on the center atom.  All degree-one neighbors, including terminal
+  carbons, are folded into the group.  Pseudo labels use SmilesDrawer's
+  right/down/left direction rules, including the all-pseudo concatenation case.
 - Solid-wedge polygons and dashed-wedge strokes now match SmilesDrawer's
   geometry, including the wide half-width and hashed-wedge step/cap.
 - Label mask centers and radii now match SmilesDrawer for text labels.

@@ -426,13 +426,21 @@
       (should (chem-exp-svg-test--xml svg))
       (should (> (chem-exp-svg-test--count "<line " svg) 10)))))
 
-(ert-deftest chem-exp-svg-bromochloromethane ()
-  "The bromochloromethane fixture renders a wedge."
-  (let ((svg (chem-exp-svg-test--render-file
-              "corpus/bromochloromethane_stereo.mol")))
+(ert-deftest chem-exp-svg-mol-file-wedge ()
+  "A stereocenter loaded from a MOL file renders a wedge."
+  (let ((svg (chem-exp-svg-test--render-file "corpus/lactic_acid.mol")))
     (should (chem-exp-svg-test--xml svg))
     (should (or (string-match-p "<polygon " svg)
                 (> (chem-exp-svg-test--count "<line " svg) 4)))))
+
+(ert-deftest chem-exp-svg-bromochloromethane-pseudo-group ()
+  "A center with terminal halogens collapses into a pseudo label."
+  (let ((svg (chem-exp-svg-test--render-file
+              "corpus/bromochloromethane_stereo.mol")))
+    (should (chem-exp-svg-test--xml svg))
+    (should (= 0 (chem-exp-svg-test--count "<line " svg)))
+    (should (= 0 (chem-exp-svg-test--count "<polygon " svg)))
+    (should (string-match-p "H₃" (chem-exp-svg-test--text-content svg)))))
 
 (ert-deftest chem-exp-svg-cip-labels ()
   "CIP labels render only when enabled."
@@ -615,6 +623,33 @@
                             (chem-exp-svg-test--text-content nitro)))
     (should (= 1 (chem-exp-svg-test--count "<text " nitro)))
     (should (= 7 (chem-exp-svg-test--count "<line " nitro)))))
+
+(ert-deftest chem-exp-svg-pseudo-groups-all-terminal-neighbors ()
+  "Pseudo labels include terminal carbons and use SmilesDrawer directions."
+  (let ((sulfonate (chem-exp-svg-test--render "CS(=O)(=O)[O-]")))
+    (should (string-match-p "SO₂O⁻CH₃"
+                            (chem-exp-svg-test--text-content sulfonate)))
+    (should (string-match-p "data-direction=\"down\"" sulfonate))
+    (should (= 0 (chem-exp-svg-test--count "<line " sulfonate))))
+  (let ((acetate (chem-exp-svg-test--render "CC(=O)[O-]")))
+    (should (string-match-p "COO⁻CH₃"
+                            (chem-exp-svg-test--text-content acetate)))
+    (should (string-match-p "data-direction=\"right\"" acetate))
+    (should (= 0 (chem-exp-svg-test--count "<line " acetate))))
+  (let ((boronic (chem-exp-svg-test--render "OB(O)O")))
+    (should (string-match-p "BO₃H₃"
+                            (chem-exp-svg-test--text-content boronic)))
+    (should (string-match-p "data-direction=\"down\"" boronic))
+    (should (= 0 (chem-exp-svg-test--count "<line " boronic))))
+  (let ((nitro (chem-exp-svg-test--render "O=[N+]([O-])c1ccccc1")))
+    (should (string-match-p "N⁺O₂\\|O₂N⁺"
+                            (chem-exp-svg-test--text-content nitro)))
+    (should (= 7 (chem-exp-svg-test--count "<line " nitro))))
+  (let ((alanine (chem-exp-svg-test--render
+                  "N[C@@H](C)C(=O)O" '(("svg-show-stereo" . nil)))))
+    (should (string-match-p "COOH\\|HOOC"
+                            (chem-exp-svg-test--text-content alanine)))
+    (should (= 3 (chem-exp-svg-test--count "<line " alanine)))))
 
 (ert-deftest chem-exp-svg-atom-numbers ()
   "Atom numbers replace hydrogen and charge annotations."

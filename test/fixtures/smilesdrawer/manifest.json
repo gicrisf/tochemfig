@@ -465,6 +465,45 @@
       "chem_options": {
         "svg-padding": 0
       }
+    },
+    {
+      "name": "sulfonate",
+      "smiles": "CS(=O)(=O)[O-]",
+      "features": [
+        "pseudo-group",
+        "negative-charge",
+        "sulfur-heteroatom",
+        "multiple-oxygen",
+        "terminal-methyl",
+        "hidden-bond",
+        "pseudo-label-down"
+      ],
+      "raster": false
+    },
+    {
+      "name": "acetate",
+      "smiles": "CC(=O)[O-]",
+      "features": [
+        "pseudo-group",
+        "negative-charge",
+        "carbonyl",
+        "terminal-methyl",
+        "hidden-bond",
+        "pseudo-label-right"
+      ],
+      "raster": false
+    },
+    {
+      "name": "boronic_acid",
+      "smiles": "OB(O)O",
+      "features": [
+        "pseudo-group",
+        "boron-heteroatom",
+        "multiple-oxygen",
+        "hidden-bond",
+        "pseudo-label-down"
+      ],
+      "raster": false
     }
   ]
 }

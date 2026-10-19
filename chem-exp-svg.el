@@ -386,7 +386,8 @@ reads outward from the atom, matching SmilesDrawer."
 
 (defun chem-exp-svg--attach-pseudo (table center element hydrogens charge)
   "Attach a pseudo ELEMENT to CENTER in TABLE."
-  (let* ((key (format "%s%s%s" hydrogens element charge))
+  (let* ((key (format "%s%s%s" hydrogens element
+                      (if (zerop charge) "" charge)))
          (groups (gethash center table))
          (existing (cl-find key groups
                             :key (lambda (group) (plist-get group :key))
@@ -427,14 +428,18 @@ PSEUDO maps a center atom index to a sorted list of pseudo groups."
            (let* ((terminal
                    (cl-remove-if-not
                     (lambda (neighbor)
-                      (and (not (member (chem-atom-element neighbor) '("C" "H")))
-                           (= 1 (length (chem-atom-neighbors neighbor)))))
+                      (= 1 (length (chem-atom-neighbors neighbor))))
                     neighbors))
+                  (terminal-heteroatoms
+                   (cl-remove-if
+                    (lambda (neighbor)
+                      (member (chem-atom-element neighbor) '("C" "H")))
+                    terminal))
                   (ctn (cl-count-if
                         (lambda (neighbor)
                           (> (length (chem-atom-neighbors neighbor)) 1))
                         neighbors)))
-             (when (and (>= (length terminal) 2) (<= ctn 1))
+             (when (and (>= (length terminal-heteroatoms) 2) (<= ctn 1))
                (dolist (neighbor terminal)
                  (puthash (chem-atom-idx neighbor) t hidden)
                  (chem-exp-svg--attach-pseudo
@@ -599,6 +604,7 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
   "Return ATOM's text direction using only visible neighbours."
   (let* ((drawing (chem-exp-svg-state-drawing state))
          (atoms (chem-drawing-atoms drawing))
+         (atom-count (hash-table-count atoms))
          (visible-neighbors
           (cl-remove-if
            (lambda (idx) (chem-exp-svg--hidden-atom-p state idx))
@@ -614,7 +620,11 @@ ONLY-HORIZONTAL forces right/left rounding for pseudo-element centers."
            visible-neighbors))
          (pseudo (gethash (chem-atom-idx atom)
                           (chem-exp-svg-state-pseudo state))))
-    (chem-exp-svg--text-direction-from-angles angles (and pseudo t))))
+    (cond
+     ((= atom-count 1) 'right)
+     ((and pseudo (= atom-count (1+ (length pseudo)))) 'right)
+     ((null angles) 'down)
+     (t (chem-exp-svg--text-direction-from-angles angles (and pseudo t))))))
 
 (defun chem-exp-svg--text-size (state text)
   "Return (WIDTH . HEIGHT) for TEXT using SmilesDrawer's estimate."

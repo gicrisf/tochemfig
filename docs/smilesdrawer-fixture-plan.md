@@ -11,12 +11,15 @@ renderer behavior that is not already covered by an existing fixture.
 
 ## Current state
 
-- Implementation status: Batches 0 through 6 are complete.
+- Implementation status: Batches 0 through 7 are complete.
 - Branch: `svg`
-- Fixture count: **41**
-- Fast suite: **506 tests**
+- Fixture count: **44**
+- Fast suite: **509 tests**
 - Hard raster gates: **17 curated fixtures**
 - Known fixture gaps: none currently declared
+- Deferred follow-up: terminal-carbon `showCarbons` parity for
+  methylammonium, and exact pseudo-key handling for bracketed neutral
+  terminals (the current IR has no bracket flag). See "Batch 7" below.
 - Fixture generator: `tools/smilesdrawer/render.mjs`
 - Manifest: `test/fixtures/smilesdrawer/manifest.json`
 - Generated fixtures: `test/fixtures/smilesdrawer/<name>.json`
@@ -70,6 +73,9 @@ caffeine_dark
 benzene_wide
 ethanol_large_font
 benzene_zero_padding
+sulfonate
+acetate
+boronic_acid
 ```
 
 The current fast tests cover:
@@ -82,7 +88,9 @@ The current fast tests cover:
 - aromatic ring circles
 - text-inclusive square viewBox
 - solid wedges and hashed wedges
-- pseudo-element groups such as `COOH` and `NO2`
+- pseudo-element groups such as `COOH`, `NO2`, and terminal-carbon groups
+  (`SO₂O⁻CH₃`, `COO⁻CH₃`)
+- pseudo-label directions, including `down` for fully concatenated groups
 - allene labels
 - deterministic output
 
@@ -219,7 +227,7 @@ Recommended policy:
 - optionally omit `svg` for fast-only fixtures
 - keep all structured reference data for fast tests
 
-Decision: all fixtures keep the reference SVG for now. At 41 fixtures the
+Decision: all fixtures keep the reference SVG for now. At 44 fixtures the
 corpus is small enough to keep the generator and raster report simple. Revisit
 if fixture size becomes a problem.
 
@@ -310,22 +318,23 @@ Expected renderer risk:
 
 ### Batch 2 deferred cases
 
-These candidates exposed SmilesDrawer behavior that the native renderer does
-not yet implement, so they are intentionally not in the corpus:
+These candidates exposed SmilesDrawer behavior that the native renderer did not
+implement when Batch 2 was written:
 
-- `sulfonate`: SmilesDrawer folds the methyl group into the sulfur pseudo
-  label (`SO₂O⁻CH₃`), hiding the S-C bond and carbon.
-- `boronic_acid`: SmilesDrawer stacks the pseudo label vertically; the native
-  renderer still lays it out horizontally.
-- `acetate`: SmilesDrawer folds the methyl group into the carboxylate pseudo
-  label.
-- `methylammonium`: SmilesDrawer labels the terminal methyl as `CH₃`; the
-  native renderer does not.
-- `methyl_radical`: SmilesDrawer does not expose a radical field for the
-  fixture builder.
+- `sulfonate`: **implemented in Batch 7.** The methyl group is now folded into
+  the sulfur pseudo label (`SO₂O⁻CH₃`), hiding the S-C bond and carbon.
+- `boronic_acid`: **implemented in Batch 7.** The pseudo label is now laid out
+  downward (`BO₃H₃`).
+- `acetate`: **implemented in Batch 7.** The methyl group is now folded into
+  the carboxylate pseudo label (`COO⁻CH₃`).
+- `methylammonium`: still deferred. SmilesDrawer labels the terminal methyl as
+  `CH₃`; the native renderer needs `showCarbons` support in the parity fixture
+  builder.
+- `methyl_radical`: still deferred. SmilesDrawer does not expose a radical
+  field for the fixture builder.
 
-Add these only after the corresponding pseudo-group or terminal-label behavior
-is covered by native tests.
+See "Batch 7 — pseudo-group parity" for the implementation and remaining
+caveats.
 
 ## Batch 3 — stereochemistry and bond edge cases
 
@@ -435,13 +444,14 @@ The audit used `tools/smilesdrawer/coverage.mjs` and a review of
 
 Results:
 
-- 41 fixtures, all with feature tags
+- 44 fixtures, all with feature tags
 - 17 raster-gated fixtures
 - no duplicate names or missing tags
-- 19 singleton features, all deliberate specialized cases: amine, cage,
-  exocyclic double bond, hydroxyl, large ring, multiple oxygens, multiple
+- 20 singleton features, all deliberate specialized cases: amine, boron
+  heteroatom, cage, exocyclic double bond, hydroxyl, large ring, multiple
   stereocenters, nitro, the four option variants, oxygen/sulfur/phosphorus
-  heteroatoms, positive charge, pseudo group, spiro, and triple bond
+  heteroatoms, positive charge, down-directed pseudo label, spiro, and triple
+  bond
 - no additional high-value molecule fixtures were needed
 
 Branches not represented by fixtures are handled elsewhere:
@@ -450,10 +460,10 @@ Branches not represented by fixtures are handled elsewhere:
   tests
 - radicals are covered by a native unit test; SmilesDrawer does not expose a
   radical field for the fixture builder
-- isotope, metal, E/Z label, reaction, and multi-fragment cases remain out of
-  scope
-- sulfonate, acetate, and boronic acid pseudo-group behavior is deferred until
-  the native pseudo-group layout matches SmilesDrawer
+- isotope, metal, E/Z label, and multi-fragment cases remain out of scope;
+  reaction schemes are planned separately
+- sulfonate, acetate, and boronic acid pseudo-group behavior is covered by
+  Batch 7
 
 Suggested audit targets for future changes:
 
@@ -464,6 +474,80 @@ Suggested audit targets for future changes:
 - every gradient type
 - every mask and point path
 - every viewBox branch
+
+## Batch 7 — pseudo-group parity
+
+Status: **implemented**. Three fixtures were added: `sulfonate`, `acetate`, and
+`boronic_acid`.
+
+### Why these cases were initially deferred
+
+The native renderer only attaches terminal heteroatoms to a pseudo label.
+SmilesDrawer first decides that a center is eligible, then attaches **every
+degree-one neighbor**, including terminal carbon and hydrogen. This accounts for
+the three deferred molecules:
+
+| Molecule | Behavior before Batch 7 | SmilesDrawer behavior |
+|---|---|---|
+| `CS(=O)(=O)[O-]` | Left a visible S-C bond; label omitted the methyl group | Hides the methyl carbon; label `SO₂O⁻CH₃` |
+| `CC(=O)[O-]` | Left a visible C-C bond; label omitted the methyl group | Hides the methyl carbon; label `COO⁻CH₃` |
+| `OB(O)O` | Label text was correct but laid out horizontally | Label `BO₃H₃`, laid out downward |
+
+The former `C[NH3+]` concern is **not** a renderer gap. Indigo places the
+methyl to the left of the nitrogen, so native `H₃C` in a left-directed label is
+consistent with the native layout. SmilesDrawer places the methyl on the right.
+A shared-coordinate fixture would use the reference coordinates and therefore
+render `CH₃` correctly once the fixture builder applies `showCarbons`; that
+remains deferred.
+
+### Resolved gaps
+
+1. **Terminal-neighbor grouping** — `chem-exp-svg--pseudo-elements` now keeps
+   eligibility based on terminal heteroatom count, but attaches and hides all
+   degree-one neighbors, including carbon and hydrogen.
+2. **Group key ordering** — `chem-exp-svg--attach-pseudo` now omits the numeric
+   zero charge from the key, so `0O` sorts before `0O-1` and `O₂` precedes
+   `O⁻`.
+3. **Pseudo-label direction** — `chem-exp-svg--text-direction-for-state` now
+   uses SmilesDrawer's rules:
+   - `right` when every non-center atom is covered by a distinct pseudo key
+     (`atom-count = raw-pseudo-key-count + 1`)
+   - `down` when a pseudo center has no visible neighbors
+   - left/right when a visible previous atom remains
+4. **Terminal carbon direction** — no renderer change was needed; see the
+   layout note above.
+
+### Implementation
+
+1. Attach and hide all degree-one neighbors in
+   `chem-exp-svg--pseudo-elements`.
+2. Omit the numeric zero charge from the pseudo group key.
+3. Apply the no-visible-neighbor and all-pseudo direction rules before the
+   existing horizontal direction logic.
+4. Add `sulfonate`, `acetate`, and `boronic_acid` fixtures.
+5. Add native unit tests for label text, hidden bonds, and direction.
+6. Run the advisory raster report.  The three new fixtures are not hard-gated:
+   the reference and native SVGs for label-only pseudo groups rasterize
+   inconsistently under Inkscape, so the advisory metrics are not a reliable
+   gate for them.
+
+### Acceptance examples
+
+- `CS(=O)(=O)[O-]`: no visible S-C line; `SO₂O⁻CH₃`; direction `down`
+- `CC(=O)[O-]`: no visible C-C line; `COO⁻CH₃`; direction `right`
+- `OB(O)O`: `BO₃H₃`; direction `down`; viewBox matches
+- `O=[N+]([O-])c1ccccc1`: remains `N⁺O₂` with direction `right`
+- alanine `COOH`: remains `HOOC` with direction `left`
+
+`methyl_radical` cannot become a SmilesDrawer fixture because SmilesDrawer does
+not expose radical data; keep it covered by the native SVG unit test.
+
+The empty neutral-charge key matches SmilesDrawer for **unbracketed** neutral
+atoms, which covers the three fixtures.  SmilesDrawer uses `0` instead of an
+empty charge for *bracketed* neutral atoms.  Indigo does not expose bracket
+status and the IR has no bracket field, so exact parity for bracketed neutral
+terminal groups would require a source-SMILES metadata field.  That is
+deliberately out of scope here.
 
 ## What not to add
 
