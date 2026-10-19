@@ -1,0 +1,121 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "ethanol",
+  "smiles": "CCO",
+  "atoms": [
+    {
+      "id": 0,
+      "x": 126.961487,
+      "y": 25.980683,
+      "element": "C",
+      "hydrogens": 3,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 100.980745,
+      "y": 40.980718,
+      "element": "C",
+      "hydrogens": 2,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": 2,
+      "x": 75,
+      "y": 25.980689,
+      "element": "O",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    }
+  ],
+  "rings": [],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 0,
+      "ring": null,
+      "x1": 100.980745,
+      "y1": 40.980718,
+      "x2": 126.961487,
+      "y2": 25.980683,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 1,
+      "ring": null,
+      "x1": 75,
+      "y1": 25.980689,
+      "x2": 100.980745,
+      "y2": 40.980718,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    }
+  ],
+  "labels": [
+    {
+      "atom": 2,
+      "text": "HO",
+      "direction": "left",
+      "x": 78.74,
+      "y": 25.980689,
+      "transform": "transform: translateX(78.73999999991004px) translateY(25.980688649431098px)"
+    }
+  ],
+  "viewBox": [
+    60.039999999910044,
+    -5.480040522743625,
+    76.92148749497608,
+    76.92148749497608
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 60.04,
+  "minY": 14.980689
+}

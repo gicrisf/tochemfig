@@ -1,0 +1,9 @@
+{
+  "name": "chem-mode-smilesdrawer-reference",
+  "private": true,
+  "type": "module",
+  "description": "Development-only SmilesDrawer reference generator for SVG parity tests",
+  "dependencies": {
+    "jsdom": "26.1.0"
+  }
+}

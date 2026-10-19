@@ -1,0 +1,84 @@
+{
+  "fixtures": [
+    {
+      "name": "benzene",
+      "smiles": "c1ccccc1"
+    },
+    {
+      "name": "naphthalene",
+      "smiles": "c1ccc2ccccc2c1"
+    },
+    {
+      "name": "indole",
+      "smiles": "c1ccc2[nH]ccc2c1"
+    },
+    {
+      "name": "pyridine",
+      "smiles": "c1ccncc1"
+    },
+    {
+      "name": "pyrrole",
+      "smiles": "c1cc[nH]c1"
+    },
+    {
+      "name": "caffeine_aromatic",
+      "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C"
+    },
+    {
+      "name": "caffeine_kekule",
+      "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+    },
+    {
+      "name": "ethanol",
+      "smiles": "CCO"
+    },
+    {
+      "name": "alanine",
+      "smiles": "N[C@@H](C)C(=O)O"
+    },
+    {
+      "name": "butene_e",
+      "smiles": "C/C=C/C"
+    },
+    {
+      "name": "butene_z",
+      "smiles": "C/C=C\\C"
+    },
+    {
+      "name": "cyclohexane",
+      "smiles": "C1CCCCC1"
+    },
+    {
+      "name": "bicyclic",
+      "smiles": "C1CC2CCC1C2"
+    },
+    {
+      "name": "nitrobenzene",
+      "smiles": "O=[N+]([O-])c1ccccc1"
+    },
+    {
+      "name": "phenol",
+      "smiles": "Oc1ccccc1"
+    },
+    {
+      "name": "aniline",
+      "smiles": "Nc1ccccc1"
+    },
+    {
+      "name": "allene",
+      "smiles": "C=C=C"
+    },
+    {
+      "name": "furan",
+      "smiles": "c1ccoc1"
+    },
+    {
+      "name": "thiophene",
+      "smiles": "c1ccsc1"
+    },
+    {
+      "name": "imidazole",
+      "smiles": "c1c[nH]cn1"
+    }
+  ]
+}

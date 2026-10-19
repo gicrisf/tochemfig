@@ -15,3 +15,6 @@ build
 
 # Generated Org Babel SVG cache
 .chem-cache/
+
+# Node tooling for the SmilesDrawer reference harness
+/tools/smilesdrawer/node_modules/

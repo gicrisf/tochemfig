@@ -34,7 +34,7 @@ and ring-record implementation.
 - Phase 7 is implemented on this branch: the 1000-molecule corpus smoke test
   and documentation updates.
 - Org Babel integration is implemented in `chem-babel.el`; see
-  `chem-mode-plans/org.md`.  The suite currently has 488 tests.
+  `chem-mode-plans/org.md`.  The suite currently has 491 tests.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.
@@ -99,8 +99,9 @@ and ring-record implementation.
   is a separate feature.
 - No isotope labels until `emacs-indigo` exposes an isotope accessor.
 - No full typographic text layout.  Text metrics are approximate by design.
-- No pixel-perfect visual parity with SmilesDrawer or chemfig.  The goal is a
-  correct, readable, deterministic drawing.
+- No pixel-perfect **layout** parity with SmilesDrawer or chemfig.  The goal is
+  a correct, readable, deterministic drawing; renderer parity work is tracked
+  in `docs/smilesdrawer-parity.md`.
 
 ## Current architecture
 
@@ -256,6 +257,7 @@ per-render results if profiling shows a problem.
 - Byte compilation: `eldev compile`
 - Module-free compile: `tools/check-module-free-compile.sh`
 - SVG exporter tests: `test/chem-exp-svg-test.el`
+- SmilesDrawer renderer parity: `test/chem-svg-parity-test.el`
 - Org Babel tests: `test/chem-babel-test.el`
 - SVG corpus smoke test: included, skips when the studies corpus is absent
 - Studies corpus parity: `tools/validate-corpus.el` compare
@@ -663,9 +665,9 @@ For v1, a simple rule is acceptable:
 
 ### Circle geometry
 
-Use `chem-ring-center` and `chem-ring-apothem`.  The circle radius should be
-smaller than the apothem by half `:svg-bond-thickness` and a small visual
-margin.
+Use `chem-ring-center` and `chem-ring-apothem`.  The circle radius is the
+scaled apothem minus `:svg-bond-spacing`, matching SmilesDrawer's aromatic
+circle formula.
 Do not reuse the chemfig radius, which is a scaled apothem.
 
 ### Double bonds in rings

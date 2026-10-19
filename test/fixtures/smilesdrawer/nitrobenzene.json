@@ -1,0 +1,354 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "theme": "light",
+    "options": {}
+  },
+  "name": "nitrobenzene",
+  "smiles": "O=[N+]([O-])c1ccccc1",
+  "atoms": [
+    {
+      "id": 0,
+      "x": 178.923045,
+      "y": 55.980582,
+      "element": "O",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": false,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 1,
+      "x": 152.942337,
+      "y": 70.980675,
+      "element": "N",
+      "hydrogens": 0,
+      "charge": 1,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": false,
+      "neighbours": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "id": 2,
+      "x": 152.942297,
+      "y": 100.980675,
+      "element": "O",
+      "hydrogens": 0,
+      "charge": -1,
+      "isotope": 0,
+      "isDrawn": false,
+      "isAromatic": false,
+      "neighbours": [
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "x": 126.961558,
+      "y": 55.980704,
+      "element": "C",
+      "hydrogens": 0,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        1,
+        4,
+        8
+      ]
+    },
+    {
+      "id": 4,
+      "x": 126.961524,
+      "y": 25.980704,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        3,
+        5
+      ]
+    },
+    {
+      "id": 5,
+      "x": 100.980745,
+      "y": 10.980733,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        4,
+        6
+      ]
+    },
+    {
+      "id": 6,
+      "x": 75,
+      "y": 25.980762,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        5,
+        7
+      ]
+    },
+    {
+      "id": 7,
+      "x": 75.000034,
+      "y": 55.980762,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        6,
+        8
+      ]
+    },
+    {
+      "id": 8,
+      "x": 100.980813,
+      "y": 70.980733,
+      "element": "C",
+      "hydrogens": 1,
+      "charge": 0,
+      "isotope": 0,
+      "isDrawn": true,
+      "isAromatic": true,
+      "neighbours": [
+        7,
+        3
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "a": 0,
+      "b": 1,
+      "order": "double",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 1,
+      "a": 1,
+      "b": 2,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 2,
+      "a": 1,
+      "b": 3,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": false
+    },
+    {
+      "id": 3,
+      "a": 3,
+      "b": 4,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 4,
+      "a": 4,
+      "b": 5,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 5,
+      "a": 5,
+      "b": 6,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 6,
+      "a": 6,
+      "b": 7,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 7,
+      "a": 7,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    },
+    {
+      "id": 8,
+      "a": 3,
+      "b": 8,
+      "order": "single",
+      "stereo": "none",
+      "aromatic": true
+    }
+  ],
+  "rings": [
+    {
+      "id": 0,
+      "atoms": [
+        8,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "aromatic": true,
+      "cx": 100.980779,
+      "cy": 40.980733
+    }
+  ],
+  "primitives": [
+    {
+      "kind": "line",
+      "edge": 2,
+      "ring": null,
+      "x1": 126.961558,
+      "y1": 55.980704,
+      "x2": 152.942337,
+      "y2": 70.980675,
+      "stroke": "url(#G66O4-atom-0)",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 3,
+      "ring": null,
+      "x1": 126.961524,
+      "y1": 25.980704,
+      "x2": 126.961558,
+      "y2": 55.980704,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 8,
+      "ring": null,
+      "x1": 100.980813,
+      "y1": 70.980733,
+      "x2": 126.961558,
+      "y2": 55.980704,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 4,
+      "ring": null,
+      "x1": 100.980745,
+      "y1": 10.980733,
+      "x2": 126.961524,
+      "y2": 25.980704,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 7,
+      "ring": null,
+      "x1": 75.000034,
+      "y1": 55.980762,
+      "x2": 100.980813,
+      "y2": 70.980733,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 5,
+      "ring": null,
+      "x1": 75,
+      "y1": 25.980762,
+      "x2": 100.980745,
+      "y2": 10.980733,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "line",
+      "edge": 6,
+      "ring": null,
+      "x1": 75,
+      "y1": 25.980762,
+      "x2": 75.000034,
+      "y2": 55.980762,
+      "stroke": "#222222",
+      "strokeWidth": 1,
+      "dash": null
+    },
+    {
+      "kind": "circle",
+      "edge": null,
+      "ring": 0,
+      "cx": 100.980779,
+      "cy": 40.980733,
+      "r": 20.880762,
+      "stroke": "#222222",
+      "fill": "none"
+    }
+  ],
+  "labels": [
+    {
+      "atom": 1,
+      "text": "N⁺O₂",
+      "direction": "right",
+      "x": 149.202337,
+      "y": 70.980675,
+      "transform": "transform: translateX(149.20233683093323px) translateY(70.98067466159651px)"
+    }
+  ],
+  "viewBox": [
+    65,
+    -9.970464603215124,
+    102.90233683093325,
+    102.90233683093325
+  ],
+  "width": 500,
+  "height": 500,
+  "minX": 65,
+  "minY": 0.980733
+}

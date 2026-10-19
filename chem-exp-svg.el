@@ -1100,15 +1100,14 @@ ring's side."
   "Return the ring SVG for STATE."
   (let* ((drawing (chem-exp-svg-state-drawing state))
          (scale (chem-exp-svg--option state :svg-scale))
-         (thickness (chem-exp-svg--option state :svg-bond-thickness))
-         (font-size (chem-exp-svg--option state :svg-font-size)))
+         (spacing (chem-exp-svg--option state :svg-bond-spacing))
+         (thickness (chem-exp-svg--option state :svg-bond-thickness)))
     (mapconcat
      (lambda (ring)
        (if (eq 'circle (chem-exp-svg--ring-aromatic-display state ring))
            (let* ((center (chem-exp-svg--ring-center-svg state ring))
                   (radius (- (* (chem-ring-apothem drawing ring) scale)
-                             (/ thickness 2.0)
-                             (* 0.1 font-size))))
+                             spacing)))
              (if (> radius 0.0)
                  (format "<circle cx=\"%s\" cy=\"%s\" r=\"%s\" fill=\"none\" stroke=\"%s\" stroke-width=\"%s\"/>\n"
                          (chem-exp-svg--number (car center))
