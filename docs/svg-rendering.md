@@ -1250,9 +1250,11 @@ entry point small.
 ## Appendix C — references
 
 - `chem-ir.el` — current stable IR and geometry helpers.
-- `chem-geometry.el` — stereocenter configuration and
-  `chem-stereocenter-wedge-up-p`.
-- `chem-indigo.el` — ingestion, canonical edges, ring records, allene data.
+- `chem-geometry.el` — stereocenter configuration,
+  `chem-stereocenter-wedge-up-p`, and drawing bounds.
+- `chem-reaction.el` — reaction layout and bounds.
+- `chem-indigo.el` — ingestion, canonical edges, ring records, allene data,
+  and reaction ingestion.
 - `chem-options.el` — common options and generic exporter option merging.
 - `chem-exp-chemfig.el` — reference renderer for label precedence, rings, and
   stereo behavior; do not copy its tree traversal into SVG.

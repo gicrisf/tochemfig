@@ -19,6 +19,28 @@
   "Convert RADIANS to degrees."
   (* radians (/ 180.0 float-pi)))
 
+(defun chem-drawing-bounds (drawing &optional margin)
+  "Return (MIN-X MIN-Y MAX-X MAX-Y) for DRAWING.
+MARGIN is added to every side; it defaults to 0.75.  Return nil when
+DRAWING has no atoms."
+  (let ((margin (or margin 0.75))
+        (min-x nil)
+        (min-y nil)
+        (max-x nil)
+        (max-y nil))
+    (maphash
+     (lambda (_ atom)
+       (let ((x (chem-atom-x atom))
+             (y (chem-atom-y atom)))
+         (setq min-x (if min-x (min min-x x) x))
+         (setq min-y (if min-y (min min-y y) y))
+         (setq max-x (if max-x (max max-x x) x))
+         (setq max-y (if max-y (max max-y y) y))))
+     (chem-drawing-atoms drawing))
+    (when min-x
+      (list (- min-x margin) (- min-y margin)
+            (+ max-x margin) (+ max-y margin)))))
+
 (defun chem--canonical-stereo (stereo start end)
   "Return STEREO relative to the canonical (lower-index) bond orientation.
 START and END are the original Indigo source and destination indices."

@@ -23,6 +23,16 @@ output needs no LaTeX toolchain.
 
 Some output uses helper macros inherited from =mol2chemfig= (charges such as =\mcfplus=, aromatic circles =\mcfcringle=, wavy bonds =\mcfwavy=, fancy bonds =\dbl=/\dbr=/\trpl=, ...). Include mol2chemfig's =mcfmacros= preamble (or equivalent definitions) when rendering structures that use them.
 
+* Architecture
+
+- =chem-ir.el=: renderer-neutral molecule and reaction records.
+- =chem-geometry.el=: coordinate and geometry helpers.
+- =chem-reaction.el=: reaction layout and bounds.
+- =chem-indigo.el=: Indigo ingestion for molecules and reactions.
+- =chem-exp-chemfig.el= and =chem-exp-svg.el=: exporters.
+- =chem-mode.el=, =chem-dispatch.el=, and =chem-babel.el=: commands, options,
+  and Org integration.
+
 * Quickstart
 
 The following is a SMILES representation of caffeine:
@@ -449,7 +459,7 @@ guard against regressions:
    coordinates.  =tools/svg-raster-report.el= adds an advisory Inkscape raster
    and bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 509 tests.
+The full ERT suite currently has 526 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

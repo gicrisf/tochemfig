@@ -24,15 +24,23 @@
 ;; compilation does not depend on the module.
 (eval-when-compile (require 'indigo-mol))
 (eval-when-compile (require 'indigo-iter))
+(eval-when-compile (require 'indigo-react))
 (require 'chem-ir)
 (require 'chem-geometry)
+(require 'chem-reaction)
 (require 'chem-exp-chemfig-mappings)
+
+(declare-function indigo-gross-formula "indigo-module" (mol))
+(declare-function indigo-iterate-catalysts "indigo-module" (reaction))
 
 (unless (macrop 'indigo-with-allene-centers-iterator)
   (error "chem-mode requires emacs-indigo (>= 0.13.0), but the \
 `indigo-with-allene-centers-iterator' macro is unavailable.  Install or upgrade \
 emacs-indigo (e.g. `M-x straight-pull-package RET indigo' or `doom sync -u') \
 and rebuild chem-mode"))
+
+(unless (macrop 'indigo-with-catalysts-iterator)
+  (error "chem-mode requires emacs-indigo with reaction catalyst support"))
 
 ;;; Parsing
 
@@ -694,6 +702,133 @@ OPTIONS is the common option plist.  The drawing is ready to be rendered."
   "Build a drawing from the molecule file at PATH with OPTIONS."
   (indigo-with-mol-file (mol path)
     (chem-from-molecule mol options)))
+
+;;; Reactions
+
+(defun chem--reaction-component-options (options)
+  "Return OPTIONS with molecule bond scaling forced to normalize."
+  (plist-put (copy-sequence options) :bond-scale 'normalize))
+
+(defun chem--reaction-drawings (reaction iterator options)
+  "Return prepared drawings from REACTION using ITERATOR and OPTIONS."
+  (let ((iter (funcall iterator reaction))
+        (component-options (chem--reaction-component-options options)))
+    (unwind-protect
+        (indigo-map (lambda (mol)
+                      (chem-from-molecule mol component-options))
+                    iter)
+      (when iter (indigo-free iter)))))
+
+(defun chem--molecule-total-charge (mol)
+  "Return the sum of formal charges in MOL."
+  (let ((iter (indigo-iterate-atoms mol)))
+    (unwind-protect
+        (apply #'+ (indigo-map (lambda (atom)
+                                 (or (indigo-charge atom) 0))
+                               iter))
+      (when iter (indigo-free iter)))))
+
+(defun chem--reaction-charge-suffix (charge)
+  "Return a plain-text suffix for CHARGE."
+  (cond
+   ((= charge 1) "+")
+   ((= charge -1) "-")
+   ((> charge 1) (format "%d+" charge))
+   ((< charge -1) (format "%d-" (- charge)))
+   (t "")))
+
+(defun chem--reaction-agent-label (mol)
+  "Return MOL's normalized gross formula with its total formal charge."
+  (let* ((formula (replace-regexp-in-string
+                   "[[:space:]]+" ""
+                   (or (indigo-gross-formula mol) "")))
+         (charge (chem--molecule-total-charge mol)))
+    (concat formula (chem--reaction-charge-suffix charge))))
+
+(defun chem--reaction-agents (reaction)
+  "Return agent labels from REACTION."
+  (indigo-with-catalysts-iterator (iter reaction)
+    (indigo-map
+     (lambda (mol)
+       (chem-reaction-agent-create
+        :label (chem--reaction-agent-label mol)))
+     iter)))
+
+(defun chem-indigo-build-reaction (reaction options)
+  "Build a prepared `chem-reaction' from Indigo REACTION and OPTIONS."
+  (let ((reactants (chem--reaction-drawings
+                    reaction #'indigo-iterate-reactants options))
+        (agents (chem--reaction-agents reaction))
+        (products (chem--reaction-drawings
+                   reaction #'indigo-iterate-products options)))
+    (unless reactants
+      (user-error "Reaction has no reactants"))
+    (unless products
+      (user-error "Reaction has no products"))
+    (let ((result (chem-reaction-create
+                   :reactants reactants
+                   :agents agents
+                   :products products
+                   :conditions (chem-reaction--conditions options)
+                   :arrow (list :style (chem-reaction--arrow-style options)))))
+      (chem-reaction-apply-layout result options))))
+
+(defun chem--validate-reaction-smiles (reaction-smiles)
+  "Validate REACTION-SMILES and return its three parts."
+  (let ((parts (split-string reaction-smiles ">" nil)))
+    (unless (and (= 3 (length parts))
+                 (not (string-empty-p (string-trim (nth 0 parts))))
+                 (not (string-empty-p (string-trim (nth 2 parts)))))
+      (user-error
+       "Reaction SMILES must have exactly two `>' separators and non-empty reactant/product sides"))
+    parts))
+
+(defun chem--validate-rxn-file (path)
+  "Validate the RXN file at PATH."
+  (unless (file-exists-p path)
+    (user-error "Reaction file does not exist: %s" path))
+  (let ((contents (with-temp-buffer
+                    (insert-file-contents path)
+                    (buffer-string))))
+    (when (string-empty-p (string-trim contents))
+      (user-error "Empty reaction file: %s" path))
+    (let ((start 0)
+          (blocks 0))
+      (while (string-match "^\\$RXN" contents start)
+        (setq blocks (1+ blocks))
+        (setq start (match-end 0)))
+      (cond
+       ((zerop blocks)
+        (user-error "Not an RXN file: %s" path))
+       ((> blocks 1)
+        (user-error "RXN file contains more than one reaction: %s" path))))))
+
+(defun chem-from-reaction-string (reaction-smiles options)
+  "Build a reaction from REACTION-SMILES with OPTIONS."
+  (when (or (null reaction-smiles)
+            (string-empty-p (string-trim reaction-smiles)))
+    (user-error "Empty reaction SMILES input"))
+  (let ((reaction-smiles (string-trim reaction-smiles)))
+    (chem--validate-reaction-smiles reaction-smiles)
+    (condition-case err
+        (indigo-with-reaction (reaction reaction-smiles)
+          (chem-indigo-build-reaction reaction options))
+      (user-error (signal (car err) (cdr err)))
+      (error (user-error "Cannot load reaction %S: %s"
+                         reaction-smiles (error-message-string err))))))
+
+(defun chem-from-reaction-file (path options)
+  "Build a reaction from the RXN file at PATH with OPTIONS."
+  (when (or (null path) (string-empty-p (string-trim path)))
+    (user-error "Empty reaction file path"))
+  (let ((path (string-trim path)))
+    (chem--validate-rxn-file path)
+    (condition-case err
+        (indigo-with-rxn-file (reaction path)
+          (chem-indigo-build-reaction reaction options))
+      (user-error (signal (car err) (cdr err)))
+      (error (user-error "Cannot load reaction file %S: %s"
+                         path (error-message-string err))))))
 
 (provide 'chem-indigo)
 ;;; chem-indigo.el ends here

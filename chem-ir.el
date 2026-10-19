@@ -94,6 +94,26 @@
   exit-node                      ; Traversal exit node
   root)                          ; Traversal root node
 
+(cl-defstruct (chem-reaction-agent (:constructor chem-reaction-agent-create))
+  label)                         ; Normalized gross formula with total charge
+
+(cl-defstruct (chem-reaction-part (:constructor chem-reaction-part-create))
+  kind                           ; :reactant :product :plus :arrow :text
+  role                           ; :text role: :agent-label :above :below
+  drawing                        ; chem-drawing for molecule parts
+  text                           ; Display text for :text parts
+  x y                            ; Lower-left placement in y-up coordinates
+  width height                   ; Layout box in IR units
+  scale)                         ; Drawing scale, initially 1.0
+
+(cl-defstruct (chem-reaction (:constructor chem-reaction-create))
+  reactants                      ; List of chem-drawing
+  agents                         ; List of chem-reaction-agent
+  products                       ; List of chem-drawing
+  conditions                     ; Plist: (:above STRING :below STRING)
+  arrow                          ; Plist: (:style :forward|:reverse|:equilibrium)
+  layout)                        ; Ordered list of chem-reaction-part
+
 (defun chem-edge-at (drawing id)
   "Return DRAWING's canonical edge with ID, or nil."
   (and id (gethash id (chem-drawing-edges drawing))))

@@ -29,7 +29,7 @@ mkdir -p "$tmp/shim" "$tmp/src"
 # Stub the `indigo' feature: provides it without loading the dynamic module.
 printf "(provide 'indigo)\n" > "$tmp/shim/indigo.el"
 
-cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el \
+cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el "$ROOT"/chem-reaction.el \
    "$ROOT"/chem-exp-chemfig-mappings.el "$ROOT"/chem-export.el \
    "$ROOT"/chem-exp-chemfig.el "$ROOT"/chem-options.el \
    "$ROOT"/chem-exp-svg.el "$ROOT"/chem-indigo.el "$ROOT"/chem-mode.el \
@@ -37,11 +37,12 @@ cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el \
 
 cd "$tmp/src"
 "$EMACS" -Q --batch \
+  --eval "(setq load-prefer-newer t)" \
   --eval "(setq load-path (append (list \"$tmp/shim\" \"$INDIGO_EL\" \"$tmp/src\") load-path))" \
   -f batch-byte-compile \
-  chem-ir.el chem-geometry.el chem-exp-chemfig-mappings.el chem-export.el \
-  chem-exp-chemfig.el chem-options.el chem-exp-svg.el chem-indigo.el \
-  chem-mode.el chem-babel.el \
+  chem-ir.el chem-geometry.el chem-reaction.el chem-exp-chemfig-mappings.el \
+  chem-export.el chem-exp-chemfig.el chem-options.el chem-exp-svg.el \
+  chem-indigo.el chem-mode.el chem-babel.el \
   2>"$tmp/stderr" || true
 
 status=0
@@ -66,6 +67,10 @@ else
   check_present chem-indigo.elc "indigo-load-molecule-from-string"
   # `indigo-with-atoms-iterator' expands to a call to this function.
   check_present chem-indigo.elc "indigo-iterate-atoms"
+  # Reaction macros must expand even without the dynamic module.
+  check_present chem-indigo.elc "indigo-load-reaction-from-string"
+  check_present chem-indigo.elc "indigo-iterate-reactants"
+  check_present chem-indigo.elc "indigo-iterate-catalysts"
 fi
 
 if [ "$status" -eq 0 ]; then

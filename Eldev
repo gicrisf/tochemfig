@@ -15,6 +15,7 @@
       '("chem-mode.el"
         "chem-ir.el"
         "chem-geometry.el"
+        "chem-reaction.el"
         "chem-export.el"
         "chem-options.el"
         "chem-indigo.el"
@@ -27,6 +28,7 @@
 (setf eldev-test-fileset
       '("test/chem-parity-test.el"
         "test/chem-ir-test.el"
+        "test/chem-reaction-test.el"
         "test/chem-mode-test.el"
         "test/chem-mode-ui-test.el"
         "test/chem-graph-test.el"

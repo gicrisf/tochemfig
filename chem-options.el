@@ -140,6 +140,41 @@ Relevant only when generated code is used as a sub-molecule."
   :group 'chem-mode
   :type '(choice (const :tag "Automatic" nil) integer))
 
+;;; Reaction options
+
+(defcustom chem-default-reaction-arrow 'forward
+  "Default reaction arrow style.
+One of `forward', `reverse', or `equilibrium'."
+  :group 'chem-mode
+  :type '(choice (const :tag "Forward" forward)
+                 (const :tag "Reverse" reverse)
+                 (const :tag "Equilibrium" equilibrium)))
+
+(defcustom chem-default-reaction-above ""
+  "Default text above the reaction arrow."
+  :group 'chem-mode
+  :type 'string)
+
+(defcustom chem-default-reaction-below ""
+  "Default text below the reaction arrow."
+  :group 'chem-mode
+  :type 'string)
+
+(defcustom chem-default-reaction-spacing 10.0
+  "Default spacing between reaction layout parts."
+  :group 'chem-mode
+  :type 'number)
+
+(defcustom chem-default-reaction-arrow-length 40.0
+  "Default reaction arrow length."
+  :group 'chem-mode
+  :type 'number)
+
+(defcustom chem-default-reaction-plus-size 9.0
+  "Default reaction plus-sign box size."
+  :group 'chem-mode
+  :type 'number)
+
 ;;; Chemfig output options
 
 (defcustom chem-exp-chemfig-default-terse nil
@@ -265,6 +300,40 @@ Without effect when `chem-exp-chemfig-default-terse' is non-nil."
      :group sub-molecule))
   "Common drawing option metadata.")
 
+(defconst chem-reaction-option-specs
+  '((:key :reaction-arrow
+     :variable chem-default-reaction-arrow
+     :label "Reaction arrow"
+     :type choice
+     :choices (forward reverse equilibrium)
+     :group reaction)
+    (:key :reaction-above
+     :variable chem-default-reaction-above
+     :label "Text above arrow"
+     :type string
+     :group reaction)
+    (:key :reaction-below
+     :variable chem-default-reaction-below
+     :label "Text below arrow"
+     :type string
+     :group reaction)
+    (:key :reaction-spacing
+     :variable chem-default-reaction-spacing
+     :label "Reaction spacing"
+     :type number
+     :group reaction)
+    (:key :reaction-arrow-length
+     :variable chem-default-reaction-arrow-length
+     :label "Arrow length"
+     :type number
+     :group reaction)
+    (:key :reaction-plus-size
+     :variable chem-default-reaction-plus-size
+     :label "Plus size"
+     :type number
+     :group reaction))
+  "Reaction option metadata.")
+
 (defun chem-common-option-specs-for (group)
   "Return the common option specs in GROUP."
   (cl-remove-if-not (lambda (spec) (eq (plist-get spec :group) group))
@@ -288,13 +357,15 @@ Without effect when `chem-exp-chemfig-default-terse' is non-nil."
         (eval (car standard) t)
       (default-value variable))))
 
-(defun chem--build-options (overrides &optional exporter standard)
+(defun chem--build-options (overrides &optional exporter standard extra-specs)
   "Build the option plist from defaults and OVERRIDES alist.
 OVERRIDES maps option name strings to values, e.g. ((\"terse\" . t)).
 EXPORTER selects the option specs.  When STANDARD is non-nil, use each
-option's standard value instead of its current value."
+option's standard value instead of its current value.  EXTRA-SPECS are
+additional option specs appended to the exporter's specs."
   (let ((opts (list :angle-round 1 :bond-round 3 :quadrant-tolerance 0.1)))
-    (dolist (spec (chem--option-specs-for-exporter exporter))
+    (dolist (spec (append (chem--option-specs-for-exporter exporter)
+                          extra-specs))
       (let ((key (plist-get spec :key))
             (variable (plist-get spec :variable)))
         (when (and key variable)
@@ -307,6 +378,12 @@ option's standard value instead of its current value."
             (val (cdr override)))
         (setq opts (plist-put opts key val))))
     opts))
+
+(defun chem--build-reaction-options (overrides &optional exporter standard)
+  "Build options for a reaction with OVERRIDES.
+EXPORTER and STANDARD are passed to `chem--build-options'."
+  (chem--build-options overrides exporter standard
+                       chem-reaction-option-specs))
 
 (provide 'chem-options)
 ;;; chem-options.el ends here
