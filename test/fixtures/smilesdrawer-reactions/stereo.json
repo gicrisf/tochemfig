@@ -19,7 +19,7 @@
     "aromatic",
     "forward-arrow"
   ],
-  "raster": false,
+  "raster": true,
   "known_gap": null,
   "reactant_count": 2,
   "product_count": 2,

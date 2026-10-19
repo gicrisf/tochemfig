@@ -49,20 +49,23 @@ those are covered by the molecule parity corpus.  The reaction parity test
 compares composition only: component placement, plus/arrow/text boxes, text
 content, and viewBox coverage.
 
-The advisory raster report also covers all reaction fixtures.  Five curated
+The advisory raster report also covers all reaction fixtures.  Six curated
 fixtures are hard raster gates: esterification, Diels-Alder, two products,
-stereo, and an agent/condition fixture.  `charged_salt` remains advisory as a
-charged-text canary.  The reaction fixtures are also used by the `chem-rxn`
-Babel tests.
+stereo, an agent/condition fixture, and `charged_salt`.  `long_conditions`
+remains advisory while wrapped/multiline text is validated in the fast suite.
+The reaction fixtures are also used by the `chem-rxn` Babel tests.
 
-## Coverage report
+## Coverage reports
 
 ```sh
 node tools/smilesdrawer/coverage.mjs
+node tools/smilesdrawer/coverage-reactions.mjs
 ```
 
-This reads only the manifest and reports feature counts, raster-gated
-fixtures, missing feature tags, duplicate names, and declared known gaps.
+The first command reads the molecule manifest and reports feature counts,
+raster-gated fixtures, missing feature tags, duplicate names, and declared
+known gaps.  The second reads the reaction manifest and generated fixtures,
+and also reports component, flow, and text-part totals.
 
 ## Raster and layout report
 

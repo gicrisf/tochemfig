@@ -408,6 +408,27 @@
       (should (string-prefix-p "\\schemestart" (buffer-string)))
       (should (string-match-p "heat" (buffer-string))))))
 
+(ert-deftest chem-mode-ui-reaction-multiline-command ()
+  "Reaction commands honor literal newlines in conditions."
+  (let ((chem-default-exporter 'svg)
+        (chem-default-reaction-above "first line\nsecond line"))
+    (with-temp-buffer
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) "CCO>>CC=O")))
+        (chem-export-reaction))
+      (should (= 2 (let ((count 0)
+                         (start 0))
+                     (while (string-match
+                             "data-reaction-part=\"text\"" (buffer-string)
+                             start)
+                       (setq count (1+ count)
+                             start (match-end 0)))
+                     count)))
+      (should (string-match-p (regexp-quote "first line")
+                              (buffer-string)))
+      (should (string-match-p (regexp-quote "second line")
+                              (buffer-string))))))
+
 (ert-deftest chem-mode-ui-reaction-transient-guards ()
   "Reaction transient options follow the selected exporter."
   (with-temp-buffer
@@ -586,6 +607,8 @@
     (should (memq 'chem-default-reaction-arrow
                   (chem-mode--option-vars)))
     (should (memq 'chem-default-reaction-spacing
+                  (chem-mode--option-vars)))
+    (should (memq 'chem-default-reaction-condition-width
                   (chem-mode--option-vars)))))
 
 (ert-deftest chem-mode-ui-insert-image-org ()

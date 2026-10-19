@@ -18,7 +18,7 @@
     "conditions",
     "forward-arrow"
   ],
-  "raster": false,
+  "raster": true,
   "known_gap": null,
   "reactant_count": 2,
   "product_count": 2,
@@ -442,6 +442,9 @@
     {
       "kind": "text",
       "text": "H, heat",
+      "lines": [
+        "H, heat"
+      ],
       "x": 215,
       "y": 43,
       "width": 33,
@@ -451,6 +454,9 @@
     {
       "kind": "text",
       "text": "cat.",
+      "lines": [
+        "cat."
+      ],
       "x": 222,
       "y": 65,
       "width": 19,
@@ -485,6 +491,9 @@
     {
       "kind": "text",
       "text": "H, heat",
+      "lines": [
+        "H, heat"
+      ],
       "x": 215,
       "y": 43,
       "width": 33,
@@ -494,6 +503,9 @@
     {
       "kind": "text",
       "text": "cat.",
+      "lines": [
+        "cat."
+      ],
       "x": 222,
       "y": 65,
       "width": 19,

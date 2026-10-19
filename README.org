@@ -253,8 +253,10 @@ files.  Use =M-x chem-export-reaction= (=C-c m r=) to insert a scheme or
 with a prefix argument they read an RXN file instead.
 
 The transient menu has a dedicated /Reaction/ group for the arrow style, text
-above and below the arrow, plus spacing and arrow length, and the chemfig
-reaction wrapper.  The chemfig exporter wraps schemes in
+above and below the arrow, condition width, plus spacing and arrow length, and
+the chemfig reaction wrapper.  Conditions wrap at the arrow length like
+SmilesDrawer, honor explicit newlines, and can use =:reaction-condition-width=
+for a custom wrap width.  The chemfig exporter wraps schemes in
 =\schemestart...\schemestop=; the SVG exporter writes a non-square standalone
 document.
 
@@ -329,8 +331,9 @@ CC(=O)O.OCC>>CC(=O)OCC.O
 #+end_src
 #+end_example
 
-Reaction blocks accept =:reaction-arrow=, =:reaction-above=, and
-=:reaction-below= with both renderers.  SVG also accepts
+Reaction blocks accept =:reaction-arrow=, =:reaction-above=,
+=:reaction-below=, and =:reaction-condition-width= with both renderers.  SVG
+also accepts
 =:reaction-spacing=, =:reaction-arrow-length=, and =:reaction-plus-size=;
 chemfig accepts =:reaction-wrap= and =:reaction-arrow-chemfig=.  For chemfig
 source:
@@ -496,11 +499,11 @@ guard against regressions:
    primitives against generated SmilesDrawer fixtures using shared
    coordinates.  =test/chem-svg-reaction-parity-test.el= compares reaction
    composition against a separate SmilesDrawer reaction corpus, and
-   =test/chem-svg-raster-test.el= gates five curated reaction fixtures.
+   =test/chem-svg-raster-test.el= gates six curated reaction fixtures.
    =tools/svg-raster-report.el= adds an advisory Inkscape raster and
    bond-length report.  See [[file:docs/smilesdrawer-parity.md][docs/smilesdrawer-parity.md]].
 
-The full ERT suite currently has 571 tests.
+The full ERT suite currently has 578 tests.
 
 The corpus MOL files carry explicit 2D coordinates, so parity is independent of
 the Indigo *layout* implementation: both sides read the same coordinates.

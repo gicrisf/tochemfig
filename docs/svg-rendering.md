@@ -35,10 +35,10 @@ and ring-record implementation.
   and documentation updates.
 - Org Babel integration is implemented in `chem-babel.el`; see
   `chem-mode-plans/org.md`.
-- Reaction SVG rendering is implemented, including composition parity and
-  curated raster gates against a separate SmilesDrawer reaction corpus, plus
-  commands, transient options, and `chem-rxn` Babel support; see
-  `docs/smilesdrawer-parity.md`.
+- Reaction SVG rendering is implemented, including composition parity for
+  wrapped/multiline conditions and curated raster gates against a separate
+  SmilesDrawer reaction corpus, plus commands, transient options, and
+  `chem-rxn` Babel support; see `docs/smilesdrawer-parity.md`.
 - `chemfig` remains the publication and parity exporter.
 - Stereochemistry data (tetrahedral centers, allene detection, CIP, enhanced
   stereo) is already in the IR.

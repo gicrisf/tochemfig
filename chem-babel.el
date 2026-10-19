@@ -37,7 +37,8 @@ directory for unsaved buffers."
   "Version of the Org Babel default option profile.")
 
 (defconst chem-babel--reaction-shared-keys
-  '(:reaction-arrow :reaction-above :reaction-below)
+  '(:reaction-arrow :reaction-above :reaction-below
+    :reaction-condition-width)
   "Reaction options accepted by both exporters.")
 
 (defconst chem-babel--reaction-svg-keys

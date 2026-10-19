@@ -175,6 +175,12 @@ One of `forward', `reverse', or `equilibrium'."
   :group 'chem-mode
   :type 'number)
 
+(defcustom chem-default-reaction-condition-width nil
+  "Maximum width for wrapped reaction condition text.
+When nil, use the reaction arrow length."
+  :group 'chem-mode
+  :type '(choice (const :tag "Arrow length" nil) number))
+
 ;;; Chemfig output options
 
 (defcustom chem-exp-chemfig-default-terse nil
@@ -342,6 +348,11 @@ When nil, derive the arrow from `chem-default-reaction-arrow'."
      :variable chem-default-reaction-plus-size
      :label "Plus size"
      :type number
+     :group reaction)
+    (:key :reaction-condition-width
+     :variable chem-default-reaction-condition-width
+     :label "Condition width"
+     :type optional-number
      :group reaction))
   "Reaction option metadata.")
 

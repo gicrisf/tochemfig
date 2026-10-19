@@ -2035,10 +2035,27 @@ ID-PREFIX namespaces generated SVG IDs when non-nil."
      (chem-exp-svg--reaction-below-text reaction))
     (_ "")))
 
+(defun chem-exp-svg--reaction-agent-line-text (text)
+  "Return formatted agent line TEXT."
+  (mapconcat #'chem-exp-svg--reaction-agent-text
+             (split-string text ", " t)
+             ", "))
+
+(defun chem-exp-svg--reaction-text-for-part (part reaction)
+  "Return display text for reaction PART in REACTION."
+  (pcase (chem-reaction-part-role part)
+    (:agent-label
+     (chem-exp-svg--reaction-agent-line-text
+      (chem-reaction-part-text part)))
+    ((or :above-line :below-line)
+     (or (chem-reaction-part-text part) ""))
+    (_
+     (chem-exp-svg--reaction-text-for-role
+      reaction (chem-reaction-part-role part)))))
+
 (defun chem-exp-svg--reaction-text-info (state part reaction scale)
   "Return text layout information for PART in REACTION."
-  (let* ((text (chem-exp-svg--reaction-text-for-role
-                reaction (chem-reaction-part-role part))))
+  (let* ((text (chem-exp-svg--reaction-text-for-part part reaction)))
     (unless (string-empty-p text)
       (let* ((size (chem-exp-svg--text-size state text))
              (width (* 0.8 (car size)))

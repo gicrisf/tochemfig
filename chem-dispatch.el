@@ -274,6 +274,9 @@ function used to read a new value, and GUARD an optional form."
   "8" chem-exp-chemfig-default-reaction-arrow-chemfig "Reaction arrow chemfig"
   #'chem-dispatch--string-reader
   (lambda () (chem-dispatch--chemfig-exporter-p)))
+(chem-dispatch--define-option chem-dispatch-option-reaction-condition-width
+  "9" chem-default-reaction-condition-width "Condition width"
+  #'chem-dispatch--optional-number-reader)
 
 (defun chem-dispatch--consume-overrides ()
   "Return and clear the pending one-off option overrides."
@@ -449,6 +452,7 @@ function used to read a new value, and GUARD an optional form."
    (chem-dispatch-option-reaction-spacing)
    (chem-dispatch-option-reaction-arrow-length)
    (chem-dispatch-option-reaction-plus-size)
+   (chem-dispatch-option-reaction-condition-width)
    (chem-dispatch-toggle-reaction-wrap)
    (chem-dispatch-option-reaction-arrow-chemfig)
    (chem-dispatch-reaction-generate)

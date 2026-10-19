@@ -80,22 +80,21 @@ on renderer parity:
   (reactants, plus signs, arrow, text, products).
 - `test/fixtures/smilesdrawer-reactions/` currently covers esterification,
   Diels-Alder, two products, stereo/aromatic input, an agent with conditions,
-  and a charged salt.
+  a charged salt, and wrapped/multiline conditions.
 - `test/chem-svg-reaction-parity-test.el` builds test-only reaction IR from the
   reference graphs and composition boxes, renders it with the native SVG
   exporter, and checks component placements, plus and arrow geometry, text
-  positions and content, and viewBox coverage.
+  positions and content, wrapped/multiline conditions, and viewBox coverage.
 
 Per-component SVG primitives, labels, masks, and gradients are not compared in
 the reaction corpus; the molecule parity suite already covers those.  The
 reaction viewBox check is containment-based because native text bounds can be
 larger than SmilesDrawer's clipped estimates.
 
-The advisory raster report covers all six reaction fixtures.  Five curated
+The advisory raster report covers all seven reaction fixtures.  Six curated
 fixtures are hard raster gates: esterification, Diels-Alder, two products,
-stereo, and an agent/condition fixture.  `charged_salt` remains advisory as a
-charged-text canary; repeated runs showed stable metrics before the other text
-fixture was promoted.
+stereo, an agent/condition fixture, and `charged_salt`.  `long_conditions`
+remains advisory while wrapped/multiline text is validated in the fast suite.
 
 ## Text bounds and viewBox divergence
 

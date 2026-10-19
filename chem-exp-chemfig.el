@@ -694,6 +694,58 @@ TERSE non-nil rejects literal percent signs in conditions."
       (user-error "Cannot use a literal %% in reaction conditions with terse output"))
     (chem-exp-chemfig--escape-latex below)))
 
+(defun chem-exp-chemfig--reaction-agent-line (text)
+  "Return formatted agent line TEXT."
+  (mapconcat #'chem-exp-chemfig--format-agent
+             (split-string text ", " t)
+             ", "))
+
+(defun chem-exp-chemfig--reaction-text-parts (reaction role)
+  "Return REACTION's layout text parts for ROLE."
+  (let ((roles (pcase role
+                 (:above '(:agent-label :above :above-line))
+                 (:below '(:below :below-line)))))
+    (cl-remove-if-not
+     (lambda (part)
+       (and (eq :text (chem-reaction-part-kind part))
+            (memq (chem-reaction-part-role part) roles)))
+     (chem-reaction-layout reaction))))
+
+(defun chem-exp-chemfig--reaction-text-lines (reaction role terse)
+  "Return formatted text lines for REACTION and ROLE.
+TERSE non-nil rejects literal percent signs in conditions."
+  (let ((parts (chem-exp-chemfig--reaction-text-parts reaction role)))
+    (if parts
+        (delq nil
+              (mapcar
+               (lambda (part)
+                 (let ((text (chem-reaction-part-text part)))
+                   (pcase (chem-reaction-part-role part)
+                     (:agent-label
+                      (chem-exp-chemfig--reaction-agent-line text))
+                     (:above
+                      (chem-exp-chemfig--reaction-above-text reaction terse))
+                     (:below
+                      (chem-exp-chemfig--reaction-below-text reaction terse))
+                     ((or :above-line :below-line)
+                      (when (and terse (string-match-p "%" text))
+                        (user-error
+                         "Cannot use a literal %% in reaction conditions with terse output"))
+                      (chem-exp-chemfig--escape-latex text))
+                     (_ nil))))
+               parts))
+      (let ((text (if (eq role :above)
+                      (chem-exp-chemfig--reaction-above-text reaction terse)
+                    (chem-exp-chemfig--reaction-below-text reaction terse))))
+        (unless (string-empty-p text) (list text))))))
+
+(defun chem-exp-chemfig--reaction-label (lines)
+  "Return LINES as a chemfig arrow label."
+  (cond
+   ((null lines) "")
+   ((= 1 (length lines)) (car lines))
+   (t (format "\\shortstack{%s}" (mapconcat #'identity lines "\\\\")))))
+
 (defun chem-exp-chemfig--reaction-arrow (reaction options)
   "Return REACTION's chemfig arrow using OPTIONS."
   (let* ((explicit (plist-get options :reaction-arrow-chemfig))
@@ -703,10 +755,13 @@ TERSE non-nil rejects literal percent signs in conditions."
                       (:reverse "<-")
                       (:equilibrium "<->")
                       (_ "->"))))
-         (above (chem-exp-chemfig--reaction-above-text
-                 reaction (plist-get options :terse)))
-         (below (chem-exp-chemfig--reaction-below-text
-                 reaction (plist-get options :terse))))
+         (terse (plist-get options :terse))
+         (above (chem-exp-chemfig--reaction-label
+                 (chem-exp-chemfig--reaction-text-lines
+                  reaction :above terse)))
+         (below (chem-exp-chemfig--reaction-label
+                 (chem-exp-chemfig--reaction-text-lines
+                  reaction :below terse))))
     (cond
      ((and (not (string-empty-p above))
            (not (string-empty-p below)))

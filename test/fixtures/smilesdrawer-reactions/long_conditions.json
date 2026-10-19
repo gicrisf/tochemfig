@@ -1,0 +1,286 @@
+{
+  "reference": {
+    "name": "smiles-drawer",
+    "version": "2.4.1",
+    "source": "smilesDrawer/dist/smiles-drawer.mjs",
+    "commit": "4355e7bc6e539780a642b978c677d72bb5a88213",
+    "theme": "light",
+    "molecule_options": {},
+    "reaction_options": {},
+    "text_above": "alpha beta gamma delta epsilon zeta eta theta iota kappa",
+    "text_below": "first line\nsecond line"
+  },
+  "name": "long_conditions",
+  "smiles": "CCO>>CC=O",
+  "features": [
+    "reaction",
+    "conditions",
+    "wrapped-conditions",
+    "multiline-conditions",
+    "forward-arrow"
+  ],
+  "raster": false,
+  "known_gap": null,
+  "reactant_count": 1,
+  "product_count": 1,
+  "components": [
+    {
+      "kind": "reactant",
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 77,
+      "height": 77,
+      "viewBox": [
+        60.039999999910044,
+        -5.480040522743625,
+        76.92148749497608,
+        76.92148749497608
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 126.961487,
+          "y": 25.980683,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 100.980745,
+          "y": 40.980718,
+          "element": "C",
+          "hydrogens": 2,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    },
+    {
+      "kind": "product",
+      "index": 1,
+      "x": 217,
+      "y": 2,
+      "width": 72,
+      "height": 72,
+      "viewBox": [
+        64.99999999991005,
+        -3.000040522743621,
+        71.96148749497607,
+        71.96148749497607
+      ],
+      "atoms": [
+        {
+          "id": 0,
+          "x": 126.961487,
+          "y": 25.980683,
+          "element": "C",
+          "hydrogens": 3,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        },
+        {
+          "id": 1,
+          "x": 100.980745,
+          "y": 40.980718,
+          "element": "C",
+          "hydrogens": 1,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            0,
+            2
+          ]
+        },
+        {
+          "id": 2,
+          "x": 75,
+          "y": 25.980689,
+          "element": "O",
+          "hydrogens": 0,
+          "charge": 0,
+          "isotope": 0,
+          "isDrawn": true,
+          "isAromatic": false,
+          "stereocenter": false,
+          "forcePositioned": false,
+          "neighbours": [
+            1
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "id": 0,
+          "a": 0,
+          "b": 1,
+          "order": "single",
+          "stereo": "none",
+          "aromatic": false
+        },
+        {
+          "id": 1,
+          "a": 1,
+          "b": 2,
+          "order": "double",
+          "stereo": "none",
+          "aromatic": false
+        }
+      ],
+      "rings": []
+    }
+  ],
+  "flow": [
+    {
+      "kind": "reactant",
+      "component": 0,
+      "x": 0,
+      "y": 0,
+      "width": 77,
+      "height": 77
+    },
+    {
+      "kind": "arrow",
+      "x": 87,
+      "y": 32,
+      "width": 120,
+      "height": 12
+    },
+    {
+      "kind": "text",
+      "text": "alpha beta gamma delta\nepsilon zeta eta theta\niota kappa",
+      "lines": [
+        "alpha beta gamma delta",
+        "epsilon zeta eta theta",
+        "iota kappa"
+      ],
+      "x": 96,
+      "y": -4,
+      "width": 103,
+      "height": 40,
+      "role": "above"
+    },
+    {
+      "kind": "text",
+      "text": "first line\nsecond line",
+      "lines": [
+        "first line",
+        "second line"
+      ],
+      "x": 121,
+      "y": 41,
+      "width": 52,
+      "height": 28,
+      "role": "below"
+    },
+    {
+      "kind": "product",
+      "component": 1,
+      "x": 217,
+      "y": 2,
+      "width": 72,
+      "height": 72
+    }
+  ],
+  "texts": [
+    {
+      "kind": "text",
+      "text": "alpha beta gamma delta\nepsilon zeta eta theta\niota kappa",
+      "lines": [
+        "alpha beta gamma delta",
+        "epsilon zeta eta theta",
+        "iota kappa"
+      ],
+      "x": 96,
+      "y": -4,
+      "width": 103,
+      "height": 40,
+      "role": "above"
+    },
+    {
+      "kind": "text",
+      "text": "first line\nsecond line",
+      "lines": [
+        "first line",
+        "second line"
+      ],
+      "x": 121,
+      "y": 41,
+      "width": 52,
+      "height": 28,
+      "role": "below"
+    }
+  ],
+  "viewBox": [
+    0,
+    -4.4325895858452995,
+    299,
+    81.35407708082138
+  ],
+  "width": 500,
+  "height": 500,
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"500\" height=\"500\" viewBox=\"0 -4.4325895858452995 299 81.35407708082138\" style=\"width: 299px; height: 76.92148749497608px;\"><svg viewBox=\"60.039999999910044 -5.480040522743625 76.92148749497608 76.92148749497608\" x=\"0\" y=\"0\" width=\"77\" height=\"77\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"G66O4-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"G66O4-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"60.039999999910044\" y=\"14.980688649431098\" width=\"76.92148749497608\" height=\"36.00002915062663\"><rect x=\"60.039999999910044\" y=\"14.980688649431098\" width=\"76.92148749497608\" height=\"36.00002915062663\" fill=\"white\"></rect><circle cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#G66O4-text-mask)\"><line x1=\"100.98074528329926\" y1=\"40.98071780005773\" x2=\"126.96148749488611\" y2=\"25.98068332892836\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"74.99999999991005\" y1=\"25.980688649431098\" x2=\"100.98074528329926\" y2=\"40.98071780005773\" stroke=\"url(#G66O4-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(78.73999999991004px) translateY(25.980688649431098px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#666666\">H</tspan><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg><svg id=\"arrow\" viewBox=\"0 -3 129.33333333333334 6\" x=\"87\" y=\"32\" width=\"120\" height=\"12\"><defs><marker id=\"arrowhead\" viewBox=\"0 0 9.333333333333334 6\" markerUnits=\"userSpaceOnUse\" markerWidth=\"18.666666666666668\" markerHeight=\"12\" refX=\"2.2\" refY=\"2.2\" orient=\"auto\" fill=\"#222222\"><path style=\"fill-rule:nonzero;\" d=\"m 0 0 l 7 2.25 l -7 2.25 c 0 0 0.735 -1.084 0.735 -2.28 c 0 -1.196 -0.735 -2.22 -0.735 -2.22 z\"></path></marker></defs><line x1=\"0\" y1=\"-0.5\" x2=\"120\" y2=\"-0.5\" stroke-width=\"1\" stroke=\"#222222\" marker-end=\"url(#arrowhead)\"></line></svg><svg x=\"96\" y=\"-4\" width=\"103\" height=\"40\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(51.43600000000003, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\">alpha beta gamma delta</tspan><tspan fill=\"#222222\" x=\"0px\" y=\"2em\">epsilon zeta eta theta</tspan><tspan fill=\"#222222\" x=\"0px\" y=\"3em\">iota kappa</tspan></text></svg><svg x=\"121\" y=\"41\" width=\"52\" height=\"28\"><style>\n            .text {\n                font: 8.8pt Arial, Helvetica, sans-serif;\n                dominant-baseline: alphabetic;\n            }\n        </style><text class=\"text\" transform=\"translate(26.180000000000007, 0)\" text-anchor=\"middle\"><tspan fill=\"#222222\" x=\"0px\" y=\"1em\">first line</tspan><tspan fill=\"#222222\" x=\"0px\" y=\"2em\">second line</tspan></text></svg><svg viewBox=\"64.99999999991005 -3.000040522743621 71.96148749497607 71.96148749497607\" x=\"217\" y=\"2\" width=\"72\" height=\"72\"><style>\n                .element {\n                    font: 11pt Arial, Helvetica, sans-serif;\n                }\n                .sub {\n                    font: 3pt Arial, Helvetica, sans-serif;\n                }\n            </style><defs><radialGradient id=\"wRVMW-atom-0\" gradientUnits=\"userSpaceOnUse\" cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"30\"><stop offset=\"20%\" stop-color=\"#e74c3c\"></stop><stop offset=\"80%\" stop-color=\"#222222\"></stop></radialGradient></defs><mask id=\"wRVMW-text-mask\" maskUnits=\"userSpaceOnUse\" x=\"64.99999999991005\" y=\"14.980688649431098\" width=\"71.96148749497607\" height=\"36.00002915062663\"><rect x=\"64.99999999991005\" y=\"14.980688649431098\" width=\"71.96148749497607\" height=\"36.00002915062663\" fill=\"white\"></rect><circle cx=\"74.99999999991005\" cy=\"25.980688649431098\" r=\"8.25\" fill=\"black\"></circle></mask><g></g><g></g><g mask=\"url(#wRVMW-text-mask)\"><line x1=\"100.98074528329926\" y1=\"40.98071780005773\" x2=\"126.96148749488611\" y2=\"25.98068332892836\" stroke=\"#222222\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"80.1480794838555\" y1=\"23.063964866317594\" x2=\"100.93267571056685\" y2=\"35.0639881868189\" stroke=\"url(#wRVMW-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line><line x1=\"74.99999999991005\" y1=\"25.980688649431098\" x2=\"100.98074528329926\" y2=\"40.98071780005773\" stroke=\"url(#wRVMW-atom-0)\" stroke-width=\"1\" stroke-linecap=\"round\"></line></g><g><g style=\"transform: translateX(78.73999999991004px) translateY(25.980688649431098px)\"><text class=\"element\" fill=\"#ffffff\" data-direction=\"left\" dominant-baseline=\"alphabetic\" y=\"0.36em\" text-anchor=\"end\"><tspan fill=\"#e74c3c\">O</tspan></text></g></g></svg></svg>"
+}

@@ -172,6 +172,21 @@
             '(("reaction-above" . "heat")
               ("reaction-below" . "cat."))))))
 
+(ert-deftest chem-exp-chemfig-reaction-multiline-conditions ()
+  "Multiline conditions use a shortstack arrow label."
+  (should (string-match-p
+           (regexp-quote
+            "\\arrow{->[\\shortstack{first line\\\\second line}]}")
+           (chem-exp-chemfig-reaction-test--render
+            "CCO>>CC=O"
+            '(("reaction-above" . "first line\\nsecond line")))))
+  (should (string-match-p
+           (regexp-quote
+            "\\arrow{->[][\\shortstack{one\\\\two}]}")
+           (chem-exp-chemfig-reaction-test--render
+            "CCO>>CC=O"
+            '(("reaction-below" . "one\\ntwo"))))))
+
 (ert-deftest chem-exp-chemfig-reaction-agent-formatting ()
   "Agent formulas use subscripts and math-mode charges."
   (let ((output (chem-exp-chemfig-reaction-test--render

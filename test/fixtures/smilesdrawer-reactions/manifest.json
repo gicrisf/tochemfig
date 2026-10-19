@@ -9,7 +9,7 @@
         "two-products",
         "forward-arrow"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "diels_alder",
@@ -20,7 +20,7 @@
         "ring-formation",
         "forward-arrow"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "two_products",
@@ -30,7 +30,7 @@
         "two-products",
         "forward-arrow"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "stereo",
@@ -42,7 +42,7 @@
         "aromatic",
         "forward-arrow"
       ],
-      "raster": false
+      "raster": true
     },
     {
       "name": "agent_above",
@@ -53,7 +53,7 @@
         "conditions",
         "forward-arrow"
       ],
-      "raster": false,
+      "raster": true,
       "text_above": "{reagents}, heat",
       "text_below": "cat."
     },
@@ -66,7 +66,21 @@
         "charged-salt",
         "forward-arrow"
       ],
-      "raster": false
+      "raster": true
+    },
+    {
+      "name": "long_conditions",
+      "smiles": "CCO>>CC=O",
+      "features": [
+        "reaction",
+        "conditions",
+        "wrapped-conditions",
+        "multiline-conditions",
+        "forward-arrow"
+      ],
+      "raster": false,
+      "text_above": "alpha beta gamma delta epsilon zeta eta theta iota kappa",
+      "text_below": "first line\nsecond line"
     }
   ]
 }

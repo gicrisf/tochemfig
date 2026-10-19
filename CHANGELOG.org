@@ -63,8 +63,12 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 - =test/chem-svg-reaction-parity-test.el=: composition parity for component
   placement, plus signs, arrows, text, and viewBox coverage.
 - Reaction raster reporting and curated hard gates for esterification,
-  Diels-Alder, two-product, stereo, and agent/condition fixtures;
-  `charged_salt` remains advisory.
+  Diels-Alder, two-product, stereo, agent/condition, and charged-salt
+  fixtures; wrapped/multiline conditions remain advisory.
+- Reaction conditions now wrap at the arrow length like SmilesDrawer, honor
+  explicit newlines, and support =:reaction-condition-width=.
+- =tools/smilesdrawer/coverage-reactions.mjs=: reaction fixture coverage
+  report for features, raster gates, duplicates, and flow/text totals.
 - =chem-export-reaction= and =chem-copy-reaction=, with reaction SMILES by
   default and RXN file input with a prefix argument.
 - A Reaction group in the transient menu and =C-c m r= for reaction export.

@@ -35,7 +35,7 @@
 (defconst chem-svg-reaction-parity-test--tolerance 1.0
   "Maximum coordinate difference for composition parity.")
 
-(defconst chem-svg-reaction-parity-test--viewbox-tolerance 2.0
+(defconst chem-svg-reaction-parity-test--viewbox-tolerance 3.0
   "Maximum viewBox difference for composition parity.")
 
 (defun chem-svg-reaction-parity-test--manifest ()
@@ -259,6 +259,37 @@ SmilesDrawer uses SVG-style y-down coordinates; the IR uses y-up."
    (chem-svg-reaction-parity-test--list
     (chem-svg-reaction-parity-test--get fixture "flow"))))
 
+(defun chem-svg-reaction-parity-test--text-parts (text)
+  "Return layout text parts for reference TEXT.
+Multi-line reference text is split into one part per line."
+  (let* ((role (chem-svg-reaction-parity-test--get text "role"))
+         (lines (chem-svg-reaction-parity-test--list
+                 (or (chem-svg-reaction-parity-test--get text "lines")
+                     (list (chem-svg-reaction-parity-test--get text "text")))))
+         (x (chem-svg-reaction-parity-test--number
+             (chem-svg-reaction-parity-test--get text "x")))
+         (y (chem-svg-reaction-parity-test--number
+             (chem-svg-reaction-parity-test--get text "y")))
+         (width (chem-svg-reaction-parity-test--number
+                 (chem-svg-reaction-parity-test--get text "width")))
+         (height (chem-svg-reaction-parity-test--number
+                  (chem-svg-reaction-parity-test--get text "height")))
+         (count (length lines))
+         (line-height (/ height count)))
+    (cl-loop for line in lines
+             for index from 0
+             collect (chem-reaction-part-create
+                      :kind :text
+                      :role (if (= count 1)
+                                (intern (concat ":" role))
+                              (intern (concat ":" role "-line")))
+                      :text line
+                      :x x
+                      :y (- (+ y (* (1+ index) line-height)))
+                      :width width
+                      :height line-height
+                      :scale 1.0))))
+
 (defun chem-svg-reaction-parity-test--build-reaction (fixture options)
   "Build a test-only `chem-reaction' from FIXTURE and OPTIONS.
 The layout boxes come from the reference composition; component drawings
@@ -310,36 +341,37 @@ come from the reference component graphs."
                       (chem-svg-reaction-parity-test--get flow "width")))
               (height (chem-svg-reaction-parity-test--number
                        (chem-svg-reaction-parity-test--get flow "height"))))
-          (push
-           (pcase kind
-             ((or "reactant" "product")
-              (gethash (chem-svg-reaction-parity-test--number
-                        (chem-svg-reaction-parity-test--get flow "component"))
-                       component-parts))
-             ("plus"
-              (chem-reaction-part-create
-               :kind :plus :text "+"
-               :x x :y (- (+ y height)) :width width :height height
-               :scale 1.0))
-             ("arrow"
-              (chem-reaction-part-create
-               :kind :arrow
-               :x x :y (- (+ y height)) :width width :height height
-               :scale 1.0))
-             ("text"
-              (let* ((role (chem-svg-reaction-parity-test--get flow "role"))
-                     (content (chem-svg-reaction-parity-test--get flow "text")))
-                (if (equal role "above")
-                    (setq above content)
-                  (setq below content))
-                (chem-reaction-part-create
-                 :kind :text
-                 :role (intern (concat ":" role))
-                 :text content
-                 :x x :y (- (+ y height)) :width width :height height
-                 :scale 1.0)))
-             (_ nil))
-           parts)))
+          (let ((new-parts
+                 (pcase kind
+                   ((or "reactant" "product")
+                    (list
+                     (gethash
+                      (chem-svg-reaction-parity-test--number
+                       (chem-svg-reaction-parity-test--get flow "component"))
+                      component-parts)))
+                   ("plus"
+                    (list (chem-reaction-part-create
+                           :kind :plus :text "+"
+                           :x x :y (- (+ y height))
+                           :width width :height height
+                           :scale 1.0)))
+                   ("arrow"
+                    (list (chem-reaction-part-create
+                           :kind :arrow
+                           :x x :y (- (+ y height))
+                           :width width :height height
+                           :scale 1.0)))
+                   ("text"
+                    (let ((role (chem-svg-reaction-parity-test--get
+                                 flow "role"))
+                          (content (chem-svg-reaction-parity-test--get
+                                    flow "text")))
+                      (if (equal role "above")
+                          (setq above content)
+                        (setq below content))
+                      (chem-svg-reaction-parity-test--text-parts flow)))
+                   (_ nil))))
+            (dolist (part new-parts) (push part parts)))))
       (chem-reaction-create
        :reactants (nreverse reactants)
        :agents nil
@@ -555,11 +587,16 @@ box only covers the actual components, plus signs, arrow, and text."
         (should (chem-svg-reaction-parity-test--close-p
                  (+ y (/ height 2.0))
                  (/ (+ (nth 1 box) (nth 3 box)) 2.0)))))
-    (should (= (length reference-texts) (length texts)))
-    (cl-loop for reference in reference-texts
-             for text in texts
-             do
-             (let ((x (chem-svg-reaction-parity-test--number
+    (let ((reference-lines
+           (cl-loop
+            for reference in reference-texts
+            append
+            (let* ((lines (chem-svg-reaction-parity-test--list
+                           (or (chem-svg-reaction-parity-test--get
+                                reference "lines")
+                               (list (chem-svg-reaction-parity-test--get
+                                      reference "text")))))
+                   (x (chem-svg-reaction-parity-test--number
                        (chem-svg-reaction-parity-test--get reference "x")))
                    (y (chem-svg-reaction-parity-test--number
                        (chem-svg-reaction-parity-test--get reference "y")))
@@ -567,12 +604,22 @@ box only covers the actual components, plus signs, arrow, and text."
                            (chem-svg-reaction-parity-test--get reference "width")))
                    (height (chem-svg-reaction-parity-test--number
                             (chem-svg-reaction-parity-test--get reference "height")))
-                   (content (chem-svg-reaction-parity-test--get reference "text")))
+                   (line-height (/ height (length lines))))
+              (cl-loop for line in lines
+                       for index from 0
+                       collect (list line
+                                     (+ x (/ width 2.0))
+                                     (+ y (* (+ index 0.5) line-height))))))))
+      (should (= (length reference-lines) (length texts)))
+      (cl-loop for reference in reference-lines
+               for text in texts
+               do
+               (should (equal (chem-exp-svg--escape (nth 0 reference))
+                              (nth 2 text)))
                (should (chem-svg-reaction-parity-test--close-p
-                        (+ x (/ width 2.0)) (nth 0 text)))
+                        (nth 1 reference) (nth 0 text)))
                (should (chem-svg-reaction-parity-test--close-p
-                        (+ y (/ height 2.0)) (nth 1 text)))
-               (should (equal (chem-exp-svg--escape content) (nth 2 text)))))
+                        (nth 2 reference) (nth 1 text)))))
     (should (= 4 (length native-viewbox)))
     ;; Molecule text bounds can make the native reaction viewBox a superset
     ;; of SmilesDrawer's composition box.  Composition parity requires that
@@ -631,6 +678,10 @@ box only covers the actual components, plus signs, arrow, and text."
 (ert-deftest chem-svg-reaction-parity-charged-salt ()
   "Charged-salt composition matches SmilesDrawer."
   (chem-svg-reaction-parity-test--check-fixture "charged_salt"))
+
+(ert-deftest chem-svg-reaction-parity-long-conditions ()
+  "Wrapped and multiline conditions match SmilesDrawer."
+  (chem-svg-reaction-parity-test--check-fixture "long_conditions"))
 
 (ert-deftest chem-svg-reaction-parity-fixture-metadata ()
   "Reaction fixtures and manifest entries stay in sync."

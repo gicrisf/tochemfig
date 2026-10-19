@@ -18,7 +18,7 @@
     "charged-salt",
     "forward-arrow"
   ],
-  "raster": false,
+  "raster": true,
   "known_gap": null,
   "reactant_count": 2,
   "product_count": 2,
@@ -340,6 +340,9 @@
     {
       "kind": "text",
       "text": "H",
+      "lines": [
+        "H"
+      ],
       "x": 167,
       "y": 8,
       "width": 6,
@@ -374,6 +377,9 @@
     {
       "kind": "text",
       "text": "H",
+      "lines": [
+        "H"
+      ],
       "x": 167,
       "y": 8,
       "width": 6,

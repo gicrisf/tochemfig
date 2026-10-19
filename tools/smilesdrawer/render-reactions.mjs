@@ -227,11 +227,15 @@ function renderReference(entry) {
     } else {
       const text = child.querySelector("text.text");
       if (text) {
-        const content = text.textContent ?? "";
+        const lines = [...text.querySelectorAll("tspan")].map(
+          (part) => part.textContent ?? "",
+        );
+        const content = lines.length > 0 ? lines.join("\n") : (text.textContent ?? "");
         if (content.trim() !== "") {
           flow.push({
             kind: "text",
             text: content,
+            lines,
             x: number(child.getAttribute("x")),
             y: number(child.getAttribute("y")),
             width: number(child.getAttribute("width")),

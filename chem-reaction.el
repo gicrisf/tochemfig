@@ -28,10 +28,18 @@
   "Arrow layout box height in reaction coordinates.")
 
 (defconst chem-reaction--text-height 0.3
-  "Approximate text height in reaction coordinates.")
+  "Approximate single-line text height in reaction coordinates.")
 
-(defconst chem-reaction--text-char-width 0.18
-  "Approximate text width per character in reaction coordinates.")
+(defconst chem-reaction--text-font-size 8.8
+  "Reaction text font size in SVG user units.")
+
+(defconst chem-reaction--text-scale 30.0
+  "Default SVG scale used to convert text measurements to reaction units.")
+
+(defconst chem-reaction--text-line-height
+  (/ (* chem-reaction--text-font-size 4.0)
+     (* 3.0 chem-reaction--text-scale))
+  "Line height for wrapped reaction text in reaction coordinates.")
 
 (defconst chem-reaction--text-above-y 0.15
   "Lower-left y coordinate for text above the arrow.")
@@ -55,12 +63,64 @@
      ((stringp value) value)
      (t (user-error "Invalid %s value: %S" key value)))))
 
-(defun chem-reaction--text-width (text)
-  "Return an approximate width for TEXT in reaction coordinates."
-  (* chem-reaction--text-char-width (length (or text ""))))
+(defun chem-reaction--text-char-width (char)
+  "Return SmilesDrawer's width factor for CHAR."
+  (cond
+   ((= char ?\s) 0.35)
+   ((and (>= char ?A) (<= char ?Z)) 0.68)
+   ((and (>= char ?a) (<= char ?z)) 0.56)
+   ((and (>= char ?0) (<= char ?9)) 0.55)
+   (t 0.45)))
 
-(defun chem-reaction--text-part (role text center-x y)
-  "Return a centered :text part with ROLE at CENTER-X and Y."
+(defun chem-reaction--text-width (text)
+  "Return SmilesDrawer-compatible width for TEXT in reaction coordinates."
+  (* (/ chem-reaction--text-font-size chem-reaction--text-scale)
+     (cl-loop for char across (or text "")
+              sum (chem-reaction--text-char-width char))))
+
+(defun chem-reaction--optional-number (options key)
+  "Return KEY from OPTIONS as a number, or nil."
+  (let ((value (plist-get options key)))
+    (cond
+     ((null value) nil)
+     ((numberp value) (float value))
+     (t (user-error "Invalid %s value: %S" key value)))))
+
+(defun chem-reaction--wrap-line (line width)
+  "Wrap LINE to WIDTH using SmilesDrawer's word-wrapping rules."
+  (if (or (string-empty-p line)
+          (< (chem-reaction--text-width line) width))
+      (list line)
+    (let ((words (split-string line " " nil))
+          (offset 0)
+          (lines nil))
+      (dotimes (index (length words))
+        (let ((part (mapconcat #'identity
+                               (cl-subseq words offset (1+ index))
+                               " ")))
+          (when (and (> (chem-reaction--text-width part) width)
+                     (> index offset))
+            (push (mapconcat #'identity
+                             (cl-subseq words offset index)
+                             " ")
+                  lines)
+            (setq offset index))))
+      (when (< offset (length words))
+        (push (mapconcat #'identity (cl-subseq words offset) " ") lines))
+      (nreverse lines))))
+
+(defun chem-reaction--wrap-lines (text width)
+  "Wrap TEXT to WIDTH, honoring explicit newlines and literal `\\n'."
+  (let ((text (string-replace "\\n" "\n" (or text "")))
+        (lines nil))
+    (dolist (line (split-string text "\n" nil))
+      (setq lines (append lines (chem-reaction--wrap-line line width))))
+    (cl-remove-if #'string-empty-p lines)))
+
+(defun chem-reaction--text-part (role text center-x y
+                                      &optional height)
+  "Return a centered :text part with ROLE at CENTER-X and Y.
+HEIGHT defaults to the single-line text height."
   (when (and text (not (string-empty-p text)))
     (let ((width (chem-reaction--text-width text)))
       (chem-reaction-part-create
@@ -70,7 +130,7 @@
        :x (- center-x (/ width 2.0))
        :y y
        :width width
-       :height chem-reaction--text-height
+       :height (or height chem-reaction--text-height)
        :scale 1.0))))
 
 (defun chem-reaction--arrow-style (options)
@@ -128,6 +188,36 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
         (setq first nil)))
     (cons (nreverse parts) cursor)))
 
+(defun chem-reaction--stack-above-parts (lines center-x)
+  "Return stacked above-arrow text parts for LINES.
+LINES is a top-to-bottom list of (ROLE . TEXT) conses."
+  (let* ((count (length lines))
+         (height chem-reaction--text-line-height)
+         (parts nil))
+    (cl-loop for pair in lines
+             for role = (car pair)
+             for text = (cdr pair)
+             for index from 0
+             for y = (+ chem-reaction--text-above-y
+                        (* height (- count 1 index)))
+             do (push (chem-reaction--text-part role text center-x y height)
+                      parts))
+    (nreverse parts)))
+
+(defun chem-reaction--stack-below-parts (lines center-x)
+  "Return stacked below-arrow text parts for LINES.
+LINES is a top-to-bottom list of (ROLE . TEXT) conses."
+  (let ((height chem-reaction--text-line-height)
+        (parts nil))
+    (cl-loop for pair in lines
+             for role = (car pair)
+             for text = (cdr pair)
+             for index from 0
+             for y = (- chem-reaction--text-below-y (* height index))
+             do (push (chem-reaction--text-part role text center-x y height)
+                      parts))
+    (nreverse parts)))
+
 (defun chem-reaction-apply-layout (reaction options)
   "Compute REACTION's layout from OPTIONS and return REACTION."
   (let* ((spacing (chem-reaction--number
@@ -136,6 +226,10 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
          (arrow-length (chem-reaction--number
                         options :reaction-arrow-length
                         chem-reaction--default-arrow-length))
+         (condition-width
+          (or (chem-reaction--optional-number
+               options :reaction-condition-width)
+              arrow-length))
          (plus-size (chem-reaction--number
                      options :reaction-plus-size
                      chem-reaction--default-plus-size))
@@ -144,6 +238,8 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
                      (chem-reaction-agents reaction) ", "))
          (above (plist-get (chem-reaction-conditions reaction) :above))
          (below (plist-get (chem-reaction-conditions reaction) :below))
+         (above-lines (chem-reaction--wrap-lines above condition-width))
+         (below-lines (chem-reaction--wrap-lines below condition-width))
          (above-text
           (mapconcat #'identity
                      (delq nil (list (unless (string-empty-p agent-text)
@@ -151,9 +247,6 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
                                      (unless (string-empty-p above)
                                        above)))
                      ", "))
-         (arrow-width (max arrow-length
-                           (chem-reaction--text-width above-text)
-                           (chem-reaction--text-width below)))
          (cursor 0.0)
          (parts nil))
     (let ((laid (chem-reaction--layout-side
@@ -167,10 +260,10 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
                          :kind :arrow
                          :x cursor
                          :y (- (/ chem-reaction--arrow-height 2.0))
-                         :width arrow-width
+                         :width arrow-length
                          :height chem-reaction--arrow-height
                          :scale 1.0))))
-    (setq cursor (+ cursor arrow-width spacing))
+    (setq cursor (+ cursor arrow-length spacing))
     (let ((laid (chem-reaction--layout-side
                  (chem-reaction-products reaction)
                  :product cursor spacing plus-size)))
@@ -178,14 +271,31 @@ gap between parts, and PLUS-SIZE is the plus-sign box size."
     (let* ((arrow (cl-find :arrow parts :key #'chem-reaction-part-kind))
            (center-x (+ (chem-reaction-part-x arrow)
                         (/ (chem-reaction-part-width arrow) 2.0)))
-           (above-part (chem-reaction--text-part
-                        (if (string-empty-p above) :agent-label :above)
-                        above-text center-x chem-reaction--text-above-y))
-           (below-part (chem-reaction--text-part
-                        :below below center-x chem-reaction--text-below-y)))
-      (dolist (part (list above-part below-part))
-        (when part
-          (setq parts (append parts (list part))))))
+           (above-parts
+            (if (> (length above-lines) 1)
+                (let ((lines
+                       (append
+                        (when (not (string-empty-p agent-text))
+                          (list (cons :agent-label agent-text)))
+                        (mapcar (lambda (line) (cons :above-line line))
+                                above-lines))))
+                  (chem-reaction--stack-above-parts lines center-x))
+              (let ((part (chem-reaction--text-part
+                           (if (string-empty-p above)
+                               :agent-label
+                             :above)
+                           above-text center-x chem-reaction--text-above-y)))
+                (when part (list part)))))
+           (below-parts
+            (if (> (length below-lines) 1)
+                (chem-reaction--stack-below-parts
+                 (mapcar (lambda (line) (cons :below-line line)) below-lines)
+                 center-x)
+              (let ((part (chem-reaction--text-part
+                           :below below center-x chem-reaction--text-below-y)))
+                (when part (list part))))))
+      (dolist (part (append above-parts below-parts))
+        (setq parts (append parts (list part)))))
     (setf (chem-reaction-layout reaction) parts)
     reaction))
 

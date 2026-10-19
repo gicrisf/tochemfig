@@ -220,7 +220,8 @@
                      :reaction-below
                      :reaction-spacing
                      :reaction-arrow-length
-                     :reaction-plus-size))
+                     :reaction-plus-size
+                     :reaction-condition-width))
         (should (plist-member options key))))))
 
 (ert-deftest chem-reaction-geometry-options ()
@@ -369,18 +370,70 @@
     (should (= 3.0 (chem-reaction-part-width plus)))
     (should (= 3.0 (chem-reaction-part-height plus)))))
 
-(ert-deftest chem-reaction-layout-text-widens-arrow ()
-  "Long condition text widens the arrow column."
-  (let* ((text (make-string 80 ?x))
+(ert-deftest chem-reaction-layout-wraps-long-text ()
+  "Long condition text wraps at the arrow length."
+  (let* ((text "alpha beta gamma delta epsilon zeta eta theta iota kappa")
          (reaction (chem-reaction-test--reaction
                     "CCO>>CC=O" (list (cons "reaction-above" text))))
          (arrow (car (chem-reaction-test--parts-of-kind reaction :arrow)))
-         (above (car (chem-reaction-test--text-parts reaction :above))))
-    (should (> (chem-reaction-part-width arrow)
-               chem-reaction--default-arrow-length))
-    (should (equal text (chem-reaction-part-text above)))
-    (should (<= (chem-reaction-part-width above)
-                (chem-reaction-part-width arrow)))))
+         (parts (cl-remove-if-not
+                 (lambda (part)
+                   (eq :text (chem-reaction-part-kind part)))
+                 (chem-reaction-layout reaction))))
+    (should (= chem-reaction--default-arrow-length
+               (chem-reaction-part-width arrow)))
+    (should (> (length parts) 1))
+    (should (equal text
+                   (mapconcat #'chem-reaction-part-text parts " ")))
+    (dolist (part parts)
+      (should (<= (chem-reaction-part-width part)
+                  (+ chem-reaction--default-arrow-length 1e-9))))))
+
+(ert-deftest chem-reaction-layout-smilesdrawer-wrap-points ()
+  "Wrapping matches SmilesDrawer's line breaks at the arrow length."
+  (let* ((text "alpha beta gamma delta epsilon zeta eta theta iota kappa")
+         (reaction (chem-reaction-test--reaction
+                    "CCO>>CC=O" (list (cons "reaction-above" text))))
+         (parts (cl-remove-if-not
+                 (lambda (part)
+                   (eq :above-line (chem-reaction-part-role part)))
+                 (chem-reaction-layout reaction))))
+    (should (equal '("alpha beta gamma delta"
+                     "epsilon zeta eta theta"
+                     "iota kappa")
+                   (mapcar #'chem-reaction-part-text parts)))))
+
+(ert-deftest chem-reaction-layout-condition-width ()
+  "A custom condition width changes the wrap points."
+  (let* ((text "alpha beta gamma delta epsilon zeta")
+         (default (chem-reaction-test--reaction
+                   "CCO>>CC=O" (list (cons "reaction-above" text))))
+         (narrow (chem-reaction-test--reaction
+                  "CCO>>CC=O"
+                  (list (cons "reaction-above" text)
+                        (cons "reaction-condition-width" 2.0))))
+         (default-lines (cl-remove-if-not
+                         (lambda (part)
+                           (eq :above-line (chem-reaction-part-role part)))
+                         (chem-reaction-layout default)))
+         (narrow-lines (cl-remove-if-not
+                        (lambda (part)
+                          (eq :above-line (chem-reaction-part-role part)))
+                        (chem-reaction-layout narrow))))
+    (should (> (length narrow-lines) (length default-lines)))))
+
+(ert-deftest chem-reaction-layout-multiline-conditions ()
+  "Explicit newlines create one text part per line."
+  (let* ((reaction (chem-reaction-test--reaction
+                    "CCO>>CC=O"
+                    '(("reaction-above" . "first line\nsecond line"))))
+         (parts (cl-remove-if-not
+                 (lambda (part)
+                   (eq :text (chem-reaction-part-kind part)))
+                 (chem-reaction-layout reaction))))
+    (should (= 2 (length parts)))
+    (should (equal '("first line" "second line")
+                   (mapcar #'chem-reaction-part-text parts)))))
 
 (ert-deftest chem-reaction-layout-bounds ()
   "Reaction bounds contain every layout part."

@@ -875,6 +875,20 @@
                "|")))
     (should (string-match-p "H⁺" text))))
 
+(ert-deftest chem-exp-svg-reaction-multiline-conditions ()
+  "Multiline and wrapped conditions produce one text element per line."
+  (let ((svg (chem-exp-svg-test--render-reaction
+              "CCO>>CC=O"
+              '(("reaction-above" . "first line\\nsecond line")))))
+    (should (= 2 (chem-exp-svg-test--reaction-part-count svg "text")))
+    (should (string-match-p (regexp-quote "first line") svg))
+    (should (string-match-p (regexp-quote "second line") svg)))
+  (let ((svg (chem-exp-svg-test--render-reaction
+              "CCO>>CC=O"
+              '(("reaction-above"
+                 . "alpha beta gamma delta epsilon zeta eta theta")))))
+    (should (> (chem-exp-svg-test--reaction-part-count svg "text") 1))))
+
 (ert-deftest chem-exp-svg-reaction-text-escaping ()
   "Reaction condition text is XML-escaped."
   (let ((svg (chem-exp-svg-test--render-reaction

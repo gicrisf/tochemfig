@@ -150,7 +150,8 @@ reveals text that the reference viewBox would otherwise clip."
     ("diels_alder" 3.7 27.0 4.8)
     ("two_products" 2.8 25.0 3.2)
     ("stereo" 5.1 30.0 8.0)
-    ("agent_above" 2.4 23.0 3.7))
+    ("agent_above" 2.4 23.0 3.7)
+    ("charged_salt" 3.5 28.0 4.2))
   "Maximum (MAE RMS EDGE) for curated reaction raster fixtures.")
 
 (ert-deftest chem-svg-raster-reaction-metadata ()
@@ -158,6 +159,7 @@ reveals text that the reference viewBox would otherwise clip."
   (dolist (entry chem-svg-raster-test--reaction-limits)
     (let* ((name (car entry))
            (fixture (chem-svg-reaction-parity-test--load name)))
+      (should (eq t (chem-svg-reaction-parity-test--get fixture "raster")))
       (should (stringp (chem-svg-reaction-parity-test--get fixture "svg")))
       (should (chem-svg-reaction-parity-test--get fixture "components")))))
 

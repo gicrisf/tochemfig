@@ -317,7 +317,8 @@ CCO>>CC=O
   (let ((svg (chem-babel--overrides
               '((:reaction-arrow . "reverse")
                 (:reaction-above . "heat")
-                (:reaction-spacing . 0.5))
+                (:reaction-spacing . 0.5)
+                (:reaction-condition-width . 2.0))
               'svg t))
         (chemfig (chem-babel--overrides
                   '((:reaction-wrap . "yes")
@@ -329,6 +330,8 @@ CCO>>CC=O
                    (cdr (assoc "reaction-above" svg))))
     (should (= 0.5
                (cdr (assoc "reaction-spacing" svg))))
+    (should (= 2.0
+               (cdr (assoc "reaction-condition-width" svg))))
     (should (eq t (cdr (assoc "reaction-wrap" chemfig))))
     (should (equal "->"
                    (cdr (assoc "reaction-arrow-chemfig" chemfig))))
