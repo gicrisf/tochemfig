@@ -60,8 +60,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   =test/fixtures/smilesdrawer-reactions/=: a separate SmilesDrawer reaction
   composition corpus.
 - =test/chem-svg-reaction-parity-test.el=: composition parity for component
-  placement, plus signs, arrows, text, and viewBox coverage.  Reaction raster
-  gates remain deferred until this fast suite is stable.
+  placement, plus signs, arrows, text, and viewBox coverage.
+- Reaction raster reporting and curated hard gates for esterification,
+  Diels-Alder, and stereo fixtures; agent/condition fixtures remain advisory.
 - SVG text bounds now measure every label part, so wide charged or subscripted
   labels such as `[NH4+]` are not clipped.  Native viewBoxes intentionally
   exceed SmilesDrawer's where the oracle clips; viewBox parity checks

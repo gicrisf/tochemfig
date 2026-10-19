@@ -47,8 +47,12 @@ and any text above or below the arrow.
 Reaction fixtures intentionally omit per-component SVG primitives and labels;
 those are covered by the molecule parity corpus.  The reaction parity test
 compares composition only: component placement, plus/arrow/text boxes, text
-content, and viewBox coverage.  Reaction raster gates are deferred until the
-fast composition suite is stable.
+content, and viewBox coverage.
+
+The advisory raster report also covers all reaction fixtures.  Three curated
+fixtures are hard raster gates: esterification, Diels-Alder, and stereo.
+Agent/condition fixtures remain advisory until text rendering is stable enough
+for raster thresholds.
 
 ## Coverage report
 

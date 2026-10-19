@@ -8,6 +8,7 @@
 ;;; Code:
 
 (require 'chem-svg-parity-test)
+(require 'chem-svg-reaction-parity-test)
 
 (defvar svg-raster-report--directory
   (expand-file-name "chem-svg-raster" temporary-file-directory))
@@ -160,6 +161,51 @@ reveals text that the reference viewBox would otherwise clip."
                      reference-cv
                      (if native-cv (format "%.3f" native-cv) "n/a"))))))
 
+(defun svg-raster-report--run-reactions ()
+  "Run the advisory raster report for reaction fixtures."
+  (make-directory svg-raster-report--directory t)
+  (let ((options (chem-svg-reaction-parity-test--options)))
+    (dolist (entry (chem-svg-reaction-parity-test--list
+                    (chem-svg-reaction-parity-test--get
+                     (chem-svg-reaction-parity-test--manifest) "fixtures")))
+      (let* ((name (chem-svg-reaction-parity-test--get entry "name"))
+             (fixture (chem-svg-reaction-parity-test--load name))
+             (reaction
+              (chem-svg-reaction-parity-test--build-reaction fixture options))
+             (native-svg (chem-render reaction 'svg options))
+             (reference-svg
+              (svg-raster-report--match-viewbox
+               (chem-svg-reaction-parity-test--get fixture "svg") native-svg))
+             (prefix (concat "reaction-" name))
+             (reference-png (expand-file-name (concat prefix "-reference.png")
+                                              svg-raster-report--directory))
+             (native-png (expand-file-name (concat prefix "-native.png")
+                                            svg-raster-report--directory))
+             (comparison-png
+              (expand-file-name (concat prefix "-comparison.png")
+                                svg-raster-report--directory)))
+        (svg-raster-report--write
+         (expand-file-name (concat prefix "-reference.svg")
+                           svg-raster-report--directory)
+         reference-svg)
+        (svg-raster-report--write
+         (expand-file-name (concat prefix "-native.svg")
+                           svg-raster-report--directory)
+         native-svg)
+        (svg-raster-report--png
+         (expand-file-name (concat prefix "-reference.svg")
+                           svg-raster-report--directory)
+         reference-png)
+        (svg-raster-report--png
+         (expand-file-name (concat prefix "-native.svg")
+                           svg-raster-report--directory)
+         native-png)
+        (princ (format "%s: %s\n"
+                       prefix
+                       (svg-raster-report--compare reference-png native-png
+                                                   comparison-png)))))))
+
 (svg-raster-report--run)
+(svg-raster-report--run-reactions)
 
 ;;; svg-raster-report.el ends here

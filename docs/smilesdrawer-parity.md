@@ -89,8 +89,12 @@ on renderer parity:
 Per-component SVG primitives, labels, masks, and gradients are not compared in
 the reaction corpus; the molecule parity suite already covers those.  The
 reaction viewBox check is containment-based because native text bounds can be
-larger than SmilesDrawer's clipped estimates.  Reaction raster gates are
-deferred until the fast composition suite is stable.
+larger than SmilesDrawer's clipped estimates.
+
+The advisory raster report covers all six reaction fixtures.  Three curated
+fixtures are hard raster gates: esterification, Diels-Alder, and stereo.  The
+agent/condition fixtures stay fast-suite only until text rendering proves
+stable enough for raster thresholds.
 
 ## Text bounds and viewBox divergence
 

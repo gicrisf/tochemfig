@@ -20,6 +20,7 @@
   (when here (add-to-list 'load-path here)))
 
 (require 'chem-svg-parity-test)
+(require 'chem-svg-reaction-parity-test)
 
 (defconst chem-svg-raster-test--script
   (expand-file-name "../tools/compare-png.py" chem-svg-parity-test--root)
@@ -139,6 +140,69 @@ reveals text that the reference viewBox would otherwise clip."
                            (<= edge (nth 2 limits)))
                 (ert-fail
                  (format "%s raster regression: mae=%.3f/%.3f rms=%.3f/%.3f edge=%.3f/%.3f"
+                         name mae (nth 0 limits)
+                         rms (nth 1 limits)
+                         edge (nth 2 limits)))))))
+      (delete-directory directory t))))
+
+(defconst chem-svg-raster-test--reaction-limits
+  '(("esterification" 2.0 18.0 2.8)
+    ("diels_alder" 3.7 27.0 4.8)
+    ("stereo" 5.1 30.0 8.0))
+  "Maximum (MAE RMS EDGE) for curated reaction raster fixtures.")
+
+(ert-deftest chem-svg-raster-reaction-metadata ()
+  "Reaction raster gate names have metadata and reference SVGs."
+  (dolist (entry chem-svg-raster-test--reaction-limits)
+    (let* ((name (car entry))
+           (fixture (chem-svg-reaction-parity-test--load name)))
+      (should (stringp (chem-svg-reaction-parity-test--get fixture "svg")))
+      (should (chem-svg-reaction-parity-test--get fixture "components")))))
+
+(ert-deftest chem-svg-raster-reaction-gates ()
+  "Curated raster parity gates for reaction composition."
+  (unless (and (executable-find "inkscape")
+               (executable-find "python3"))
+    (ert-skip "Inkscape or python3 is unavailable"))
+  (unless (zerop (call-process "python3" nil nil nil "-c" "import PIL"))
+    (ert-skip "Pillow is unavailable"))
+  (let ((directory (make-temp-file "chem-svg-reaction-raster-" t))
+        (options (chem-svg-reaction-parity-test--options)))
+    (unwind-protect
+        (dolist (entry chem-svg-raster-test--reaction-limits)
+          (let* ((name (car entry))
+                 (limits (cdr entry))
+                 (fixture (chem-svg-reaction-parity-test--load name))
+                 (reaction
+                  (chem-svg-reaction-parity-test--build-reaction
+                   fixture options))
+                 (native-svg (chem-render reaction 'svg options))
+                 (reference-svg
+                  (chem-svg-raster-test--match-viewbox
+                   (chem-svg-reaction-parity-test--get fixture "svg")
+                   native-svg))
+                 (reference-svg-path
+                  (expand-file-name (concat name "-reference.svg") directory))
+                 (native-svg-path
+                  (expand-file-name (concat name "-native.svg") directory))
+                 (reference-png
+                  (expand-file-name (concat name "-reference.png") directory))
+                 (native-png
+                  (expand-file-name (concat name "-native.png") directory)))
+            (chem-svg-raster-test--write reference-svg-path reference-svg)
+            (chem-svg-raster-test--write native-svg-path native-svg)
+            (chem-svg-raster-test--png reference-svg-path reference-png)
+            (chem-svg-raster-test--png native-svg-path native-png)
+            (let* ((metrics (chem-svg-raster-test--compare
+                             reference-png native-png))
+                   (mae (nth 0 metrics))
+                   (rms (nth 1 metrics))
+                   (edge (nth 2 metrics)))
+              (unless (and (<= mae (nth 0 limits))
+                           (<= rms (nth 1 limits))
+                           (<= edge (nth 2 limits)))
+                (ert-fail
+                 (format "%s reaction raster regression: mae=%.3f/%.3f rms=%.3f/%.3f edge=%.3f/%.3f"
                          name mae (nth 0 limits)
                          rms (nth 1 limits)
                          edge (nth 2 limits)))))))
