@@ -6,8 +6,8 @@
 
 ;;; Commentary:
 
-;; Experimental CheMLisp reader, expansion, compiler, and exporter tests.  These
-;; tests do not require the Indigo dynamic module.
+;; Experimental CheMLisp reader, expansion, compiler, and exporter tests.
+;; Compilation uses Indigo for layout and hydrogen perception.
 
 ;;; Code:
 
@@ -67,7 +67,7 @@
 
 (ert-deftest chemlisp-benzene-ring ()
   "Benzene compiles to an aromatic six-membered ring."
-  (let* ((source "(molecule (c :id c1 (c :id c2 :angle 0 (c :id c3 :angle 60 (c :id c4 :angle 120 (c :id c5 :angle 180 (c :id c6 :angle 240 (close c1))))))))")
+  (let* ((source "(molecule (c :id c1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close c1))))))))")
          (drawing (chemlisp-test--compile source))
          (rings (chem-drawing-rings drawing)))
     (should (= 6 (hash-table-count (chem-drawing-atoms drawing))))
@@ -82,6 +82,73 @@
                             (chemlisp-render source 'svg
                                              (list :svg-aromatic 'circle))))))
 
+(ert-deftest chemlisp-auto-layout-bond-lengths ()
+  "Indigo layout is normalized to a unit bond length."
+  (let* ((drawing (chemlisp-test--compile "(molecule (C (C (O))))"))
+         (lengths (mapcar (lambda (edge)
+                            (chem-edge-length drawing edge))
+                          (chem-edges drawing))))
+    (should (cl-every (lambda (length)
+                        (< (abs (- length 1.0)) 1e-3))
+                      lengths))))
+
+(ert-deftest chemlisp-auto-layout-ring ()
+  "A ring without authored angles is still a closed regular ring."
+  (let* ((source "(molecule (c :id c1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close c1))))))))")
+         (drawing (chemlisp-test--compile source))
+         (ring (car (chem-drawing-rings drawing)))
+         (lengths (mapcar (lambda (edge-id)
+                            (chem-edge-length drawing
+                                              (chem-edge-at drawing edge-id)))
+                          (chem-ring-bonds ring))))
+    (should (= 6 (length (chem-ring-atoms ring))))
+    (should (chem-ring-aromatic-p ring))
+    (should (cl-every (lambda (length)
+                        (< (abs (- length 1.0)) 1e-3))
+                      lengths))
+    (should (< (- (apply #'max (chem-ring-vertex-radii drawing ring))
+                  (apply #'min (chem-ring-vertex-radii drawing ring)))
+               1e-3))))
+
+(ert-deftest chemlisp-aromatic-nitrogen ()
+  "Indigo hydrogens distinguish pyridine from pyrrole."
+  (let* ((pyridine "(molecule (n :id n1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close n1))))))))")
+         (pyrrole "(molecule (n :h 1 :id n1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close n1))))))))")
+         (pyridine-atom (car (chemlisp-test--atoms
+                              (chemlisp-test--compile pyridine))))
+         (pyrrole-atom (car (chemlisp-test--atoms
+                             (chemlisp-test--compile pyrrole)))))
+    (should (= 0 (chem-atom-hydrogens pyridine-atom)))
+    (should (= 1 (chem-atom-hydrogens pyrrole-atom)))))
+
+(ert-deftest chemlisp-explicit-length ()
+  "Explicit :length overrides the normalized layout length."
+  (let* ((drawing (chemlisp-test--compile "(molecule (C (C :length 2)))"))
+         (edge (car (chem-edges drawing))))
+    (should (< (abs (- (chem-edge-length drawing edge) 2.0)) 1e-6))))
+
+(ert-deftest chemlisp-root-at ()
+  "A fragment root :at places the root at the requested coordinates."
+  (let* ((drawing (chemlisp-test--compile
+                   "(molecule (Na :charge 1 :at (2 3)) (Cl :charge -1))"))
+         (na (gethash 0 (chem-drawing-atoms drawing))))
+    (should (= 2.0 (chem-atom-x na)))
+    (should (= 3.0 (chem-atom-y na)))))
+
+(ert-deftest chemlisp-rejects-ring-geometry ()
+  "Explicit geometry on a ring bond is rejected."
+  (should-error
+   (chemlisp-test--compile
+    "(molecule (c :id c1 (c :id c2 :angle 0 (c :id c3 (close c1)))))"))
+  (should-error
+   (chemlisp-test--compile
+    "(molecule (c :id c1 (c :id c2 :length 1.5 (c :id c3 (close c1)))))")))
+
+(ert-deftest chemlisp-hydrogen-validation ()
+  "Impossible :h values are rejected."
+  (should-error (chemlisp-test--compile "(molecule (C :h 2))"))
+  (should-error (chemlisp-test--compile "(molecule (H :h 1))")))
+
 (ert-deftest chemlisp-value-definition ()
   "A value definition is reusable and appends use-site children."
   (let* ((source "(chem-def hydroxyl () (O)) (molecule (C (hydroxyl (C))))")
@@ -92,13 +159,18 @@
 
 (ert-deftest chemlisp-value-use-attrs-and-bond ()
   "Use-site attributes and bond markers override the definition."
-  (let* ((source "(chem-def hydroxyl () (O)) (molecule (C (=hydroxyl :charge -1)))")
+  (let* ((source "(chem-def hydroxyl () (O)) (molecule (C (=hydroxyl)))")
          (drawing (chemlisp-test--compile source))
          (edges (chemlisp-test--edges drawing))
          (atoms (chemlisp-test--atoms drawing)))
     (should (= 2 (length atoms)))
     (should (= 1 (length edges)))
     (should (eq :double (chem-edge-order (car edges))))
+    (should (= 0 (chem-atom-charge (nth 1 atoms)))))
+  (let* ((source "(chem-def hydroxyl () (O)) (molecule (C (hydroxyl :charge -1)))")
+         (drawing (chemlisp-test--compile source))
+         (atoms (chemlisp-test--atoms drawing)))
+    (should (= 2 (length atoms)))
     (should (= -1 (chem-atom-charge (nth 1 atoms))))))
 
 (ert-deftest chemlisp-template ()
@@ -160,7 +232,7 @@
 
 (ert-deftest chemlisp-fresh-ids-per-use ()
   "Reusing a definition with an internal closure creates independent rings."
-  (let* ((source "(chem-def ringlet () (c :id a (c :id b :angle 0 (c :id c :angle 120 (close a))))) (molecule (C (ringlet) (ringlet)))")
+  (let* ((source "(chem-def ringlet () (c :id a (c :id b (c :id c (close a))))) (molecule (C (ringlet) (ringlet)))")
          (drawing (chemlisp-test--compile source)))
     (should (= 7 (hash-table-count (chem-drawing-atoms drawing))))
     (should (= 8 (hash-table-count (chem-drawing-edges drawing))))
@@ -174,7 +246,7 @@
 
 (ert-deftest chemlisp-numeric-closure ()
   "Numeric closures use one-based pre-order indices."
-  (let* ((source "(molecule (c :id a (c :id b :angle 0 (c :id c :angle 120 (close 1)))))")
+  (let* ((source "(molecule (c :id a (c :id b (c :id c (close 1)))))")
          (drawing (chemlisp-test--compile source)))
     (should (= 1 (length (chem-drawing-rings drawing))))))
 
@@ -192,9 +264,9 @@
   (let* ((drawing (chemlisp-test--compile "(molecule (N :charge 1) (Cl :charge -1) (H))"))
          (atoms (chemlisp-test--atoms drawing)))
     (should (equal '(4 0 0) (mapcar #'chem-atom-hydrogens atoms))))
-  (let* ((drawing (chemlisp-test--compile "(molecule (n :h 1))"))
-         (atom (car (chemlisp-test--atoms drawing))))
-    (should (= 1 (chem-atom-hydrogens atom)))))
+  (let* ((drawing (chemlisp-test--compile "(molecule (C (N :h 1 (C)) (C)))"))
+         (atoms (chemlisp-test--atoms drawing)))
+    (should (= 1 (chem-atom-hydrogens (nth 1 atoms))))))
 
 (ert-deftest chemlisp-view-and-options ()
   "View and common options transform coordinates."

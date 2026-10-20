@@ -384,11 +384,11 @@ lowercase atoms are aromatic.  Definitions use =chem-def=, local values use
 #+begin_example
 (chem-def phenyl (ortho meta para)
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1)))
           (para))
         (meta))
@@ -400,8 +400,9 @@ lowercase atoms are aromatic.  Definitions use =chem-def=, local values use
 
 See [[file:docs/chemlisp.md][docs/chemlisp.md]] for the syntax reference and
 [[file:examples/chemlisp.org][examples/chemlisp.org]] for a runnable tour.
-The compiler module and the =chemlisp= Babel language are pure Elisp and run
-without the Indigo module; SMILES/MOL/RXN blocks load Indigo on demand.
+CheMLisp uses Indigo for automatic 2D layout and hydrogen perception, so
+Indigo is required.  Explicit =:angle=, =:turn=, and =:length= are overrides;
+omit them for the default depiction.
 
 ** Migrating from tochemfig
 

@@ -79,18 +79,21 @@ default valence is not what you want.
 
 * Rings
 
+Indigo computes the default coordinates.  Omit angles unless you want to
+force a particular depiction.
+
 ** Benzene
 
-Lowercase atoms are aromatic.  Ring bonds need explicit angles to close.
+Lowercase atoms are aromatic; the ring is laid out automatically.
 
 #+begin_src chemlisp :results file
 (molecule
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1))))))))
 #+end_src
 
@@ -102,11 +105,11 @@ Lowercase atoms are aromatic.  Ring bonds need explicit angles to close.
 #+begin_src chemlisp :results file :aromatic circle
 (molecule
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1))))))))
 #+end_src
 
@@ -121,11 +124,11 @@ needed.
 #+begin_src chemlisp :results file
 (molecule
   (n :id n1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close n1))))))))
 #+end_src
 
@@ -135,11 +138,11 @@ needed.
 #+begin_src chemlisp :results file
 (molecule
   (n :h 1 :id n1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close n1))))))))
 #+end_src
 
@@ -148,15 +151,15 @@ needed.
 
 * Stereochemistry
 
-~>C~ is an up wedge and ~<C~ is a down wedge.
+A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
 
 #+begin_src chemlisp :results file
 (molecule
   (C
     (C :angle 30
       (N :angle 60)
-      (>C :angle -60)
-      (=O :angle 180))))
+      (>Br :angle -60)
+      (O :angle 180))))
 #+end_src
 
 #+RESULTS:
@@ -190,11 +193,11 @@ needed.
 #+begin_src chemlisp :results file
 (chem-def phenyl (ortho meta para)
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1)))
           (para))
         (meta))
@@ -212,11 +215,11 @@ needed.
 #+begin_src chemlisp :results file
 (chem-def phenyl (ortho meta para)
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1)))
           (para))
         (meta))

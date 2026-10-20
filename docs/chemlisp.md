@@ -8,9 +8,10 @@ It compiles directly to the shared `chem-drawing` IR and renders with both the
 SVG and chemfig exporters.  It is a source format for **drawings**, not a
 replacement for SMILES or MOL.
 
-The compiler module is pure Elisp and builds without the Indigo dynamic module.
-The `chemlisp` Org Babel language also works without Indigo; only
-SMILES/MOL/RXN blocks load the Indigo ingestion layer on demand.
+CheMLisp uses Indigo for automatic 2D layout and hydrogen perception.  Indigo
+is required; the DSL does not implement a separate layout engine.  Explicit
+angles are overrides on top of the Indigo layout, not a prerequisite for
+drawing rings.
 
 ## Quick start
 
@@ -128,11 +129,11 @@ Named targets are stable under edits:
 
 ```elisp
 (c :id c1
-  (c :id c2 :angle 0
-    (c :id c3 :angle 60
-      (c :id c4 :angle 120
-        (c :id c5 :angle 180
-          (c :id c6 :angle 240
+  (c :id c2
+    (c :id c3
+      (c :id c4
+        (c :id c5
+          (c :id c6
             (close c1)))))))
 ```
 
@@ -148,21 +149,28 @@ closure target must be an ancestor of its source atom.  A closure may carry
 
 ### Geometry
 
-`:angle` is absolute, counterclockwise.  `:turn` is relative to the incoming
-direction.  `:length` defaults to `1.0`.
-
-Missing angles use a deterministic skeleton layout.  Because rings need to
-close, author ring bonds with explicit angles:
+Coordinates are computed by Indigo.  Omit geometry for the default depiction:
 
 ```elisp
 (c :id c1
-  (c :id c2 :angle 0
-    (c :id c3 :angle 60
-      (c :id c4 :angle 120
-        (c :id c5 :angle 180
-          (c :id c6 :angle 240
+  (c :id c2
+    (c :id c3
+      (c :id c4
+        (c :id c5
+          (c :id c6
             (close c1)))))))
 ```
+
+Explicit geometry is applied afterwards as an override:
+
+- `:angle` is absolute, counterclockwise.
+- `:turn` is relative to the incoming direction.
+- `:length` sets the incoming bond length.
+
+Explicit geometry is supported on acyclic bonds and ring substituents.  It is
+rejected on ring-internal bonds because rotating a subtree would break the
+closure.  Use the molecule view (`:rotation`, `:flip-x`, `:flip-y`, `:scale`)
+to orient an entire ring system.
 
 ### Fragments and view
 
@@ -225,11 +233,11 @@ A non-empty parameter list defines a template.  Parameters are holes:
 ```elisp
 (chem-def phenyl (ortho meta para)
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1)))
           (para))
         (meta))
@@ -296,11 +304,14 @@ a reused value stay local to that instance.
 
 ## Labels and hydrogens
 
-Implicit hydrogens are derived from a small valence table.  `:h` overrides them.
+Indigo computes implicit hydrogens from the loaded molecule.  `:h` overrides
+the count and is encoded with explicit hydrogen atoms for layout/perception:
 
-- Aromatic carbon infers `H` from its aromatic bond count.
-- Aromatic heteroatoms default to no hydrogen; specify `:h` explicitly
-  (for example `(n :h 1)` for pyrrole and `(n :h 0)` for pyridine).
+- `(n :h 1)` gives pyrrole-like N-H.
+- `(n :h 0)` gives pyridine-like N with no hydrogen.
+- An `:h` value that contradicts the achievable valence is rejected.
+- Explicit `H` atoms written as children are ordinary atoms; `:h` adds
+  implicit hydrogens on top.
 - `:show :always` forces an atom label.
 - `:show :never` hides the label while keeping the atom and its bonds.
 
@@ -330,7 +341,8 @@ Lisp macros, and are never evaluated.
 
 ## Current limitations
 
-- Ring geometry is not auto-laid-out; use explicit angles.
+- Automatic layout and hydrogen perception require Indigo.
+- Explicit geometry on ring-internal bonds is rejected; use the molecule view.
 - Closures must target an ancestor of their source atom.
 - No `chem-flet` / `chem-flet*`.
 - No chemfig `\definesubmol` emission from `chem-def`.
@@ -346,5 +358,5 @@ emacs -Q --batch -L . -L emacs-indigo -L test \
 ```
 
 The compiler also participates in
-`tools/check-module-free-compile.sh`, proving it builds without the Indigo
-dynamic module.
+`tools/check-module-free-compile.sh`, proving it byte-compiles without the
+Indigo dynamic module.  Runtime layout still requires Indigo.

@@ -14,8 +14,9 @@
 ;;
 ;; CheMLisp compiles a hand-authored S-expression drawing into the shared
 ;; `chem-drawing' IR.  It is a source format for drawings, not a replacement
-;; for SMILES or MOL.  The compiler is independent of Indigo: it builds the
-;; graph, traversal tree, coordinates, labels, and rings directly.
+;; for SMILES or MOL.  The compiler builds the graph, traversal tree, labels,
+;; and rings directly, then uses Indigo for the default coordinates and
+;; implicit hydrogen perception.
 ;;
 ;; A document contains top-level `chem-def' forms and exactly one drawing form:
 ;;
@@ -40,6 +41,19 @@
 (require 'chem-ir)
 (require 'chem-geometry)
 (require 'chem-export)
+
+(eval-when-compile (require 'indigo-mol))
+(eval-when-compile (require 'indigo-iter))
+(eval-when-compile (require 'indigo-atom))
+
+(declare-function indigo-layout "indigo-mol" (molecule))
+(declare-function indigo-xyz "indigo-module" (atom))
+(declare-function indigo-count-implicit-hydrogens "indigo-module" (atom))
+(declare-function indigo-index "indigo-module" (atom))
+(declare-function indigo-map "indigo-iter" (function iterator))
+(declare-function indigo-iterate-atoms "indigo-module" (molecule))
+(declare-function indigo-free "indigo-module" (handle))
+(declare-function indigo-load-molecule-from-string "indigo-io" (string))
 
 (define-error 'chemlisp-error "CheMLisp error" 'user-error)
 
@@ -67,26 +81,6 @@
     "Md" "No" "Lr" "Rf" "Db" "Sg" "Bh" "Hs" "Mt" "Ds"
     "Rg" "Cn" "Nh" "Fl" "Mc" "Lv" "Ts" "Og")
   "Supported element symbols.")
-
-(defconst chemlisp--base-valence
-  '(("H" . 1) ("B" . 3) ("C" . 4) ("N" . 3) ("O" . 2) ("F" . 1)
-    ("Si" . 4) ("P" . 3) ("S" . 2) ("Cl" . 1) ("Br" . 1) ("I" . 1)
-    ("Se" . 2) ("As" . 3) ("Te" . 2) ("At" . 1))
-  "Default valence for common elements.")
-
-(defconst chemlisp--charged-valence
-  '(("C" (1 . 3) (-1 . 3))
-    ("N" (1 . 4) (-1 . 2))
-    ("O" (1 . 3) (-1 . 1))
-    ("S" (1 . 3) (-1 . 1))
-    ("P" (1 . 4) (-1 . 2))
-    ("B" (-1 . 4))
-    ("F" (-1 . 0))
-    ("Cl" (-1 . 0))
-    ("Br" (-1 . 0))
-    ("I" (-1 . 0))
-    ("At" (-1 . 0)))
-  "Valence overrides for common charged atoms.")
 
 (defconst chemlisp--reserved-form-names
   '(molecule chem-let chem-let* chem-def close ->)
@@ -1080,70 +1074,6 @@ Return (ROOT-TREE . EXIT-KEY)."
     (cons root (or global-exit
                    (chemlisp--fragment-exit-key previous nil)))))
 
-(defun chemlisp--default-angle (index depth direction)
-  "Return a default angle for child INDEX at DEPTH with DIRECTION."
-  (cond
-   ((= index 0)
-    (if (evenp depth) 30 -30))
-   (t
-    (+ (or direction 0)
-       (* (if (cl-oddp index) 1 -1)
-          (* 60 (/ (+ index 1) 2)))))))
-
-(defun chemlisp--layout-tree (tree x y direction depth coords)
-  "Lay out TREE at (X, Y) using DIRECTION and DEPTH.
-Store coordinates in COORDS."
-  (puthash (chemlisp-tree-key tree) (cons x y) coords)
-  (let ((index 0))
-    (dolist (child (chemlisp-tree-children tree))
-      (when (chemlisp-tree-p child)
-        (when (chemlisp--attr (chemlisp-tree-attrs child) :at)
-          (chemlisp--error "Only a root can have :at"))
-        (let* ((attrs (chemlisp-tree-attrs child))
-               (angle (cond
-                       ((chemlisp--attr attrs :angle))
-                       ((chemlisp--attr attrs :turn)
-                        (+ (or direction 0)
-                           (chemlisp--attr attrs :turn)))
-                       (t
-                        (chemlisp--default-angle index depth direction))))
-               (length (or (chemlisp--attr attrs :length) 1.0))
-               (radians (* angle (/ float-pi 180.0)))
-               (child-x (+ x (* length (cos radians))))
-               (child-y (+ y (* length (sin radians)))))
-          (chemlisp--layout-tree child child-x child-y angle (1+ depth) coords))
-        (setq index (1+ index))))))
-
-(defun chemlisp--fragment-bounds (tree coords)
-  "Return (MIN-X MIN-Y MAX-X MAX-Y) for TREE using COORDS."
-  (let (min-x min-y max-x max-y)
-    (cl-labels ((walk (node)
-                  (let ((coord (gethash (chemlisp-tree-key node) coords)))
-                    (when coord
-                      (setq min-x (if min-x (min min-x (car coord)) (car coord)))
-                      (setq min-y (if min-y (min min-y (cdr coord)) (cdr coord)))
-                      (setq max-x (if max-x (max max-x (car coord)) (car coord)))
-                      (setq max-y (if max-y (max max-y (cdr coord)) (cdr coord)))))
-                  (dolist (child (chemlisp-tree-children node))
-                    (when (chemlisp-tree-p child)
-                      (walk child)))))
-      (walk tree))
-    (list min-x min-y max-x max-y)))
-
-(defun chemlisp--layout-fragments (trees)
-  "Lay out fragment TREES and return a coordinate hash."
-  (let ((coords (make-hash-table :test #'eql))
-        (current-x 0.0))
-    (dolist (tree trees)
-      (let* ((at (chemlisp--attr (chemlisp-tree-attrs tree) :at))
-             (x (if at (nth 0 at) current-x))
-             (y (if at (nth 1 at) 0.0)))
-        (chemlisp--layout-tree tree x y nil 0 coords)
-        (let* ((bounds (chemlisp--fragment-bounds tree coords))
-               (max-x (nth 2 bounds)))
-          (setq current-x (+ max-x 1.5)))))
-    coords))
-
 (defun chemlisp--preorder-nodes (tree)
   "Return TREE nodes in pre-order, excluding closures."
   (let (nodes)
@@ -1168,57 +1098,6 @@ Store coordinates in COORDS."
     (nreverse closures)))
 
 ;;; IR construction
-
-(defun chemlisp--base-valence (element charge)
-  "Return the base valence of ELEMENT with CHARGE."
-  (let ((overrides (cdr (assoc element chemlisp--charged-valence))))
-    (or (and overrides (alist-get charge overrides))
-        (or (cdr (assoc element chemlisp--base-valence)) 0))))
-
-(defun chemlisp--bond-sum (drawing atom)
-  "Return (SUM . AROMATIC-BONDS) for ATOM in DRAWING."
-  (let ((sum 0)
-        (aromatic-bonds 0))
-    (dolist (neighbor (chem-atom-neighbors atom))
-      (let ((edge (chem-get-edge drawing (chem-atom-idx atom) neighbor)))
-        (unless (and edge (chem-edge-link-p edge))
-          (pcase (chem-edge-order edge)
-            (:single (cl-incf sum 1))
-            (:double (cl-incf sum 2))
-            (:triple (cl-incf sum 3))
-            (:aromatic (cl-incf aromatic-bonds 1))
-            (_ (cl-incf sum 1))))))
-    (cons sum aromatic-bonds)))
-
-(defun chemlisp--implicit-hydrogens (drawing aromatic atom)
-  "Return ATOM's implicit hydrogens in DRAWING.
-AROMATIC is the aromatic atom hash."
-  (if (equal (chem-atom-element atom) "H")
-      0
-    (let* ((bond-sum (chemlisp--bond-sum drawing atom))
-           (sum (car bond-sum))
-           (aromatic-bonds (cdr bond-sum)))
-      (if (gethash (chem-atom-idx atom) aromatic)
-          (if (equal (chem-atom-element atom) "C")
-              (max 0 (round (- 4 (+ sum (* 1.5 aromatic-bonds)))))
-            0)
-        (let ((valence (chemlisp--base-valence
-                        (chem-atom-element atom)
-                        (or (chem-atom-charge atom) 0))))
-          (max 0 (round (- valence sum))))))))
-
-(defun chemlisp--compute-hydrogens (drawing aromatic explicit-h)
-  "Set implicit hydrogens on DRAWING's atoms.
-AROMATIC is an idx hash and EXPLICIT-H maps idx to user values."
-  (maphash
-   (lambda (idx atom)
-     (let ((explicit (gethash idx explicit-h)))
-       (setf (chem-atom-hydrogens atom)
-             (if explicit
-                 explicit
-               (chemlisp--implicit-hydrogens drawing aromatic atom)))))
-   (chem-drawing-atoms drawing))
-  drawing)
 
 (defun chemlisp--compute-bond-angles (drawing)
   "Populate bond angles on DRAWING's atoms."
@@ -1565,6 +1444,265 @@ the compiled graph."
    shows)
   drawing)
 
+(defun chemlisp--tree-atom-keys (tree)
+  "Return TREE's atom keys, excluding closures."
+  (let (keys)
+    (cl-labels ((walk (node)
+                  (push (chemlisp-tree-key node) keys)
+                  (dolist (child (chemlisp-tree-children node))
+                    (when (chemlisp-tree-p child)
+                      (walk child)))))
+      (walk tree))
+    (nreverse keys)))
+
+(defun chemlisp--ring-edge-set (drawing)
+  "Return a hash of edge ids that belong to DRAWING's rings."
+  (let ((edges (make-hash-table :test #'eql)))
+    (dolist (ring (chem-drawing-rings drawing))
+      (dolist (id (chem-ring-bonds ring))
+        (puthash id t edges)))
+    edges))
+
+(defun chemlisp--drawing-to-mol (drawing explicit-h)
+  "Serialize DRAWING to V3000 MOL for Indigo layout.
+EXPLICIT-H maps atom indices to :h values that are added as explicit
+hydrogen atoms."
+  (let ((atoms (chem-drawing-atoms drawing))
+        (n (hash-table-count (chem-drawing-atoms drawing)))
+        (atom-count (hash-table-count (chem-drawing-atoms drawing)))
+        (bond-count 0)
+        (atom-lines nil)
+        (bond-lines nil))
+    (dotimes (idx n)
+      (let* ((atom (gethash idx atoms))
+             (charge (or (chem-atom-charge atom) 0))
+             (radical (or (chem-atom-radical atom) 0))
+             (properties
+              (concat (unless (zerop charge)
+                        (format " CHG=%d" charge))
+                      (pcase radical
+                        (1 " RAD=2")
+                        (2 " RAD=3")
+                        (_ "")))))
+        (push (format "M  V30 %d %s 0 0 0 0%s\n"
+                      (1+ idx) (chem-atom-element atom) properties)
+              atom-lines)))
+    (dotimes (idx n)
+      (let ((h (gethash idx explicit-h)))
+        (when (and h (> h 0))
+          (when (equal (chem-atom-element (gethash idx atoms)) "H")
+            (chemlisp--error "Cannot specify :h on a hydrogen atom"))
+          (dotimes (_ h)
+            (cl-incf atom-count)
+            (push (format "M  V30 %d H 0 0 0 0\n" atom-count) atom-lines)
+            (cl-incf bond-count)
+            (push (format "M  V30 %d 1 %d %d\n"
+                          bond-count (1+ idx) atom-count)
+                  bond-lines)))))
+    (dolist (edge (chem-edges drawing))
+      (unless (chem-edge-link-p edge)
+        (let* ((order (pcase (chem-edge-order edge)
+                        (:single 1)
+                        (:double 2)
+                        (:triple 3)
+                        (:aromatic 4)
+                        (_ 1)))
+               (a (chem-edge-a edge))
+               (b (chem-edge-b edge)))
+          (cl-incf bond-count)
+          (push (format "M  V30 %d %d %d %d\n"
+                        bond-count order (1+ a) (1+ b))
+                bond-lines))))
+    (with-temp-buffer
+      (insert "chemlisp\n  chemlisp layout\n\n")
+      (insert "  0  0  0  0  0  0  0  0  0  0  0 V3000\n")
+      (insert "M  V30 BEGIN CTAB\n")
+      (insert (format "M  V30 COUNTS %d %d 0 0 0\n" atom-count bond-count))
+      (insert "M  V30 BEGIN ATOM\n")
+      (dolist (line (nreverse atom-lines)) (insert line))
+      (insert "M  V30 END ATOM\n")
+      (insert "M  V30 BEGIN BOND\n")
+      (dolist (line (nreverse bond-lines)) (insert line))
+      (insert "M  V30 END BOND\n")
+      (insert "M  V30 END CTAB\n")
+      (insert "M  END\n")
+      (buffer-string))))
+
+(defun chemlisp--normalize-layout (drawing)
+  "Scale DRAWING so its most common bond length is 1.0."
+  (let ((counts (make-hash-table :test #'equal)))
+    (dolist (edge (chem-visible-edges drawing))
+      (let ((length (chem-edge-length drawing edge)))
+        (when (> length 1e-9)
+          (let ((key (round (* length 1000))))
+            (puthash key (1+ (or (gethash key counts) 0)) counts)))))
+    (let (items)
+      (maphash (lambda (length count) (push (cons length count) items)) counts)
+      (setq items
+            (sort items
+                  (lambda (a b)
+                    (if (/= (cdr a) (cdr b))
+                        (> (cdr a) (cdr b))
+                      (< (car a) (car b))))))
+      (let ((best (car items)))
+        (when (and best (> (car best) 0))
+          (let ((scale (/ 1000.0 (car best))))
+            (unless (= scale 1.0)
+              (chem-scale drawing scale)))))))
+  drawing)
+
+(defun chemlisp--indigo-layout (drawing explicit-h aromatic)
+  "Lay out DRAWING with Indigo and set hydrogens.
+EXPLICIT-H maps atom indices to :h values; AROMATIC is the aromatic
+atom hash."
+  (require 'chem-indigo)
+  (let* ((atoms (chem-drawing-atoms drawing))
+         (n (hash-table-count atoms))
+         (mol-string (chemlisp--drawing-to-mol drawing explicit-h)))
+    (condition-case err
+        (progn
+          (indigo-with-molecule (mol mol-string)
+            (indigo-layout mol)
+            (indigo-with-atoms-iterator (it mol)
+              (indigo-map
+               (lambda (atom)
+                 (let ((idx (indigo-index atom)))
+                   (when (< idx n)
+                     (let* ((xyz (indigo-xyz atom))
+                            (h (condition-case nil
+                                   (indigo-count-implicit-hydrogens atom)
+                                 (error -1)))
+                            (explicit (gethash idx explicit-h))
+                            (target (gethash idx atoms)))
+                       (when (null xyz)
+                         (chemlisp--error
+                          "Cannot read Indigo coordinates for atom %d"
+                          (1+ idx)))
+                       (when (equal (chem-atom-element target) "H")
+                         (setq h 0))
+                       (when (and (= h -1)
+                                  (gethash idx aromatic)
+                                  (not (equal (chem-atom-element target) "C")))
+                         (setq h 0))
+                       (when (< (or h 0) 0)
+                         (chemlisp--error
+                          "Cannot calculate implicit hydrogens for atom %d"
+                          (1+ idx)))
+                       (setf (chem-atom-x target) (nth 0 xyz))
+                       (setf (chem-atom-y target) (nth 1 xyz))
+                       (if explicit
+                           (progn
+                             (unless (= h 0)
+                               (chemlisp--error
+                                "Atom %d has :h %d but Indigo still sees %d implicit hydrogens"
+                                (1+ idx) explicit h))
+                             (setf (chem-atom-hydrogens target) explicit))
+                         (setf (chem-atom-hydrogens target) h)))))
+                 nil)
+               it)))
+          (chemlisp--normalize-layout drawing)
+          drawing)
+      (chemlisp-error (signal (car err) (cdr err)))
+      (error
+       (chemlisp--error "Cannot lay out CheMLisp drawing: %s"
+                        (error-message-string err))))))
+
+(defun chemlisp--apply-fragment-at (drawing fragments key->idx)
+  "Translate DRAWING's FRAGMENTS with :at to their root position.
+KEY->IDX maps atom keys to indices."
+  (let ((atoms (chem-drawing-atoms drawing)))
+    (dolist (tree fragments)
+      (let ((at (chemlisp--attr (chemlisp-tree-attrs tree) :at)))
+        (when at
+          (let* ((root (gethash (gethash (chemlisp-tree-key tree) key->idx)
+                                atoms))
+                 (dx (- (nth 0 at) (chem-atom-x root)))
+                 (dy (- (nth 1 at) (chem-atom-y root))))
+            (dolist (key (chemlisp--tree-atom-keys tree))
+              (let ((atom (gethash (gethash key key->idx) atoms)))
+                (setf (chem-atom-x atom) (+ (chem-atom-x atom) dx))
+                (setf (chem-atom-y atom) (+ (chem-atom-y atom) dy)))))))))
+  drawing)
+
+(defun chemlisp--coordinate-distance (a b)
+  "Return the distance between atoms A and B."
+  (let ((dx (- (chem-atom-x b) (chem-atom-x a)))
+        (dy (- (chem-atom-y b) (chem-atom-y a))))
+    (sqrt (+ (* dx dx) (* dy dy)))))
+
+(defun chemlisp--coordinate-angle (a b)
+  "Return the counterclockwise angle from A to B in degrees."
+  (let ((dx (- (chem-atom-x b) (chem-atom-x a)))
+        (dy (- (chem-atom-y b) (chem-atom-y a))))
+    (when (and (zerop dx) (zerop dy))
+      (chemlisp--error "Cannot apply explicit geometry to a zero-length bond"))
+    (mod (chem--rad-to-deg (atan dy dx)) 360.0)))
+
+(defun chemlisp--apply-explicit-geometry (drawing fragments key->idx tree-edge-ids)
+  "Apply :angle, :turn, and :length overrides to DRAWING.
+FRAGMENTS are the authored fragment trees.  KEY->IDX maps atom keys to
+indices; TREE-EDGE-IDS maps tree nodes to edge ids.  Explicit geometry
+on ring bonds is rejected."
+  (let ((atoms (chem-drawing-atoms drawing))
+        (ring-edges (chemlisp--ring-edge-set drawing)))
+    (cl-labels
+        ((subtree-atoms (tree)
+           (mapcar (lambda (key)
+                     (gethash (gethash key key->idx) atoms))
+                   (chemlisp--tree-atom-keys tree)))
+         (rotate-subtree (tree px py delta)
+           (let ((cosine (cos delta))
+                 (sine (sin delta)))
+             (dolist (atom (subtree-atoms tree))
+               (let ((dx (- (chem-atom-x atom) px))
+                     (dy (- (chem-atom-y atom) py)))
+                 (setf (chem-atom-x atom) (+ px (- (* dx cosine) (* dy sine))))
+                 (setf (chem-atom-y atom) (+ py (+ (* dx sine) (* dy cosine))))))))
+         (translate-subtree (tree dx dy)
+           (dolist (atom (subtree-atoms tree))
+             (setf (chem-atom-x atom) (+ (chem-atom-x atom) dx))
+             (setf (chem-atom-y atom) (+ (chem-atom-y atom) dy))))
+         (walk (tree direction)
+           (dolist (child (chemlisp-tree-children tree))
+             (when (chemlisp-tree-p child)
+               (let* ((attrs (chemlisp-tree-attrs child))
+                      (angle (chemlisp--attr attrs :angle))
+                      (turn (chemlisp--attr attrs :turn))
+                      (length (chemlisp--attr attrs :length))
+                      (edge-id (gethash child tree-edge-ids))
+                      (parent (gethash (gethash (chemlisp-tree-key tree) key->idx)
+                                       atoms))
+                      (child-atom (gethash (gethash (chemlisp-tree-key child)
+                                                    key->idx)
+                                           atoms))
+                      (current (chemlisp--coordinate-angle parent child-atom))
+                      (desired (cond (angle (mod angle 360.0))
+                                     (turn (mod (+ (or direction 0) turn) 360.0))
+                                     (t current)))
+                      (delta (mod (- desired current) 360.0)))
+                 (when (> delta 180.0) (setq delta (- delta 360.0)))
+                 (when (and (or angle turn length) (gethash edge-id ring-edges))
+                   (chemlisp--error-at
+                    (chemlisp-node-pos (chemlisp-tree-node child))
+                    "Explicit geometry on ring bonds is not supported; remove :angle/:turn/:length or use the molecule view"))
+                 (unless (zerop delta)
+                   (rotate-subtree child
+                                   (chem-atom-x parent)
+                                   (chem-atom-y parent)
+                                   (* delta (/ float-pi 180.0))))
+                 (when length
+                   (let* ((radians (* desired (/ float-pi 180.0)))
+                          (delta-length (- length
+                                           (chemlisp--coordinate-distance
+                                            parent child-atom))))
+                     (translate-subtree child
+                                        (* delta-length (cos radians))
+                                        (* delta-length (sin radians)))))
+                 (walk child desired))))))
+      (dolist (tree fragments)
+        (walk tree 0.0))))
+  drawing)
+
 (defun chemlisp--compile-resolved (resolved options)
   "Compile resolved AST RESOLVED into a `chem-drawing' using OPTIONS."
   (let* ((roots (if (chemlisp-molecule-p resolved)
@@ -1578,7 +1716,6 @@ the compiled graph."
     (when (> (length exit-keys) 1)
       (chemlisp--error "Only one :exit atom is allowed"))
     (let* ((global-exit (car exit-keys))
-           (coords (chemlisp--layout-fragments fragments))
            (attach (chemlisp--attach-fragments fragments global-exit))
            (root-tree (car attach))
            (exit-key (cdr attach))
@@ -1604,10 +1741,10 @@ the compiled graph."
           (let* ((idx (gethash (chemlisp-tree-key node) key->idx))
                  (attrs (chemlisp--validate-attrs
                          (chemlisp-tree-attrs node)
-                         chemlisp--atom-keys 'atom (chemlisp-node-pos (chemlisp-tree-node node))))
+                         chemlisp--atom-keys 'atom
+                         (chemlisp-node-pos (chemlisp-tree-node node))))
                  (info (chemlisp--element-info
                         (chemlisp-node-head (chemlisp-tree-node node))))
-                 (coord (gethash (chemlisp-tree-key node) coords))
                  (from-key (chemlisp-tree-from-key node))
                  (fragment-root (or (null from-key)
                                     (chemlisp-tree-link-p node))))
@@ -1622,8 +1759,8 @@ the compiled graph."
               (chemlisp--error "A root cannot have an incoming bond"))
             (let ((atom (chem-atom-create
                          :idx idx
-                         :x (car coord)
-                         :y (cdr coord)
+                         :x 0.0
+                         :y 0.0
                          :element (car info)
                          :hydrogens nil
                          :charge (or (chemlisp--attr attrs :charge) 0)
@@ -1645,9 +1782,8 @@ the compiled graph."
           (when (chemlisp-tree-from-key node)
             (let* ((from (gethash (chemlisp-tree-from-key node) key->idx))
                    (to (gethash (chemlisp-tree-key node) key->idx))
-                   (attrs (chemlisp-tree-attrs node))
                    (edge (chemlisp--create-edge
-                          drawing from to attrs
+                          drawing from to (chemlisp-tree-attrs node)
                           (chemlisp-tree-link-p node)
                           (gethash from aromatic)
                           (gethash to aromatic))))
@@ -1658,23 +1794,14 @@ the compiled graph."
                  (source (gethash (chemlisp-tree-key parent) key->idx))
                  (target (chemlisp--resolve-closure-target
                           closure key->idx keys source))
-                 (attrs (chemlisp-tree-closure-attrs closure))
                  (edge (chemlisp--create-edge
-                        drawing source target attrs nil
+                        drawing source target
+                        (chemlisp-tree-closure-attrs closure)
+                        nil
                         (gethash source aromatic)
                         (gethash target aromatic))))
             (puthash closure target closure-targets)
             (puthash closure (chem-edge-id edge) closure-edge-ids)))
-        (when (plist-get options :flip)
-          (chem-flip-horizontal drawing))
-        (when (plist-get options :flop)
-          (chem-flip-vertical drawing))
-        (let ((rotation (or (plist-get options :angle) 0)))
-          (unless (zerop rotation)
-            (chem-rotate drawing rotation)))
-        (chemlisp--apply-view drawing view)
-        (chemlisp--compute-hydrogens drawing aromatic explicit-h)
-        (chemlisp--compute-bond-angles drawing)
         (let* ((closure-pairs (chemlisp--preorder-closures root-tree))
                (parents (chemlisp--parent-map nodes tree-edge-ids key->idx)))
           (dolist (pair closure-pairs)
@@ -1692,6 +1819,19 @@ the compiled graph."
           (chemlisp--compute-rings drawing closure-pairs
                                    parents key->idx tree-edge-ids
                                    closure-edge-ids closure-targets aromatic))
+        (chemlisp--indigo-layout drawing explicit-h aromatic)
+        (chemlisp--apply-fragment-at drawing fragments key->idx)
+        (chemlisp--apply-explicit-geometry drawing fragments key->idx
+                                           tree-edge-ids)
+        (when (plist-get options :flip)
+          (chem-flip-horizontal drawing))
+        (when (plist-get options :flop)
+          (chem-flip-vertical drawing))
+        (let ((rotation (or (plist-get options :angle) 0)))
+          (unless (zerop rotation)
+            (chem-rotate drawing rotation)))
+        (chemlisp--apply-view drawing view)
+        (chemlisp--compute-bond-angles drawing)
         (let* ((chem-root (chemlisp--build-chem-node
                            root-tree key->idx tree-edge-ids
                            closure-edge-ids closure-targets))

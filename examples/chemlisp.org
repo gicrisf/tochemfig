@@ -29,11 +29,11 @@
 #+begin_src chemlisp :results file
 (molecule
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1))))))))
 #+end_src
 
@@ -42,11 +42,11 @@
 #+begin_src chemlisp :results file
 (chem-def phenyl (ortho meta para)
   (c :id c1
-    (c :id c2 :angle 0
-      (c :id c3 :angle 60
-        (c :id c4 :angle 120
-          (c :id c5 :angle 180
-            (c :id c6 :angle 240
+    (c :id c2
+      (c :id c3
+        (c :id c4
+          (c :id c5
+            (c :id c6
               (close c1)))
           (para))
         (meta))
