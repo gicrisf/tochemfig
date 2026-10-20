@@ -156,7 +156,7 @@
        (not (memq symbol '(t nil)))
        (let ((name (symbol-name symbol)))
          (and (> (length name) 0)
-              (not (memq (aref name 0) '(?= ?> ?< ?~ ?_)))
+              (not (memq (aref name 0) '(?= ?> ?< ?~ ?_ ?^)))
               (not (string-prefix-p "≡" name))))))
 
 (defun chemlisp--valid-name-p (symbol &optional parameter-p)
@@ -170,7 +170,7 @@ attribute keywords."
        (not (memq symbol chemlisp--reserved-form-names))
        (let ((name (symbol-name symbol)))
          (and (> (length name) 0)
-              (not (memq (aref name 0) '(?= ?> ?< ?~ ?_)))
+              (not (memq (aref name 0) '(?= ?> ?< ?~ ?_ ?^)))
               (not (string-prefix-p "≡" name))))
        (or (not parameter-p)
            (not (memq (intern (concat ":" (symbol-name symbol)))
@@ -194,7 +194,7 @@ attribute keywords."
   head attrs children pos key)
 
 (cl-defstruct (chemlisp-closure (:constructor chemlisp-closure-create))
-  target attrs pos target-key target-index)
+  target attrs pos target-key target-index target-ancestor)
 
 (cl-defstruct (chemlisp-molecule (:constructor chemlisp-molecule-create))
   attrs roots pos)
@@ -212,7 +212,7 @@ attribute keywords."
   key attrs children link-p from-key root-p node)
 
 (cl-defstruct (chemlisp-tree-closure (:constructor chemlisp-tree-closure-create))
-  target-key target-index attrs pos)
+  target-key target-index target-ancestor attrs pos)
 
 ;;; Reader
 
@@ -305,18 +305,41 @@ Return (HEAD . ATTRIBUTES)."
                           :children children
                           :pos pos)))
 
+(defun chemlisp--ancestor-target (symbol pos)
+  "Return the ancestor count for SYMBOL at POS, or nil.
+Signal an error for malformed caret references."
+  (let ((name (symbol-name symbol)))
+    (cond
+     ((string-match "\\`\\^\\([0-9]+\\)\\'" name)
+      (let ((count (string-to-number (match-string 1 name))))
+        (when (< count 1)
+          (chemlisp--error-at pos
+                              "Ancestor reference must be at least one level up"))
+        count))
+     ((string-match "\\`\\^+\\'" name)
+      (length name))
+     ((string-prefix-p "^" name)
+      (chemlisp--error-at pos "Invalid ancestor reference: %s" name))
+     (t nil))))
+
 (defun chemlisp--parse-closure (raw pos)
-  "Parse closure form RAW at POS."
+  "Parse arrow closure form RAW at POS."
   (unless (>= (length raw) 2)
     (chemlisp--error-at pos "A closure needs a target"))
-  (let ((target (nth 1 raw))
-        (parsed (chemlisp--parse-keyword-pairs (cddr raw) pos)))
-    (unless (or (integerp target)
-                (and (symbolp target) (not (memq target '(t nil)))))
+  (let* ((target (nth 1 raw))
+         (ancestor (and (symbolp target)
+                        (chemlisp--ancestor-target target pos)))
+         (parsed (chemlisp--parse-keyword-pairs (cddr raw) pos)))
+    (unless (or ancestor
+                (integerp target)
+                (and (symbolp target)
+                     (not (memq target '(t nil)))
+                     (not (string-prefix-p "^" (symbol-name target)))))
       (chemlisp--error-at pos "Invalid closure target: %S" target))
     (when (cdr parsed)
       (chemlisp--error-at pos "A closure cannot have children"))
     (chemlisp-closure-create :target target
+                             :target-ancestor ancestor
                              :attrs (car parsed)
                              :pos pos)))
 
@@ -387,7 +410,10 @@ SEQUENTIAL-P selects chem-let*."
        ((eq head 'chem-let) (chemlisp--parse-let raw pos nil))
        ((eq head 'chem-let*) (chemlisp--parse-let raw pos t))
        ((eq head 'molecule) (chemlisp--parse-molecule raw pos))
-       ((memq head '(close ->)) (chemlisp--parse-closure raw pos))
+       ((eq head '->) (chemlisp--parse-closure raw pos))
+       ((eq head 'close)
+        (chemlisp--error-at
+         pos "Use (-> TARGET) for closures; `close` is no longer supported"))
        ((keywordp head)
         (chemlisp--error-at pos "Invalid form head: %S" head))
        (t (chemlisp--parse-node raw pos)))))))
@@ -686,9 +712,11 @@ PARAMS is the parameter list, COUNTS an eq hash, and POS the definition."
          (attrs (chemlisp--validate-attrs (chemlisp-closure-attrs closure)
                                           chemlisp--closure-keys 'closure pos))
          (target (chemlisp-closure-target closure))
+         (ancestor (chemlisp-closure-target-ancestor closure))
          (target-key nil)
          (target-index nil))
     (cond
+     (ancestor)
      ((integerp target)
       (when (< target 1)
         (chemlisp--error-at pos "Closure index must be positive"))
@@ -700,6 +728,7 @@ PARAMS is the parameter list, COUNTS an eq hash, and POS the definition."
      (t
       (chemlisp--error-at pos "Invalid closure target: %S" target)))
     (chemlisp-closure-create :target target
+                             :target-ancestor ancestor
                              :attrs attrs
                              :pos pos
                              :target-key target-key
@@ -1006,6 +1035,7 @@ ROOT-P marks NODE as a fragment root."
                (chemlisp-tree-closure-create
                 :target-key (chemlisp-closure-target-key child)
                 :target-index (chemlisp-closure-target-index child)
+                :target-ancestor (chemlisp-closure-target-ancestor child)
                 :attrs (chemlisp-closure-attrs child)
                 :pos (chemlisp-closure-pos child)))
               (t
@@ -1339,6 +1369,24 @@ SOURCE is the source atom index."
       (chemlisp--error-at (chemlisp-tree-closure-pos closure)
                           "Closure target must be an earlier atom"))
     target))
+
+(defun chemlisp--resolve-ancestor-target (closure parent tree-map key->idx)
+  "Resolve CLOSURE's ancestor target from PARENT.
+TREE-MAP maps atom keys to tree nodes; KEY->IDX maps keys to indices."
+  (let ((count (chemlisp-tree-closure-target-ancestor closure))
+        (node parent))
+    (dotimes (_ count)
+      (when (chemlisp-tree-link-p node)
+        (chemlisp--error-at (chemlisp-tree-closure-pos closure)
+                            "Ancestor reference crosses a fragment boundary"))
+      (let ((parent-key (chemlisp-tree-from-key node)))
+        (unless parent-key
+          (chemlisp--error-at (chemlisp-tree-closure-pos closure)
+                              "Ancestor reference goes above the fragment root"))
+        (setq node (gethash parent-key tree-map))))
+    (or (gethash (chemlisp-tree-key node) key->idx)
+        (chemlisp--error-at (chemlisp-tree-closure-pos closure)
+                            "Ancestor reference target is outside the drawing"))))
 
 (defun chemlisp--build-chem-node (tree key->idx tree-edge-ids closure-edge-ids
                                        closure-targets)
@@ -1719,6 +1767,7 @@ on ring bonds is rejected."
            (attach (chemlisp--attach-fragments fragments global-exit))
            (root-tree (car attach))
            (exit-key (cdr attach))
+           (tree-map (chemlisp--tree-key-map root-tree))
            (nodes (chemlisp--preorder-nodes root-tree))
            (keys (vconcat (mapcar #'chemlisp-tree-key nodes)))
            (key->idx (make-hash-table :test #'eql)))
@@ -1792,8 +1841,11 @@ on ring bonds is rejected."
           (let* ((closure (car pair))
                  (parent (cdr pair))
                  (source (gethash (chemlisp-tree-key parent) key->idx))
-                 (target (chemlisp--resolve-closure-target
-                          closure key->idx keys source))
+                 (target (if (chemlisp-tree-closure-target-ancestor closure)
+                             (chemlisp--resolve-ancestor-target
+                              closure parent tree-map key->idx)
+                           (chemlisp--resolve-closure-target
+                            closure key->idx keys source)))
                  (edge (chemlisp--create-edge
                         drawing source target
                         (chemlisp-tree-closure-attrs closure)

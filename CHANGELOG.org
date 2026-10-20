@@ -13,7 +13,9 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   document-level =chem-def= values/templates, =chem-let=, and =chem-let*=.
   Indigo computes the default 2D layout and implicit hydrogens; explicit
   =:angle=, =:turn=, and =:length= are overrides.  Ring-internal explicit
-  geometry is rejected in favor of the molecule view.  Supports both exporters.
+  geometry is rejected in favor of the molecule view.  Closures use =->= with
+  optional ancestor targets (=^=, =^^=, =^N=, or repeated carets), so atom IDs
+  are optional.  Supports both exporters.
 - =chemlisp= Org Babel blocks, with SVG file results and chemfig source results.
 - =test/chemlisp-test.el= and =docs/chemlisp.md=.
 - =chem-ir.el=: flat graph plus tree view, explicit geometry, and per-node

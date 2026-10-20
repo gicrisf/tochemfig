@@ -378,18 +378,19 @@ to edit by hand, and it renders with both SVG and chemfig.
 #+end_example
 
 Nested forms are bonds, the first child continues the main chain, and
-lowercase atoms are aromatic.  Definitions use =chem-def=, local values use
+lowercase atoms are aromatic.  Closures use =->=; ancestor targets such as
+=^5= avoid per-atom IDs.  Definitions use =chem-def=, local values use
 =chem-let=, and templates use parameter holes:
 
 #+begin_example
 (chem-def phenyl (ortho meta para)
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1)))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5)))
           (para))
         (meta))
       (ortho))))

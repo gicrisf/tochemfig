@@ -67,7 +67,7 @@
 
 (ert-deftest chemlisp-benzene-ring ()
   "Benzene compiles to an aromatic six-membered ring."
-  (let* ((source "(molecule (c :id c1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close c1))))))))")
+  (let* ((source "(molecule (c (c (c (c (c (c (-> ^5))))))))")
          (drawing (chemlisp-test--compile source))
          (rings (chem-drawing-rings drawing)))
     (should (= 6 (hash-table-count (chem-drawing-atoms drawing))))
@@ -94,7 +94,7 @@
 
 (ert-deftest chemlisp-auto-layout-ring ()
   "A ring without authored angles is still a closed regular ring."
-  (let* ((source "(molecule (c :id c1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close c1))))))))")
+  (let* ((source "(molecule (c (c (c (c (c (c (-> ^5))))))))")
          (drawing (chemlisp-test--compile source))
          (ring (car (chem-drawing-rings drawing)))
          (lengths (mapcar (lambda (edge-id)
@@ -110,10 +110,51 @@
                   (apply #'min (chem-ring-vertex-radii drawing ring)))
                1e-3))))
 
+(ert-deftest chemlisp-ancestor-closures ()
+  "Ancestor-relative closures parse and resolve."
+  (let* ((triangle (chemlisp-test--compile
+                    "(molecule (c (c (c (-> ^^)))))"))
+         (benzene (chemlisp-test--compile
+                   "(molecule (c (c (c (c (c (c (-> ^^^^^))))))))")))
+    (should (= 1 (length (chem-drawing-rings triangle))))
+    (should (= 1 (length (chem-drawing-rings benzene))))))
+
+(ert-deftest chemlisp-naphthalene ()
+  "Naphthalene can be authored as one tree without IDs."
+  (let* ((source "(molecule (c (c (c (c (c (c (-> ^5))))) (c (c (c (c (-> ^5))))))))")
+         (drawing (chemlisp-test--compile source))
+         (rings (chem-drawing-rings drawing)))
+    (should (= 10 (hash-table-count (chem-drawing-atoms drawing))))
+    (should (= 11 (hash-table-count (chem-drawing-edges drawing))))
+    (should (= 2 (length rings)))
+    (should (cl-every #'chem-ring-aromatic-p rings))))
+
+(ert-deftest chemlisp-naphthalene-shared-ids ()
+  "Shared atoms can be named explicitly when fusing rings."
+  (let* ((source "(molecule (c :id a (c :id b (c (c (c (c (-> a))))) (c (c (c (c (-> a))))))))")
+         (drawing (chemlisp-test--compile source))
+         (rings (chem-drawing-rings drawing)))
+    (should (= 10 (hash-table-count (chem-drawing-atoms drawing))))
+    (should (= 2 (length rings)))
+    (should (cl-every #'chem-ring-aromatic-p rings))))
+
+(ert-deftest chemlisp-ancestor-errors ()
+  "Invalid ancestor references and fragment crossings are rejected."
+  (should-error (chemlisp-test--compile "(molecule (c (c (-> ^2))))"))
+  (should-error (chemlisp-test--compile "(molecule (c) (c (c (c (-> ^5)))))"))
+  (should-error (chemlisp-test--compile "(molecule (c (c (-> ^0)))))"))
+  (should-error (chemlisp-test--compile "(molecule (c (c (-> ^foo)))))"))
+  (should-error (chemlisp-test--compile "(molecule (c (c (-> ^)))))"))
+  (should-error (chemlisp-test--compile "(molecule (c :id ^foo))")))
+
+(ert-deftest chemlisp-close-removed ()
+  "The old `close` form is rejected in favor of `->`."
+  (should-error (chemlisp-test--compile "(molecule (c (close 1)))")))
+
 (ert-deftest chemlisp-aromatic-nitrogen ()
   "Indigo hydrogens distinguish pyridine from pyrrole."
-  (let* ((pyridine "(molecule (n :id n1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close n1))))))))")
-         (pyrrole "(molecule (n :h 1 :id n1 (c :id c2 (c :id c3 (c :id c4 (c :id c5 (c :id c6 (close n1))))))))")
+  (let* ((pyridine "(molecule (n (c (c (c (c (c (-> ^5))))))))")
+         (pyrrole "(molecule (n :h 1 (c (c (c (c (c (-> ^5))))))))")
          (pyridine-atom (car (chemlisp-test--atoms
                               (chemlisp-test--compile pyridine))))
          (pyrrole-atom (car (chemlisp-test--atoms
@@ -139,10 +180,10 @@
   "Explicit geometry on a ring bond is rejected."
   (should-error
    (chemlisp-test--compile
-    "(molecule (c :id c1 (c :id c2 :angle 0 (c :id c3 (close c1)))))"))
+    "(molecule (c (c :angle 0 (c (-> ^2)))))"))
   (should-error
    (chemlisp-test--compile
-    "(molecule (c :id c1 (c :id c2 :length 1.5 (c :id c3 (close c1)))))")))
+    "(molecule (c (c :length 1.5 (c (-> ^2)))))")))
 
 (ert-deftest chemlisp-hydrogen-validation ()
   "Impossible :h values are rejected."
@@ -232,7 +273,7 @@
 
 (ert-deftest chemlisp-fresh-ids-per-use ()
   "Reusing a definition with an internal closure creates independent rings."
-  (let* ((source "(chem-def ringlet () (c :id a (c :id b (c :id c (close a))))) (molecule (C (ringlet) (ringlet)))")
+  (let* ((source "(chem-def ringlet () (c (c (c (-> ^2))))) (molecule (C (ringlet) (ringlet)))")
          (drawing (chemlisp-test--compile source)))
     (should (= 7 (hash-table-count (chem-drawing-atoms drawing))))
     (should (= 8 (hash-table-count (chem-drawing-edges drawing))))
@@ -246,7 +287,7 @@
 
 (ert-deftest chemlisp-numeric-closure ()
   "Numeric closures use one-based pre-order indices."
-  (let* ((source "(molecule (c :id a (c :id b (c :id c (close 1)))))")
+  (let* ((source "(molecule (c (c (c (-> 1)))))")
          (drawing (chemlisp-test--compile source)))
     (should (= 1 (length (chem-drawing-rings drawing))))))
 
@@ -324,12 +365,12 @@
 (ert-deftest chemlisp-errors ()
   "Invalid documents signal user errors."
   (should-error (chemlisp-test--compile "(molecule (Xx))"))
-  (should-error (chemlisp-test--compile "(molecule (C (close zz)))"))
-  (should-error (chemlisp-test--compile "(molecule (C (close 5)))"))
+  (should-error (chemlisp-test--compile "(molecule (C (-> zz)))"))
+  (should-error (chemlisp-test--compile "(molecule (C (-> 5)))"))
   (should-error (chemlisp-test--compile "(molecule (C :exit t (C :exit t)))"))
   (should-error (chemlisp-test--compile "(molecule (C :id a) (C :id a))"))
   (should-error (chemlisp-test--compile
-                 "(molecule (C (C :id a) (C (close 2))))"))
+                 "(molecule (C (C) (C (-> 2))))"))
   (should-error (chemlisp-test--compile
                  "(chem-def x () (O)) (chem-def x () (C)) (molecule (x))"))
   (should-error (chemlisp-test--compile

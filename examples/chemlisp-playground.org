@@ -3,13 +3,17 @@
 #+STARTUP: inlineimages
 #+OPTIONS: toc:2
 
-A scratch buffer for trying the experimental CheMLisp DSL.  Evaluate the *Setup* block once with
-=C-c C-c=, then put point in any other block and press =C-c C-c= to render it.
-Toggle image preview with =C-c C-x C-v=, or run
-=M-x chem-org-regenerate-buffer= to refresh every block.
+A scratch buffer for trying the experimental CheMLisp DSL.  CheMLisp's syntax,
+public API, and rendered output may change without notice.
 
-CheMLisp blocks use the pure-Elisp compiler and SVG exporter; they do not need
-the Indigo module.  Only SMILES/MOL/RXN blocks load Indigo on demand.
+Evaluate the *Setup* block once with =C-c C-c=, then put point in any other
+block and press =C-c C-c= to render it.  Toggle image preview with
+=C-c C-x C-v=, or run =M-x chem-org-regenerate-buffer= to refresh every block.
+
+CheMLisp uses Indigo for automatic 2D layout and hydrogen perception, so the
+Indigo module is required.  Explicit geometry is an override, not a
+prerequisite: omit angles for the default depiction, and add them only when
+you want to force a particular arrangement.
 
 * Setup
 
@@ -22,6 +26,8 @@ the Indigo module.  Only SMILES/MOL/RXN blocks load Indigo on demand.
 
 ** Ethanol
 
+No angles: Indigo computes the chain layout.
+
 #+begin_src chemlisp :results file
 (molecule
   (C
@@ -29,23 +35,15 @@ the Indigo module.  Only SMILES/MOL/RXN blocks load Indigo on demand.
       (O))))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-254c992e2a5a337303389fb5d39b4d51a9c48687e3316dda2c8150416a73e355.svg]]
-
 ** Acetic acid
-
-Explicit angles are optional, but they make the drawing predictable.
 
 #+begin_src chemlisp :results file
 (molecule
   (C
-    (C :angle 30
-      (=O :angle 60)
-      (O :angle -60))))
+    (C
+      (=O)
+      (O))))
 #+end_src
-
-#+RESULTS:
-[[file:.chem-cache/chem-909ac26b8aed6248bb29f2830916bbf84c495d0349078acfd6289e8926393b3b.svg]]
 
 ** Branches
 
@@ -54,19 +52,30 @@ The first atom child continues the main chain; the others are branches.
 #+begin_src chemlisp :results file
 (molecule
   (C
-    (C :angle 35
-      (C :angle 20)
-      (O :angle -60))
-    (C :angle -30)))
+    (C
+      (C)
+      (O))
+    (C)))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-d9ff255fea3d1005394e68a07c7bf9f46c6830fc6514fdc98fbd066ee1f4222f.svg]]
+** Forcing angles
+
+Explicit =:angle=, =:turn=, and =:length= override the automatic layout on
+acyclic bonds and ring substituents.  Explicit geometry on ring-internal bonds
+is rejected; use the molecule view to orient a whole ring.
+
+#+begin_src chemlisp :results file
+(molecule
+  (C
+    (C :angle 90
+      (O :angle 30)
+      (C :angle -30))))
+#+end_src
 
 ** Charges and hydrogens
 
-~:charge~ and ~:h~ are atom attributes.  ~:h~ is only needed when the
-default valence is not what you want.
+~:charge~ and ~:h~ are atom attributes.  ~:h~ is encoded with explicit
+hydrogens, so impossible values are rejected.
 
 #+begin_src chemlisp :results file
 (molecule
@@ -74,84 +83,94 @@ default valence is not what you want.
   (O :charge -1))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-6f49b08efa2009dd346db5d4b2d35567b6fced38073c0e7b10ef9726ed35cb3f.svg]]
-
 * Rings
 
-Indigo computes the default coordinates.  Omit angles unless you want to
-force a particular depiction.
+Indigo computes ring coordinates.  Lowercase atoms are aromatic and rings are
+laid out automatically; no angles are needed.
 
 ** Benzene
 
-Lowercase atoms are aromatic; the ring is laid out automatically.
-
 #+begin_src chemlisp :results file
 (molecule
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1))))))))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5))))))))
 #+end_src
-
-#+RESULTS:
-[[file:.chem-cache/chem-a43d54eb26f26a922647603eddc7691aa72a867f3636e918ece4ba7821dddc9c.svg]]
 
 ** Benzene with an aromatic circle
 
 #+begin_src chemlisp :results file :aromatic circle
 (molecule
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1))))))))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5))))))))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-a43d54eb26f26a922647603eddc7691aa72a867f3636e918ece4ba7821dddc9c.svg]]
+** Pyridine
 
-** Pyridine and pyrrole
-
-Aromatic heteroatoms default to no hydrogen.  Set ~:h~ explicitly when
-needed.
+Aromatic heteroatoms default to no hydrogen.
 
 #+begin_src chemlisp :results file
 (molecule
-  (n :id n1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close n1))))))))
+  (n
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5))))))))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-ef94d29ac12c3148713a8fe47bd271e8707a3fc3ccb4a63f99a9ec9d43bf4317.svg]]
+** Pyrrole
+
+Set ~:h~ when the aromatic heteroatom carries a hydrogen.
 
 #+begin_src chemlisp :results file
 (molecule
-  (n :h 1 :id n1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close n1))))))))
+  (n :h 1
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5))))))))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-2f4c07794f929ffa59bb91064d02fb60d8fa3432a65721b0c3103a046443c919.svg]]
+** Naphthalene
+
+Fused rings use one tree.  The second ring branches from the shared atom `b`
+and closes back to `a`; no IDs are needed.
+
+#+begin_src chemlisp :results file
+(molecule
+  (c
+    (c
+      (c (c (c (c (-> ^5)))))
+      (c (c (c (c (-> ^5))))))))
+#+end_src
+
+The shared atoms can be named when that is clearer:
+
+#+begin_src chemlisp :results file
+(molecule
+  (c :id a
+    (c :id b
+      (c (c (c (c (-> a)))))
+      (c (c (c (c (-> a))))))))
+#+end_src
 
 * Stereochemistry
 
 A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
+The explicit angles here force the branch directions around the center.
 
 #+begin_src chemlisp :results file
 (molecule
@@ -161,9 +180,6 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
       (>Br :angle -60)
       (O :angle 180))))
 #+end_src
-
-#+RESULTS:
-[[file:.chem-cache/chem-abbaaedebb0da2997f8f2a4f02edc0edbb2ab3f62390db8fc24631b067b9c1ff.svg]]
 
 * Definitions
 
@@ -182,9 +198,6 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
     (methyl)))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-7cca02475ebfdf684aa66eb0546a61146d1cd59b60f05a0ac6431c188503cbee.svg]]
-
 ** A template
 
 ~para~, ~meta~, and ~ortho~ are holes.  Missing arguments default to
@@ -192,13 +205,13 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
 
 #+begin_src chemlisp :results file
 (chem-def phenyl (ortho meta para)
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1)))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5)))
           (para))
         (meta))
       (ortho))))
@@ -207,20 +220,17 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
   (phenyl :ortho (O)))
 #+end_src
 
-#+RESULTS:
-[[file:.chem-cache/chem-6defe4171f4ecae5fead9c7d76ac999820438fe0c90d424c2824cd4d6da606ae.svg]]
-
 ** Two substituents
 
 #+begin_src chemlisp :results file
 (chem-def phenyl (ortho meta para)
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1)))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5)))
           (para))
         (meta))
       (ortho))))
@@ -228,9 +238,6 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
 (molecule
   (phenyl :ortho (O :h 1) :para (N :h 2)))
 #+end_src
-
-#+RESULTS:
-[[file:.chem-cache/chem-c469c28875c0922236045f7e05b765cae7063ba0a0a265362289f91b0d5144d5.svg]]
 
 ** Local values
 
@@ -258,9 +265,9 @@ A ~>~ prefix (for example ~>Br~) is an up wedge and ~<~ is a down wedge.
 #+begin_src chemlisp :results file
 (molecule :rotation 30 :scale 1.4
   (C
-    (C :angle 30
-      (=O :angle 60)
-      (O :angle -60))))
+    (C
+      (=O)
+      (O))))
 #+end_src
 
 * Options

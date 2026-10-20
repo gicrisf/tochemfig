@@ -17,7 +17,8 @@ This file exercises the SVG exporter and the Org Babel integration.
     (require 'chem-babel)
     (add-to-list 'org-babel-load-languages '(chem-smiles . t))
     (add-to-list 'org-babel-load-languages '(chem-mol . t))
-    (add-to-list 'org-babel-load-languages '(chem-rxn . t)))
+    (add-to-list 'org-babel-load-languages '(chem-rxn . t))
+    (add-to-list 'org-babel-load-languages '(chemlisp . t)))
   #+end_example
 
 *How to use this file*
@@ -44,6 +45,7 @@ Run this block once.  It should report =t= for =chem-babel=, =chem-smiles=, =che
       :chem-smiles (fboundp 'org-babel-execute:chem-smiles)
       :chem-mol (fboundp 'org-babel-execute:chem-mol)
       :chem-rxn (fboundp 'org-babel-execute:chem-rxn)
+      :chemlisp (fboundp 'org-babel-execute:chemlisp)
       :indigo-version (and (fboundp 'indigo-version)
                            (ignore-errors (indigo-version))))
 #+end_src
@@ -344,13 +346,67 @@ Reaction scope is intentionally single-step.  Multi-step schemes, atom
 mapping, stoichiometric coefficients, and structured agent drawings are not
 supported.
 
+* CheMLisp (experimental)
+
+CheMLisp is an experimental S-expression drawing language that compiles to the
+same IR.  It uses Indigo for automatic 2D layout and hydrogen perception, and
+explicit =:angle=, =:turn=, and =:length= are overrides, not prerequisites.
+
+#+begin_src chemlisp :results file
+(molecule
+  (C
+    (C
+      (O))))
+#+end_src
+
+Rings are structural; no angles are needed:
+
+#+begin_src chemlisp :results file
+(molecule
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5))))))))
+#+end_src
+
+Fused rings use one tree.  Naphthalene branches from the shared atom and closes
+back to the first ring atom; no IDs are needed:
+
+#+begin_src chemlisp :results file
+(molecule
+  (c
+    (c
+      (c (c (c (c (-> ^5)))))
+      (c (c (c (c (-> ^5))))))))
+#+end_src
+
+Definitions use =chem-def=, local values use =chem-let=, and templates use
+parameter holes:
+
+#+begin_src chemlisp :results file
+(chem-def hydroxyl ()
+  (O))
+
+(molecule
+  (C
+    (C (hydroxyl))))
+#+end_src
+
+See [[file:chemlisp-playground.org][chemlisp-playground.org]] for the full tour and
+[[file:../docs/chemlisp.md][docs/chemlisp.md]] for the syntax reference.
+Explicit geometry on ring-internal bonds is rejected; use the molecule view to
+orient a whole ring system.
+
 * One-off images and cache commands
 
 - =M-x chem-insert-image= (=C-c m i= when =chem-mode= is active) writes a
   one-off image link using =chem-image-directory=.  It is not the reproducible
   Org Babel path.
 - =M-x chem-org-regenerate-buffer= re-executes every =chem-smiles=,
-  =chem-mol=, and =chem-rxn= block in the buffer.
+  =chem-mol=, =chem-rxn=, and =chemlisp= block in the buffer.
 - =M-x chem-org-clean-cache= deletes generated SVGs that are not linked from
   the current buffer.
 - Export this file to HTML with =C-c C-e h h=.  With the default

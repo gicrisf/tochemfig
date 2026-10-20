@@ -125,40 +125,77 @@ Attributes follow the atom token, before its children:
 
 ### Closures
 
-Named targets are stable under edits:
+Use `->` to close a ring. Targets can be ancestor-relative, named, or absolute.
+
+Ancestor-relative targets count parent links:
 
 ```elisp
-(c :id c1
-  (c :id c2
-    (c :id c3
-      (c :id c4
-        (c :id c5
-          (c :id c6
-            (close c1)))))))
+(c
+  (c
+    (c
+      (c
+        (c
+          (c
+            (-> ^5)))))))
+```
+
+`^` is the parent, `^^` is the grandparent, and `^5` is five levels up.
+`^^^^^` is another spelling of `^5`. The target must be an ancestor of the
+source atom, and it must not cross a fragment link.
+
+Named IDs are optional and useful when several closures share an atom:
+
+```elisp
+(c :id a
+  (c
+    (c (-> a))))
 ```
 
 Numeric targets use one-based pre-order atom indices:
 
 ```elisp
-(close 1)
+(-> 1)
 ```
 
-`(-> c1)` is an alias for `(close c1)`.  Forward references are rejected, and a
-closure target must be an ancestor of its source atom.  A closure may carry
-`:bond` or `:stereo` attributes.
+IDs are optional; closures always use `->`. A closure may carry `:bond` or
+`:stereo` attributes.
+
+#### Naphthalene
+
+Naphthalene is two six-membered rings sharing an edge. No IDs are needed:
+
+```elisp
+(molecule
+  (c
+    (c
+      (c (c (c (c (-> ^5)))))
+      (c (c (c (c (-> ^5))))))))
+```
+
+The shared atoms can be named if that is clearer:
+
+```elisp
+(molecule
+  (c :id a
+    (c :id b
+      (c (c (c (c (-> a)))))
+      (c (c (c (c (-> a))))))))
+```
+
+The second ring branches from `b` and closes to `a`, reusing the `a-b` edge.
 
 ### Geometry
 
 Coordinates are computed by Indigo.  Omit geometry for the default depiction:
 
 ```elisp
-(c :id c1
-  (c :id c2
-    (c :id c3
-      (c :id c4
-        (c :id c5
-          (c :id c6
-            (close c1)))))))
+(c
+  (c
+    (c
+      (c
+        (c
+          (c
+            (-> ^5)))))))
 ```
 
 Explicit geometry is applied afterwards as an override:
@@ -232,13 +269,13 @@ A non-empty parameter list defines a template.  Parameters are holes:
 
 ```elisp
 (chem-def phenyl (ortho meta para)
-  (c :id c1
-    (c :id c2
-      (c :id c3
-        (c :id c4
-          (c :id c5
-            (c :id c6
-              (close c1)))
+  (c
+    (c
+      (c
+        (c
+          (c
+            (c
+              (-> ^5)))
           (para))
         (meta))
       (ortho))))
@@ -296,8 +333,11 @@ a reused value stay local to that instance.
   The chemfig `:submol-name` option still wraps the whole drawing.
 - Atom IDs are scoped to a definition instance.  A caller cannot close to an
   atom inside a used definition, and a definition cannot close to a caller atom.
+- Ancestor references are resolved in the final expanded tree.  Inside a
+  reusable definition, use counts that stay within the definition instance,
+  or use named IDs for shared atoms.
 - Numeric closures refer to one-based pre-order indices in the final expanded
-  drawing.  Prefer named IDs inside reusable definitions.
+  drawing.
 - Definitions, parameters, and binding names cannot collide with element or
   aromatic tokens.  Names such as `a`, `x`, `name`, and `other-name` are fine;
   `b`, `c`, `n`, `o`, `s`, `p` are reserved.
@@ -344,6 +384,9 @@ Lisp macros, and are never evaluated.
 - Automatic layout and hydrogen perception require Indigo.
 - Explicit geometry on ring-internal bonds is rejected; use the molecule view.
 - Closures must target an ancestor of their source atom.
+- No fuse syntax; fused rings use one tree with ancestor closures.
+- `^N` inside a reusable definition is resolved in the final tree; keep the
+  count within the definition instance or use a named ID.
 - No `chem-flet` / `chem-flet*`.
 - No chemfig `\definesubmol` emission from `chem-def`.
 - No pseudo groups, hidden atoms, carbon dots, or free-form text labels.
