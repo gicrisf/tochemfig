@@ -8,6 +8,12 @@ All notable changes to =chem-mode= are documented in this file.
 IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
 
 ** Added
+- *Experimental*: =chemlisp.el=, a direct-to-IR S-expression drawing language with atom-first
+  trees, bond markers, closures, explicit geometry, fragments, view transforms,
+  document-level =chem-def= values/templates, =chem-let=, and =chem-let*=.
+  It compiles without the Indigo module and supports both exporters.
+- =chemlisp= Org Babel blocks, with SVG file results and chemfig source results.
+- =test/chemlisp-test.el= and =docs/chemlisp.md=.
 - =chem-ir.el=: flat graph plus tree view, explicit geometry, and per-node
   drawing attributes.
 - =chem-export.el= and =chem-options.el=: exporter and option registries.

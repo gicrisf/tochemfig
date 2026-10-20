@@ -77,7 +77,8 @@ CCO
   "The Org Babel language entry points exist."
   (should (fboundp 'org-babel-execute:chem-smiles))
   (should (fboundp 'org-babel-execute:chem-mol))
-  (should (fboundp 'org-babel-execute:chem-rxn)))
+  (should (fboundp 'org-babel-execute:chem-rxn))
+  (should (fboundp 'org-babel-execute:chemlisp)))
 
 (ert-deftest chem-babel-default-header-args ()
   "The default Babel header arguments are installed."
@@ -90,7 +91,10 @@ CCO
   (should-not (assq :results org-babel-default-header-args:chem-smiles))
   (should (equal "svg"
                  (cdr (assq :renderer
-                            org-babel-default-header-args:chem-rxn)))))
+                            org-babel-default-header-args:chem-rxn))))
+  (should (equal "svg"
+                 (cdr (assq :renderer
+                            org-babel-default-header-args:chemlisp)))))
 
 (ert-deftest chem-babel-smiles-file ()
   "A SMILES block writes SVG and inserts a relative link."
@@ -205,6 +209,33 @@ CCO
 "
     (chem-babel-test--execute-first)
     (should (string-match-p "chemfig" (buffer-string)))
+    (should-not (chem-babel-test--link))))
+
+(ert-deftest chem-babel-chemlisp-svg-file ()
+  "A chemlisp block writes SVG and inserts a relative link."
+  (chem-babel-test--with-org
+      "#+begin_src chemlisp :results file
+(chem-def hydroxyl () (O))
+(molecule (C (C (hydroxyl))))
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (let* ((link (chem-babel-test--link))
+           (path (chem-babel-test--path link)))
+      (should link)
+      (should (file-exists-p path))
+      (should (string-match-p "<svg " (chem-babel-test--contents path))))))
+
+(ert-deftest chem-babel-chemlisp-chemfig ()
+  "A chemlisp block renders chemfig source."
+  (chem-babel-test--with-org
+      "#+begin_src chemlisp :renderer chemfig :results value
+(chem-def hydroxyl () (O))
+(molecule (C (C (hydroxyl))))
+#+end_src
+"
+    (chem-babel-test--execute-first)
+    (should (string-match-p "OH" (buffer-string)))
     (should-not (chem-babel-test--link))))
 
 (ert-deftest chem-babel-mol-block ()

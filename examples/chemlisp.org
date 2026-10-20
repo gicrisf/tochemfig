@@ -1,0 +1,75 @@
+#+title: CheMLisp tour (experimental) tour (experimental)
+#+author: Giovanni Crisalfi
+
+#+begin_src elisp :exports none
+(require 'chem-babel)
+#+end_src
+
+* Ethanol
+
+#+begin_src chemlisp :results file
+(molecule
+  (C
+    (C
+      (O))))
+#+end_src
+
+* Acetic acid
+
+#+begin_src chemlisp :results file
+(molecule
+  (C
+    (C :angle 30
+      (=O :angle 60)
+      (O :angle -60))))
+#+end_src
+
+* Benzene
+
+#+begin_src chemlisp :results file
+(molecule
+  (c :id c1
+    (c :id c2 :angle 0
+      (c :id c3 :angle 60
+        (c :id c4 :angle 120
+          (c :id c5 :angle 180
+            (c :id c6 :angle 240
+              (close c1))))))))
+#+end_src
+
+* A phenyl template
+
+#+begin_src chemlisp :results file
+(chem-def phenyl (ortho meta para)
+  (c :id c1
+    (c :id c2 :angle 0
+      (c :id c3 :angle 60
+        (c :id c4 :angle 120
+          (c :id c5 :angle 180
+            (c :id c6 :angle 240
+              (close c1)))
+          (para))
+        (meta))
+      (ortho))))
+
+(molecule
+  (phenyl :para (O)))
+#+end_src
+
+* Local values
+
+#+begin_src chemlisp :results file
+(chem-let ((hydroxyl (O))
+           (methyl   (C)))
+  (molecule
+    (C
+      (C (hydroxyl))
+      (methyl))))
+#+end_src
+
+* Chemfig output
+
+#+begin_src chemlisp :renderer chemfig :results value
+(chem-def hydroxyl () (O))
+(molecule (C (C (hydroxyl))))
+#+end_src

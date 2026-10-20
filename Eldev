@@ -22,6 +22,7 @@
         "chem-exp-chemfig-mappings.el"
         "chem-exp-chemfig.el"
         "chem-exp-svg.el"
+        "chemlisp.el"
         "chem-dispatch.el"
         "chem-babel.el"))
 
@@ -37,4 +38,5 @@
         "test/chem-svg-parity-test.el"
         "test/chem-svg-reaction-parity-test.el"
         "test/chem-svg-raster-test.el"
-        "test/chem-babel-test.el"))
+        "test/chem-babel-test.el"
+        "test/chemlisp-test.el"))

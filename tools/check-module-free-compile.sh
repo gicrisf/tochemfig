@@ -33,7 +33,7 @@ cp "$ROOT"/chem-ir.el "$ROOT"/chem-geometry.el "$ROOT"/chem-reaction.el \
    "$ROOT"/chem-exp-chemfig-mappings.el "$ROOT"/chem-export.el \
    "$ROOT"/chem-exp-chemfig.el "$ROOT"/chem-options.el \
    "$ROOT"/chem-exp-svg.el "$ROOT"/chem-indigo.el "$ROOT"/chem-mode.el \
-   "$ROOT"/chem-babel.el "$tmp/src/"
+   "$ROOT"/chem-babel.el "$ROOT"/chemlisp.el "$tmp/src/"
 
 cd "$tmp/src"
 "$EMACS" -Q --batch \
@@ -42,7 +42,7 @@ cd "$tmp/src"
   -f batch-byte-compile \
   chem-ir.el chem-geometry.el chem-reaction.el chem-exp-chemfig-mappings.el \
   chem-export.el chem-exp-chemfig.el chem-options.el chem-exp-svg.el \
-  chem-indigo.el chem-mode.el chem-babel.el \
+  chem-indigo.el chem-mode.el chem-babel.el chemlisp.el \
   2>"$tmp/stderr" || true
 
 status=0
@@ -59,7 +59,8 @@ check_present() {
 
 if [ ! -f chem-ir.elc ] || [ ! -f chem-indigo.elc ] \
    || [ ! -f chem-exp-chemfig.elc ] || [ ! -f chem-exp-svg.elc ] \
-   || [ ! -f chem-mode.elc ] || [ ! -f chem-babel.elc ]; then
+   || [ ! -f chem-mode.elc ] || [ ! -f chem-babel.elc ] \
+   || [ ! -f chemlisp.elc ]; then
   echo "FAIL: byte-compilation did not produce .elc files" >&2
   status=1
 else

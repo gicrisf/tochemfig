@@ -360,6 +360,49 @@ Useful commands:
 A complete executable tour is in
 [[file:examples/org-playground.org][examples/org-playground.org]].
 
+** CheMLisp (experimental)
+
+CheMLisp is an *experimental* S-expression drawing language that compiles
+directly to the shared IR.  It is useful when SMILES ring digits or MOL coordinates are awkward
+to edit by hand, and it renders with both SVG and chemfig.
+
+#+begin_example
+#+begin_src chemlisp :results file
+(chem-def hydroxyl ()
+  (O))
+
+(molecule
+  (C
+    (C (hydroxyl))))
+#+end_src
+#+end_example
+
+Nested forms are bonds, the first child continues the main chain, and
+lowercase atoms are aromatic.  Definitions use =chem-def=, local values use
+=chem-let=, and templates use parameter holes:
+
+#+begin_example
+(chem-def phenyl (ortho meta para)
+  (c :id c1
+    (c :id c2 :angle 0
+      (c :id c3 :angle 60
+        (c :id c4 :angle 120
+          (c :id c5 :angle 180
+            (c :id c6 :angle 240
+              (close c1)))
+          (para))
+        (meta))
+      (ortho))))
+
+(molecule
+  (phenyl :para (O)))
+#+end_example
+
+See [[file:docs/chemlisp.md][docs/chemlisp.md]] for the syntax reference and
+[[file:examples/chemlisp.org][examples/chemlisp.org]] for a runnable tour.
+The compiler module and the =chemlisp= Babel language are pure Elisp and run
+without the Indigo module; SMILES/MOL/RXN blocks load Indigo on demand.
+
 ** Migrating from tochemfig
 
 =chem-mode= makes a clean break: the old =tochemfig= commands and variables
@@ -430,8 +473,10 @@ Evil, so =q= quits it.  Doom disables the menu bar, so use =SPC C o= /
 - [X] *Generate chemfig code from MOL files*
 - [X] *Render standalone SVG* with deterministic output
 - [X] *Insert SVG images* with Org/Markdown links
-- [X] *Org Babel blocks* (=chem-smiles=, =chem-mol=, =chem-rxn=) with
-  deterministic SVG file results
+- [X] *Org Babel blocks* (=chem-smiles=, =chem-mol=, =chem-rxn=, =chemlisp=)
+  with deterministic SVG file results
+- [X] *CheMLisp* (experimental) S-expression drawings with =chem-def=
+  values/templates, =chem-let=, direct-to-IR compilation, and both exporters
 - [X] *Single-step reactions* from reaction SMILES or RXN files in chemfig and
   SVG, with agents, conditions, plus signs, and forward/reverse/equilibrium
   arrows
