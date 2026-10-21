@@ -17,6 +17,8 @@ IR-first refactor.  The package is now =chem-mode=; chemfig is an exporter.
   optional ancestor targets (=^=, =^^=, =^N=, or repeated carets), so atom IDs
   are optional.  Supports both exporters.
 - =chemlisp= Org Babel blocks, with SVG file results and chemfig source results.
+  Blocks are fontified and edited with =lisp-data-mode=; customize
+  =chem-babel-chemlisp-src-mode= to use =emacs-lisp= instead.
 - =test/chemlisp-test.el= and =docs/chemlisp.md=.
 - =chem-ir.el=: flat graph plus tree view, explicit geometry, and per-node
   drawing attributes.

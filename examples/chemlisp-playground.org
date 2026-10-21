@@ -15,6 +15,9 @@ Indigo module is required.  Explicit geometry is an override, not a
 prerequisite: omit angles for the default depiction, and add them only when
 you want to force a particular arrangement.
 
+CheMLisp blocks are fontified with `lisp-data-mode`; `C-c '` opens them in that
+mode.
+
 * Setup
 
 #+begin_src elisp :exports none :results silent

@@ -31,6 +31,10 @@ In Org:
 Press `C-c C-c` to regenerate the SVG.  Use `:renderer chemfig` with
 `:results value` or `:results raw` to get chemfig source instead.
 
+CheMLisp blocks are fontified and edited with `lisp-data-mode`, so they use
+Lisp syntax and colors.  `C-c '` opens the block in that mode.  Customize
+`chem-babel-chemlisp-src-mode` to use `emacs-lisp` instead.
+
 Programmatically:
 
 ```elisp

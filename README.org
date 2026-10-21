@@ -401,6 +401,8 @@ lowercase atoms are aromatic.  Closures use =->=; ancestor targets such as
 
 See [[file:docs/chemlisp.md][docs/chemlisp.md]] for the syntax reference and
 [[file:examples/chemlisp.org][examples/chemlisp.org]] for a runnable tour.
+CheMLisp Org blocks are fontified and edited with =lisp-data-mode=; set
+=chem-babel-chemlisp-src-mode= to =emacs-lisp= if you prefer Elisp tooling.
 CheMLisp uses Indigo for automatic 2D layout and hydrogen perception, so
 Indigo is required.  Explicit =:angle=, =:turn=, and =:length= are overrides;
 omit them for the default depiction.

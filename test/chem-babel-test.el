@@ -80,6 +80,30 @@ CCO
   (should (fboundp 'org-babel-execute:chem-rxn))
   (should (fboundp 'org-babel-execute:chemlisp)))
 
+(ert-deftest chem-babel-chemlisp-src-mode ()
+  "CheMLisp Org blocks use Lisp data mode by default."
+  (require 'org-src)
+  (should (equal 'lisp-data
+                 (cdr (assoc "chemlisp" org-src-lang-modes))))
+  (should (eq 'lisp-data-mode (org-src-get-lang-mode "chemlisp")))
+  (let ((chem-babel-chemlisp-src-mode 'emacs-lisp))
+    (chem-babel--install-chemlisp-src-mode)
+    (should (eq 'emacs-lisp-mode (org-src-get-lang-mode "chemlisp"))))
+  (chem-babel--install-chemlisp-src-mode)
+  (should (eq 'lisp-data-mode (org-src-get-lang-mode "chemlisp"))))
+
+(ert-deftest chem-babel-chemlisp-font-lock ()
+  "CheMLisp blocks are fontified with Lisp faces."
+  (chem-babel-test--with-org
+      "#+begin_src chemlisp\n(molecule (c :id a))\n#+end_src\n"
+    (let ((org-src-fontify-natively t))
+      (font-lock-ensure)
+      (goto-char (point-min))
+      (search-forward ":id")
+      (let ((face (get-text-property (match-beginning 0) 'face)))
+        (should (member 'font-lock-builtin-face
+                        (if (listp face) face (list face))))))))
+
 (ert-deftest chem-babel-default-header-args ()
   "The default Babel header arguments are installed."
   (should (equal "svg"

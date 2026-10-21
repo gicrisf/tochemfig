@@ -19,6 +19,7 @@
 (require 'org)
 (require 'ob-core)
 (require 'org-element)
+(require 'org-src)
 (require 'chem-options)
 (require 'chem-export)
 (require 'chem-exp-svg)
@@ -36,6 +37,22 @@ When nil, use .chem-cache next to the Org file, or the user cache
 directory for unsaved buffers."
   :group 'chem-mode
   :type '(choice (const :tag "Automatic" nil) directory))
+
+(defcustom chem-babel-chemlisp-src-mode 'lisp-data
+  "Mode used to fontify and edit `chemlisp' Org source blocks.
+The value is a mode name without the `-mode' suffix, as required by
+`org-src-lang-modes'."
+  :group 'chem-mode
+  :type '(choice (const :tag "Lisp data" lisp-data)
+                 (const :tag "Emacs Lisp" emacs-lisp)
+                 (symbol :tag "Other")))
+
+(defun chem-babel--install-chemlisp-src-mode ()
+  "Use `chem-babel-chemlisp-src-mode' for chemlisp source blocks."
+  (setf (alist-get "chemlisp" org-src-lang-modes nil nil #'equal)
+        chem-babel-chemlisp-src-mode))
+
+(chem-babel--install-chemlisp-src-mode)
 
 (defconst chem-babel-profile-version 1
   "Version of the Org Babel default option profile.")
